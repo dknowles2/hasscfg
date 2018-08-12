@@ -1,13 +1,3 @@
-media_player.bedroom:
-  config_entry_id: ddb80010d55f4aefba7131d4180276f0
-  name: Bedroom Chromecast
-  platform: cast
-  unique_id: 1d4bb477-fa95-cca6-2722-6108353f2c36
-media_player.living_room:
-  config_entry_id: ddb80010d55f4aefba7131d4180276f0
-  name: Living Room Chromecast
-  platform: cast
-  unique_id: 6d8c63eb-97b9-5b8d-8b6e-24511f35a6da
 media_player.house:
   config_entry_id: ddb80010d55f4aefba7131d4180276f0
   name: House Music
@@ -28,11 +18,6 @@ media_player.all_the_things:
   name: All The Things
   platform: cast
   unique_id: 365f7f25-bcd2-4b5c-bca9-0774e610daea
-media_player.speaker_bar:
-  config_entry_id: ddb80010d55f4aefba7131d4180276f0
-  name: Speaker Bar
-  platform: cast
-  unique_id: 9168c55d-a616-cdc7-37e8-b9cfaf9dd426
 sensor.davids_iphone_x_battery_level:
   config_entry_id:
   name: David's iPhoneX Battery Level
@@ -43,13 +28,18 @@ sensor.davids_iphone_x_battery_state:
   name: David's iPhoneX Battery State
   platform: ios
   unique_id: state_davids_iphone_x
-sensor.davids_iphone_x_battery_level_2:
-  config_entry_id:
+media_player.speaker_bar:
+  config_entry_id: ddb80010d55f4aefba7131d4180276f0
   name:
-  platform: ios
-  unique_id: level_davidsiphonex
-sensor.davids_iphone_x_battery_state_2:
-  config_entry_id:
+  platform: cast
+  unique_id: 9168c55d-a616-cdc7-37e8-b9cfaf9dd426
+media_player.living_room:
+  config_entry_id: ddb80010d55f4aefba7131d4180276f0
   name:
-  platform: ios
-  unique_id: state_davidsiphonex
+  platform: cast
+  unique_id: 6d8c63eb-97b9-5b8d-8b6e-24511f35a6da
+media_player.bedroom:
+  config_entry_id: ddb80010d55f4aefba7131d4180276f0
+  name:
+  platform: cast
+  unique_id: 1d4bb477-fa95-cca6-2722-6108353f2c36

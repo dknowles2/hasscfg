@@ -1,0 +1,40 @@
+light.dining_room_chandelier:
+  friendly_name: "Dining Room Chandelier"
+light.downstairs_hallway_lights:
+  friendly_name: "Downstairs Hallway Lights"
+light.front_foyer_floor_lamp_and_doorbell:
+  friendly_name: "Doorbell"
+media_player.kitchen:
+  friendly_name: "Kitchen Google Home"
+light.kitchen_island_pendants:
+  friendly_name: "Kitchen Island Pendants"
+switch.living_room_ceiling_fan:
+  friendly_name: "Living Room Ceiling Fan"
+light.living_room_main_lights:
+  friendly_name: "Living Room Main Lights"
+switch.jacob_noisemaker:
+  friendly_name: "Jacob's Noisemaker"
+binary_sensor.kids_room_occupancy:
+  friendly_name: "Jacob's Room Occupancy"
+sensor.kids_room_temperature:
+  friendly_name: "Jacob's Room"
+sensor.yr_symbol:
+  friendly_name: "Weather"
+sensor.blink_foyer_temperature:
+  friendly_name: "Foyer"
+sensor.thermostat_temperature:
+  friendly_name: "Thermostat"
+sensor.blink_foyer_battery:
+  friendly_name: "Foyer Camera Battery"
+sensor.thermostat_humidity:
+  friendly_name: "Humidity"
+weather.thermostat:
+  friendly_name: "Weather Forecast"
+weather.dark_sky:
+  friendly_name: "Weather Forecast"
+sensor.dark_sky_humidity:
+  friendly_name: "Outside Humidity"
+sensor.thermostat_humidity:
+  friendly_name: "Inside Humidity"
+sensor.dark_sky_temperature:
+  friendly_name: "Outside"

@@ -1,0 +1,8 @@
+*.conf
+*.crt
+*.db
+*.key
+*.token
+*~
+known_devices.yaml
+secrets.yaml

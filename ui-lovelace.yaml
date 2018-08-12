@@ -100,7 +100,7 @@ views:
                 entity: camera.jacobs_room
               - type: entities
                 entities:
-                  - entity: switch.jacob_noisemaker
+                  - entity: switch.noisemaker
                     name: Noisemaker
                     secondary_info: last-changed
                   - entity: sensor.kids_room_temperature

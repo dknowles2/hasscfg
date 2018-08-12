@@ -26,12 +26,10 @@ sensor.thermostat_temperature:
   friendly_name: "Thermostat"
 sensor.blink_foyer_battery:
   friendly_name: "Foyer Camera Battery"
-sensor.thermostat_humidity:
-  friendly_name: "Humidity"
 weather.thermostat:
   friendly_name: "Weather Forecast"
 weather.dark_sky:
-  friendly_name: "Weather Forecast"
+  friendly_name: "Dark Sky Weather Forecast"
 sensor.dark_sky_humidity:
   friendly_name: "Outside Humidity"
 sensor.thermostat_humidity:

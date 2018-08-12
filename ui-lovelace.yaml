@@ -55,22 +55,6 @@ views:
     id: house
     icon: mdi:home-assistant
     cards:
-      - type: entities
-        title: Lights
-        show_header_toggle: true
-        entities:
-          - entity: light.living_room_main_lights
-            name: Main Lights
-            secondary_info: last-changed
-          - entity: light.kitchen_island_pendants
-            name: Island Pendants
-            secondary_info: last-changed
-          - entity: light.dining_room_chandelier
-            name: Chandelier
-            secondary_info: last-changed
-          - entity: switch.living_room_ceiling_fan
-            name: Ceiling Fan
-            secondary_info: last-changed
       - type: vertical-stack
         cards:
           - type: picture-entity
@@ -106,3 +90,27 @@ views:
                   - entity: sensor.kids_room_temperature
                     name: Temperature
                     secondary_info: last-changed
+      - type: entities
+        title: Lights
+        show_header_toggle: true
+        entities:
+          - entity: light.living_room_main_lights
+            name: Main Lights
+            secondary_info: last-changed
+          - entity: light.kitchen_island_pendants
+            name: Island Pendants
+            secondary_info: last-changed
+          - entity: light.dining_room_chandelier
+            name: Chandelier
+            secondary_info: last-changed
+          - entity: switch.living_room_ceiling_fan
+            name: Ceiling Fan
+            secondary_info: last-changed
+      - type: history-graph
+        title: Washer
+        show_header_toggle: false
+        entities:
+          - sensor.washer_amps
+          - sensor.washer_kw
+          - sensor.washer_volts
+          - sensor.washer_watts

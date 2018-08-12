@@ -1,0 +1,109 @@
+default_view:
+  view: yes
+  icon: mdi:home-assistant
+  entities:
+    - sensor.yr_symbol
+    - sensor.thermostat_temperature
+    - sensor.thermostat_humidity
+    - sensor.lyft_time
+    - group.occupants
+    - weather.thermostat
+    - camera.radar_nyc
+    - media_player.spotify
+    - camera.calendar
+    # - group.climate
+    # - group.upstairs
+    # - group.downstairs
+
+weather:
+  name: Weather
+  entities:
+    - sensor.dark_sky_daily_summary
+    - weather.thermostat
+    - camera.radar_nyc
+climate:
+  name: Climate
+  view: yes
+  icon: mdi:thermometer
+  entities:
+    - sun.sun
+    - sensor.yr_symbol
+    - climate.thermostat
+    - sensor.thermostat_temperature
+    - sensor.blink_foyer_temperature
+    - sensor.kids_room_temperature
+    - sensor.thermostat_humidity
+    - weather.thermostat
+    - history_graph.house_temperature
+upstairs:
+  name: Upstairs
+  view: yes
+  entities:
+    - light.living_room_main_lights
+    - light.kitchen_island_pendants
+    - light.dining_room_chandelier
+    - switch.living_room_ceiling_fan
+    - climate.thermostat
+    - media_player.spotify
+downstairs:
+  name: Downstairs
+  view: yes
+  entities:
+    - light.downstairs_hallway_lights
+    - camera.foyer
+    - light.front_foyer_floor_lamp_and_doorbell
+    - sensor.blink_foyer_battery
+    - sensor.blink_foyer_temperature
+jacobs_room:
+  name: "Jacob's Room"
+  view: yes
+  entities:
+    - binary_sensor.kids_room_occupancy
+    - sensor.kids_room_temperature
+    - camera.jacobs_room
+    - switch.jacob_noisemaker
+occupants:
+  name: "Occupants"
+  view: no
+  icon: mdi:account-multiple
+  entities:
+    # - device_tracker.davids_iphone_x
+    - device_tracker.davidsiphonex
+    - device_tracker.sarahsiphone
+blink:
+  name: "Blink"
+  view: no
+  entities:
+    - binary_sensor.blink_foyer_motion_enabled
+    - binary_sensor.blink_armed_status
+    - sensor.blink_foyer_battery
+    - sensor.blink_foyer_notifications
+    - sensor.blink_foyer_temperature
+    - scripts.blink_capture_script
+media:
+  name: "Media"
+  view: yes
+  entities:
+    - group.google_home
+    - group.chromecast
+    - group.music
+google_home:
+  name: "Google Home"
+  view: no
+  entities:
+    - media_player.kitchen
+    - media_player.office
+chromecast:
+  name: "Chromecast"
+  view: no
+  entities:
+    - media_player.bedroom
+    - media_player.living_room
+music:
+  name: "Music"
+  view: no
+  entities:
+    - media_player.all_the_things
+    - media_player.house
+    - media_player.spotify
+    

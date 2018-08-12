@@ -10,7 +10,6 @@ blink_arm:
       data:
         friendly_name: "Foyer"
         device_armed: "True"
-  sequence:
     - service: blink.arm_camera
       data:
         friendly_name: "Living Room"

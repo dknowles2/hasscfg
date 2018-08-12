@@ -1,85 +1,35 @@
-- id: 17cc032f5622477190d1baf83a2512a8
-  alias: Arm blink when not home
-  trigger:
-  - entity_id: device_tracker.davidsiphonex
-    event: leave
-    platform: zone
-    zone: zone.home
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      message: lol bye
-      title: BYE FELICIA
-    
-- id: 88c2cf7b81074a229e74c4547131002a
-  alias: Disarm blink when home
-  trigger:
-  - entity_id: device_tracker.davidsiphonex
-    event: enter
-    platform: zone
-    zone: zone.home
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      message: Welcome home jerk
-      title: O HAI
-    
-- alias: David is home
-  trigger:
-    platform: state
-    entity_id: device_tracker.davidsiphonex
-    from: away
-    to: home
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      title: David is home!
-      message: LOL David is home!
-  id: 705585edd85048bebe603acb5f18701a
-- alias: David is away
-  trigger:
-    platform: state
-    entity_id: device_tracker.davidsiphonex
-    from: home
-    to: away
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      title: David is away!
-      message: LOL David is away!
-  id: 766e9ed5fd2a4f598fcf1f593a101d31
-- id: '1533254330920'
-  alias: New Automation
-  trigger:
-  - entity_id: group.occupants
-    platform: state
-  condition: []
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      title: HI
-    
 - alias: All Home
   trigger:
     platform: template
     value_template: "{% if is_state('device_tracker.davidsiphonex', 'home') or is_state('device_tracker.sarahsiphone', 'home') %}true{% endif %}"
-#  condition:
-#    condition: time
-#    before: 
   action:
-    - service: notify.ios_davids_iphone_x
-      data:
-        title: "SOMEBODY HOME"
-        message: "sumone is hizzome"
     - service: script.blink_disarm
-          
-- alias: all away
+
+- alias: All Away
   trigger:
     platform: template
     value_template: "{% if not is_state('device_tracker.davidsiphonex', 'home') and not is_state('device_tracker.sarahsiphone', 'home') %}true{% endif %}"
   action:
     - service: notify.ios_davids_iphone_x
       data:
-        title: "WE NOT HOME"
-        message: "nobody home dood"
+        title: "Bye Felicia"
+        message: "We all gone."
     - service: script.blink_arm
+
+- alias: Foyer Motion Detected
+  trigger:
+    platform: event
+    event_type: foyer_motion_detected
+  action:
+    - service: notify.ios_davids_iphone_x
+      data:
+        title: "Foyer Motion Detected"
+        message: "I've seen some shit."
+    - service: script.blink_capture
+
+# - alias: Regularly update Foyer picture
+#   trigger:
+#     platform: time
+#     minutes: "/5"
+#   action:
+#     - service: script.blink_capture

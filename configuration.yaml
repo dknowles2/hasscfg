@@ -184,10 +184,6 @@ zone:
     longitude: -74.003409
     radius: 500
     icon: mdi:briefcase
-  - name: Saffron
-    latitude: 40.721687
-    longitude: -74.047026
-    radius: 100
   - name: Lake
     latitude: 34.993856
     longitude: -83.810117

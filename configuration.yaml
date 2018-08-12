@@ -79,15 +79,15 @@ sensor:
     client_secret: !secret lyft_client_secret
     start_latitude: !secret latitude
     start_longitude: !secret longitude
-    
+
 camera:
   - platform: generic
     name: "Radar NYC"
-    still_image_url: "~https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=OKX&brand=wui&num=6&delay=15&type=N0R&frame=0&scale=0.375&noclutter=1&showstorms=0&mapx=400&mapy=240&centerx=678&centery=198&transx=278&transy=-42&showlabels=1&severe=0&rainsnow=0&lightning=0&smooth=1&rand=25560123&lat=0&lon=0&label=you"
+    still_image_url: "https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=OKX&brand=wui&num=6&delay=15&type=N0R&frame=0&scale=0.375&noclutter=1&showstorms=0&mapx=400&mapy=240&centerx=678&centery=198&transx=278&transy=-42&showlabels=1&severe=0&rainsnow=0&lightning=0&smooth=1&rand=25560123&lat=0&lon=0&label=you"
   - platform: generic
     name: "Calendar"
     still_image_url: "https://calendar.google.com/calendar/embed?showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&mode=AGENDA&wkst=1&src=casa.de.knowles%40gmail.com"
-      
+
 # Text to speech
 tts:
   - platform: google
@@ -98,7 +98,7 @@ cloud:
 blink:
   username: !secret blink_username
   password: !secret blink_password
-  
+
 nest:
   client_id: !secret nest_client_id
   client_secret: !secret nest_client_secret
@@ -122,7 +122,7 @@ switch:
 
 ifttt:
   key: !secret ifttt_key
-    
+
 device_tracker:
   - platform: unifi
     host: 192.168.1.2
@@ -148,7 +148,7 @@ panel_iframe:
     title: "Calendar"
     url: "https://calendar.google.com/calendar/embed?showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&mode=AGENDA&wkst=1&src=casa.de.knowles%40gmail.com"
     icon: mdi:calendar
-  
+
 history_graph:
   house_temperature:
     name: "House Temperature"
@@ -178,8 +178,8 @@ zone:
     latitude: 34.993856
     longitude: -83.810117
     radius: 1600
-    
-    
+
+
 group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml

@@ -82,16 +82,16 @@ sensor:
   - platform: template
     sensors:
       washer_amps:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["Current"] | replace(" A", "") | float }}'
+        value_template: '{{ states.switch.tplink_power_monitor.attributes["current_a"] | replace(" A", "") | float }}'
         unit_of_measurement: 'A'
       washer_watts:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["Current consumption"] | replace(" W", "") | float }}'
+        value_template: '{{ states.switch.tplink_power_monitor.attributes["current_power_w"] | replace(" W", "") | float }}'
         unit_of_measurement: 'W'
       washer_kw:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["Total consumption"] | replace(" kW", "") | float }}'
+        value_template: '{{ states.switch.tplink_power_monitor.attributes["total_energy_kwh"] | replace(" kW", "") | float }}'
         unit_of_measurement: 'kW'
       washer_volts:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["Voltage"] | replace(" V", "") | float }}'
+        value_template: '{{ states.switch.tplink_power_monitor.attributes["voltage"] | replace(" V", "") | float }}'
         unit_of_measurement: 'V'
 
 camera:

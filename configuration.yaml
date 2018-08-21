@@ -145,7 +145,8 @@ device_tracker:
     # TODO: FIXME:
     verify_ssl: false
     interval_seconds: 10
-    consider_home: 180
+    consider_home: 120
+    detection_time: 120
     track_new_devices: false
 
 media_player:

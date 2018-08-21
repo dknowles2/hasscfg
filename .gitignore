@@ -4,5 +4,13 @@
 *.key
 *.token
 *~
+.HA_VERSION
+.cloud
+.spotify-token-cache
+.storage
+.uuid
+aircast.xml
+home-assistant.log
 known_devices.yaml
 secrets.yaml
+tts

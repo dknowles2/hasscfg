@@ -1,35 +1,49 @@
 - alias: All Home
   trigger:
-    platform: template
-    value_template: "{% if is_state('device_tracker.davidsiphonex', 'home') or is_state('device_tracker.sarahsiphone', 'home') %}true{% endif %}"
+    platform: state
+    entity_id: binary_sensor.people_home
+    to: on
   action:
-    - service: script.blink_disarm
+    - service: notify.ios_davids_iphone_x
+      data:
+        title: "Hi Felicia"
+        message: "10 HOME\n20 SWEET\n30 GOTO 10"
 
 - alias: All Away
   trigger:
-    platform: template
-    value_template: "{% if not is_state('device_tracker.davidsiphonex', 'home') and not is_state('device_tracker.sarahsiphone', 'home') %}true{% endif %}"
+    platform: state
+    entity_id: binary_sensor.people_home
+    to: off
   action:
     - service: notify.ios_davids_iphone_x
       data:
         title: "Bye Felicia"
-        message: "We all gone."
-    - service: script.blink_arm
+        message: "home empty"
 
-- alias: Foyer Motion Detected
+- alias: Presence test
   trigger:
-    platform: event
-    event_type: foyer_motion_detected
+    platform: state
+    entity_id: binary_sensor.people_home
   action:
     - service: notify.ios_davids_iphone_x
-      data:
-        title: "Foyer Motion Detected"
-        message: "I've seen some shit."
-    - service: script.blink_capture
+      data_template:
+        title: "Occupancy changed"
+        message: "{{ trigger.from_state.state }} --> {{ trigger.to_state.state }}"
 
-# - alias: Regularly update Foyer picture
-#   trigger:
-#     platform: time
-#     minutes: "/5"
-#   action:
-#     - service: script.blink_capture
+- alias: Dark theme at night
+  trigger:
+    - platform: sun
+      event: sunset
+  action:
+    - service: frontend.set_theme
+      data:
+        name: midnight
+
+- alias: Light theme during day
+  trigger:
+    - platform: sun
+      event: sunrise
+  action:
+    - service: frontend.set_theme
+      data:
+        name: default

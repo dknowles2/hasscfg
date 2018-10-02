@@ -15,6 +15,7 @@ homeassistant:
 
 # Enables the frontend
 frontend:
+  themes: !include_dir_merge_named themes
 
 # Enables configuration UI
 config:
@@ -59,6 +60,7 @@ sun:
 weather:
   - platform: darksky
     api_key: !secret darksky_key
+    mode: daily
 
 sensor:
   # Weather prediction
@@ -82,25 +84,56 @@ sensor:
   - platform: template
     sensors:
       washer_amps:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["current_a"] | replace(" A", "") | float }}'
+        value_template: >-
+          {{ state_attr("switch.washer", "current_a") | replace(" A", "") | float }}
         unit_of_measurement: 'A'
       washer_watts:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["current_power_w"] | replace(" W", "") | float }}'
+        value_template: >-
+          {{ state_attr("switch.washer", "current_power_w") | replace(" W", "") | float }}
         unit_of_measurement: 'W'
       washer_kw:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["total_energy_kwh"] | replace(" kW", "") | float }}'
+        value_template: >-
+          '{{ state_attr("switch.washer", "total_energy_kwh") | replace(" kW", "") | float }}
         unit_of_measurement: 'kW'
       washer_volts:
-        value_template: '{{ states.switch.tplink_power_monitor.attributes["voltage"] | replace(" V", "") | float }}'
+        value_template: >-
+          {{ state_attr("switch.washer", "voltage") | replace(" V", "") | float }}
+        unit_of_measurement: 'V'
+      dryer_amps:
+        value_template: >-
+          {{ state_attr("switch.dryer", "current_a") | replace(" A", "") | float }}
+        unit_of_measurement: 'A'
+      dryer_watts:
+        value_template: >-
+          {{ state_attr("switch.dryer", "current_power_w") | replace(" W", "") | float }}
+        unit_of_measurement: 'W'
+      dryer_kw:
+        value_template: >-
+          {{ state_attr("switch.dryer", "total_energy_kwh") | replace(" kW", "") | float }}
+        unit_of_measurement: 'kW'
+      dryer_volts:
+        value_template: >-
+          {{ state_attr("switch.dryer", "voltage") | replace(" V", "") | float }}
         unit_of_measurement: 'V'
 
-camera:
-  - platform: generic
-    name: "Radar NYC"
-    still_image_url: "https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=OKX&brand=wui&num=6&delay=15&type=N0R&frame=0&scale=0.375&noclutter=1&showstorms=0&mapx=400&mapy=240&centerx=678&centery=198&transx=278&transy=-42&showlabels=1&severe=0&rainsnow=0&lightning=0&smooth=1&rand=25560123&lat=0&lon=0&label=you"
-  - platform: generic
-    name: "Calendar"
-    still_image_url: "https://calendar.google.com/calendar/embed?showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&mode=AGENDA&wkst=1&src=casa.de.knowles%40gmail.com"
+binary_sensor:
+  - platform: template
+    sensors:
+      washer:
+        friendly_name: "Washer"
+        value_template: '{{ states("sensor.washer_watts") | float > 0 }}'
+      dryer:
+        friendly_name: "Dryer"
+        value_template: '{{ states("sensor.dryer_watts") | float > 0 }}'
+      people_home:
+        friendly_name: "House Occupied"
+        device_class: presence
+        value_template: >-
+          {{
+              is_state("device_tracker.davidsiphonex", "home") or
+              is_state("device_tracker.davids_iphone_x", "home") or
+              is_state("device_tracker.sarahsiphone", "home")
+          }}
 
 # Text to speech
 tts:
@@ -108,10 +141,6 @@ tts:
 
 # Cloud
 cloud:
-
-blink:
-  username: !secret blink_username
-  password: !secret blink_password
 
 nest:
   client_id: !secret nest_client_id
@@ -131,8 +160,11 @@ switch:
     name: "Noisemaker"
     host: 192.168.1.82
   - platform: tplink
-    name: "TP-Link Power Monitor"
+    name: "Washer"
     host: 192.168.1.83
+  - platform: tplink
+    name: "Dryer"
+    host: 192.168.1.84
 
 ifttt:
   key: !secret ifttt_key
@@ -157,23 +189,6 @@ media_player:
 google:
   client_id: !secret google_client_id
   client_secret: !secret google_client_secret
-
-panel_iframe:
-  google_calendar:
-    title: "Calendar"
-    url: "https://calendar.google.com/calendar/embed?showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&mode=AGENDA&wkst=1&src=casa.de.knowles%40gmail.com"
-    icon: mdi:calendar
-
-history_graph:
-  house_temperature:
-    name: "House Temperature"
-    entities:
-      - climate.thermostat
-      - sensor.blink_foyer_temperature
-      # - sensor.kids_room_temperature
-      # - sensor.thermostat_temperature
-    hours_to_show: 72
-    refresh: 60
 
 zone:
   - name: Home

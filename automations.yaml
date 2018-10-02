@@ -2,7 +2,7 @@
   trigger:
     platform: state
     entity_id: binary_sensor.people_home
-    to: on
+    to: "on"
   action:
     - service: notify.ios_davids_iphone_x
       data:
@@ -13,7 +13,7 @@
   trigger:
     platform: state
     entity_id: binary_sensor.people_home
-    to: off
+    to: "off"
   action:
     - service: notify.ios_davids_iphone_x
       data:
@@ -52,7 +52,7 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.washer
-      to: off
+      to: "off"
   action:
     - service: notify.ios_davids_iphone_x
       data:
@@ -63,7 +63,7 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.dryer
-      to: off
+      to: "off"
   action:
     - service: notify.ios_davids_iphone_x
       data:

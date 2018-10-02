@@ -1,26 +1,38 @@
 title: Casa de Knowles
+resources:
+  - url: /local/lovelace-slider-entity-row/slider-entity-row.js
+    type: js
+  - url: https://unpkg.com/moment@2.22.2/moment.js
+    type: js
+  - url: /local/homeassistant-lovelace-google-calendar-card/calendar-card.js
+    type: js
+
 views:
   - title: Home
     id: home
     icon: mdi:calendar
     badges:
+      - binary_sensor.people_home
       - device_tracker.davids_iphone_x
       - device_tracker.sarahsiphone
-      - sensor.yr_symbol
+      - climate.thermostat
       - sensor.thermostat_temperature
       - sensor.thermostat_humidity
       - sensor.lyft_time
+      - binary_sensor.washer
+      - binary_sensor.dryer
     cards:
       - type: vertical-stack
         cards:
           - type: weather-forecast
             entity: weather.dark_sky
-          - type: picture
-            title: Radar
-            image: "https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=OKX&brand=wui&num=15&delay=15&type=N0R&frame=0&scale=0.5&noclutter=0&showstorms=0&mapx=400&mapy=240&centerx=601.75&centery=185.25&transx=201.75&transy=-54.75&showlabels=1&severe=0&rainsnow=0&lightning=0&smooth=1&rand=25543743&lat=0&lon=0&label=you"
-      - type: iframe
-        title: Calendar
-        url: "https://calendar.google.com/calendar/embed?showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0&mode=AGENDA&wkst=1&src=casa.de.knowles%40gmail.com"
+          - type: iframe
+            url: https://maps.darksky.net/@radar,40.720,-74.047,11?marker=40.720,-74.047&marker-name=Jersey%20City
+            aspect_ratio: 75%
+      - type: custom:calendar-card
+        showProgressBar: false
+        entities:
+          - calendar.casadeknowlesgmailcom
       - type: media-control
         entity: media_player.spotify
   - title: Climate
@@ -30,7 +42,6 @@ views:
       - sun.sun
       - sensor.yr_symbol
       - sensor.thermostat_temperature
-      - sensor.blink_foyer_temperature
       - sensor.kids_room_temperature
       - sensor.thermostat_humidity
     cards:
@@ -43,7 +54,6 @@ views:
                 secondary_info: last-changed
           - type: history-graph
             entities:
-              - sensor.blink_foyer_temperature
               - sensor.kids_room_temperature
               - sensor.thermostat_temperature
               - sensor.dark_sky_temperature
@@ -59,21 +69,18 @@ views:
         cards:
           - type: picture-entity
             title: Downstairs
-            entity: camera.foyer
-            camera_image: camera.foyer
+            entity: camera.entryway
+            camera_image: camera.entryway
           - type: entities
             show_header_toggle: true
             entities:
               - entity: light.downstairs_hallway_lights
                 name: Hallway Lights
                 secondary_info: last-changed
+                type: custom:slider-entity-row
               - entity: light.front_foyer_floor_lamp_and_doorbell
                 name: Doorbell
                 secondary_info: last-changed
-              - entity: sensor.blink_foyer_temperature
-                name: Temperature
-                secondary_info: last-changed
-              - entity: sensor.blink_foyer_battery
       - type: vertical-stack
         title: "Jacob's Room"
         cards:
@@ -97,12 +104,15 @@ views:
           - entity: light.living_room_main_lights
             name: Main Lights
             secondary_info: last-changed
+            type: custom:slider-entity-row
           - entity: light.kitchen_island_pendants
             name: Island Pendants
             secondary_info: last-changed
+            type: custom:slider-entity-row
           - entity: light.dining_room_chandelier
             name: Chandelier
             secondary_info: last-changed
+            type: custom:slider-entity-row
           - entity: switch.living_room_ceiling_fan
             name: Ceiling Fan
             secondary_info: last-changed
@@ -110,7 +120,5 @@ views:
         title: Washer
         show_header_toggle: false
         entities:
-          - sensor.washer_amps
-          - sensor.washer_kw
-          - sensor.washer_volts
           - sensor.washer_watts
+          - sensor.dryer_watts

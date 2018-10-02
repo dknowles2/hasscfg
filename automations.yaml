@@ -47,3 +47,25 @@
     - service: frontend.set_theme
       data:
         name: default
+
+- alias: Washer Done
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.washer
+      to: off
+  action:
+    - service: notify.ios_davids_iphone_x
+      data:
+        title: "Washer is Done"
+        message: "Flip the damned laundry."
+
+- alias: Dryer Done
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.dryer
+      to: off
+  action:
+    - service: notify.ios_davids_iphone_x
+      data:
+        title: "Dryer is Done"
+        message: "Fold the damned laundry."

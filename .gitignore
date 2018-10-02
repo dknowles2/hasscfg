@@ -10,6 +10,7 @@
 .storage
 .uuid
 aircast.xml
+deps
 home-assistant.log
 known_devices.yaml
 secrets.yaml

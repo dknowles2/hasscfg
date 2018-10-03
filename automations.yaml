@@ -31,6 +31,7 @@
         message: "{{ trigger.from_state.state }} --> {{ trigger.to_state.state }}"
 
 - alias: Dark theme at night
+  initial_state: True
   trigger:
     - platform: sun
       event: sunset

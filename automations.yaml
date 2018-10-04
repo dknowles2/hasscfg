@@ -54,6 +54,10 @@
     - platform: state
       entity_id: binary_sensor.washer
       to: "off"
+  condition:
+    condition: state
+    entity_id: device_tracker.davids_iphone_x
+    state: home
   action:
     - service: notify.ios_davids_iphone_x
       data:
@@ -65,6 +69,10 @@
     - platform: state
       entity_id: binary_sensor.dryer
       to: "off"
+  condition:
+    condition: state
+    entity_id: device_tracker.davids_iphone_x
+    state: home
   action:
     - service: notify.ios_davids_iphone_x
       data:

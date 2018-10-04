@@ -1,34 +1,34 @@
-- alias: All Home
-  trigger:
-    platform: state
-    entity_id: binary_sensor.people_home
-    to: "on"
-  action:
-    - service: notify.ios_davids_iphone_x
-      data:
-        title: "Hi Felicia"
-        message: "10 HOME\n20 SWEET\n30 GOTO 10"
+# - alias: House Occupied
+#   trigger:
+#     platform: state
+#     entity_id: binary_sensor.people_home
+#     to: "on"
+#   action:
+#     - service: notify.ios_davids_iphone_x
+#       data:
+#         title: "Hi Felicia"
+#         message: "10 HOME\n20 SWEET\n30 GOTO 10"
 
-- alias: All Away
-  trigger:
-    platform: state
-    entity_id: binary_sensor.people_home
-    to: "off"
-  action:
-    - service: notify.ios_davids_iphone_x
-      data:
-        title: "Bye Felicia"
-        message: "home empty"
+# - alias: All Away
+#   trigger:
+#     platform: state
+#     entity_id: binary_sensor.people_home
+#     to: "off"
+#   action:
+#     - service: notify.ios_davids_iphone_x
+#       data:
+#         title: "Bye Felicia"
+#         message: "home empty"
 
-- alias: Presence test
-  trigger:
-    platform: state
-    entity_id: binary_sensor.people_home
-  action:
-    - service: notify.ios_davids_iphone_x
-      data_template:
-        title: "Occupancy changed"
-        message: "{{ trigger.from_state.state }} --> {{ trigger.to_state.state }}"
+# - alias: Presence test
+#   trigger:
+#     platform: state
+#     entity_id: binary_sensor.people_home
+#   action:
+#     - service: notify.ios_davids_iphone_x
+#       data_template:
+#         title: "Occupancy changed"
+#         message: "{{ trigger.from_state.state }} --> {{ trigger.to_state.state }}"
 
 - alias: Dark theme at night
   initial_state: True

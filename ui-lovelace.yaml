@@ -12,15 +12,12 @@ views:
     id: home
     icon: mdi:calendar
     badges:
-      - binary_sensor.people_home
       - device_tracker.davids_iphone_x
       - device_tracker.sarahsiphone
       - climate.thermostat
       - sensor.thermostat_temperature
       - sensor.thermostat_humidity
       - sensor.lyft_time
-      - binary_sensor.washer
-      - binary_sensor.dryer
     cards:
       - type: vertical-stack
         cards:
@@ -29,12 +26,16 @@ views:
           - type: iframe
             url: https://maps.darksky.net/@radar,40.720,-74.047,11?marker=40.720,-74.047&marker-name=Jersey%20City
             aspect_ratio: 75%
-      - type: custom:calendar-card
-        showProgressBar: false
-        entities:
-          - calendar.casadeknowlesgmailcom
-      - type: media-control
-        entity: media_player.spotify
+      - type: vertical-stack
+        cards:
+          - type: glance
+            entities:
+              - binary_sensor.washer
+              - binary_sensor.dryer
+          - type: custom:calendar-card
+            showProgressBar: false
+            entities:
+              - calendar.casadeknowlesgmailcom
   - title: Climate
     id: climate
     icon: mdi:thermometer
@@ -117,8 +118,8 @@ views:
             name: Ceiling Fan
             secondary_info: last-changed
       - type: history-graph
-        title: Washer
+        title: Laundry
         show_header_toggle: false
         entities:
-          - sensor.washer_watts
-          - sensor.dryer_watts
+          - binary_sensor.washer
+          - binary_sensor.dryer

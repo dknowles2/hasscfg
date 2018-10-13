@@ -165,6 +165,9 @@ switch:
   - platform: tplink
     name: "Dryer"
     host: 192.168.1.84
+  - platform: tplink
+    name: "Holiday Lights"
+    host: 192.168.1.85
 
 ifttt:
   key: !secret ifttt_key

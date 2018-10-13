@@ -32,6 +32,7 @@ views:
             entities:
               - binary_sensor.washer
               - binary_sensor.dryer
+              - switch.holiday_lights
           - type: custom:calendar-card
             showProgressBar: false
             entities:

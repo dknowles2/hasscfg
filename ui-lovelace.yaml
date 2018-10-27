@@ -19,24 +19,25 @@ views:
       - sensor.thermostat_humidity
       - sensor.lyft_time
     cards:
-      - type: vertical-stack
-        cards:
-          - type: weather-forecast
-            entity: weather.dark_sky
-          - type: iframe
-            url: https://maps.darksky.net/@radar,40.720,-74.047,11?marker=40.720,-74.047&marker-name=Jersey%20City
-            aspect_ratio: 75%
-      - type: vertical-stack
-        cards:
-          - type: glance
-            entities:
-              - binary_sensor.washer
-              - binary_sensor.dryer
-              - switch.holiday_lights
-          - type: custom:calendar-card
-            showProgressBar: false
-            entities:
-              - calendar.casadeknowlesgmailcom
+      - id: c90a8aedf2c240459710978f05f892bd  # Automatically created id
+        type: weather-forecast
+        entity: weather.dark_sky
+      - id: 558ef6db887b4e50a2400189d02140c3  # Automatically created id
+        type: iframe
+        url: https://maps.darksky.net/@radar,40.720,-74.047,11?marker=40.720,-74.047&marker-name=Jersey%20City
+        aspect_ratio: 75%
+      - id: cfdf023bdf894e7d9a62a4f7ea0325cd  # Automatically created id
+        type: glance
+        entities:
+          - binary_sensor.washer
+          - binary_sensor.dryer
+          - light.front_foyer_floor_lamp_and_doorbell
+          - switch.holiday_lights
+      - id: 90b9dfc71cf443e991e796534d378e56  # Automatically created id
+        type: custom:calendar-card
+        showProgressBar: false
+        entities:
+          - calendar.casadeknowlesgmailcom
   - title: Climate
     id: climate
     icon: mdi:thermometer
@@ -47,27 +48,26 @@ views:
       - sensor.kids_room_temperature
       - sensor.thermostat_humidity
     cards:
-      - type: vertical-stack
-        cards:
-          - type: entities
-            entities:
-              - entity: climate.thermostat
-                name: Thermostat
-                secondary_info: last-changed
-          - type: history-graph
-            entities:
-              - sensor.kids_room_temperature
-              - sensor.thermostat_temperature
-              - sensor.dark_sky_temperature
-          - type: history-graph
-            entities:
-              - sensor.dark_sky_humidity
-              - sensor.thermostat_humidity
+      - id: fb85676e29c642ff83228063ed5708bb  # Automatically created id
+        type: thermostat
+        entity: climate.thermostat
+      - id: 48a380c667fb41009c1213e84c9b7474  # Automatically created id
+        type: history-graph
+        entities:
+          - sensor.kids_room_temperature
+          - sensor.thermostat_temperature
+          - sensor.dark_sky_temperature
+      - id: 259cfa001033410a9d263e02e9eca2f8  # Automatically created id
+        type: history-graph
+        entities:
+          - sensor.dark_sky_humidity
+          - sensor.thermostat_humidity
   - title: House
     id: house
     icon: mdi:home-assistant
     cards:
-      - type: vertical-stack
+      - id: 481fe08ae22c41c58d3ad8b7e7e65258  # Automatically created id
+        type: vertical-stack
         cards:
           - type: picture-entity
             title: Downstairs
@@ -83,13 +83,14 @@ views:
               - entity: light.front_foyer_floor_lamp_and_doorbell
                 name: Doorbell
                 secondary_info: last-changed
-      - type: vertical-stack
-        title: "Jacob's Room"
+      - id: f68a7728fba14001abfc4085a06f24a1  # Automatically created id
+        type: vertical-stack
+        title: Jacob's Room
         cards:
           - type: vertical-stack
             cards:
               - type: picture-entity
-                title: "Jacob's Room"
+                title: Jacob's Room
                 entity: camera.jacobs_room
               - type: entities
                 entities:
@@ -99,7 +100,8 @@ views:
                   - entity: sensor.kids_room_temperature
                     name: Temperature
                     secondary_info: last-changed
-      - type: entities
+      - id: 3ee76e86196f4c34b237b5926460372f  # Automatically created id
+        type: entities
         title: Lights
         show_header_toggle: true
         entities:
@@ -118,7 +120,8 @@ views:
           - entity: switch.living_room_ceiling_fan
             name: Ceiling Fan
             secondary_info: last-changed
-      - type: history-graph
+      - id: 0bea2fc60ecc4224abee52e4b32f073f  # Automatically created id
+        type: history-graph
         title: Laundry
         show_header_toggle: false
         entities:

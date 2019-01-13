@@ -2,10 +2,12 @@ title: Casa de Knowles
 resources:
   - url: /local/lovelace-slider-entity-row/slider-entity-row.js
     type: js
-  - url: https://unpkg.com/moment@2.22.2/moment.js
+  - url: https://unpkg.com/moment@2.23.0/moment.js
     type: js
   - url: /local/homeassistant-lovelace-google-calendar-card/calendar-card.js
     type: js
+  - url: /local/calendar-card/calendar-card.js?v=1.2.2
+    type: module
 
 views:
   - title: Home

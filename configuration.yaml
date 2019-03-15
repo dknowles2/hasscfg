@@ -28,7 +28,7 @@ config:
 hassio:
 
 http:
-  base_url: casa-de-knowles.duckdns.org:443
+  base_url: https://casa-de-knowles.duckdns.org
 
 # Checks for available updates
 # Note: This component will send some information about your system to

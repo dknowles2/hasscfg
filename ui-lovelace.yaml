@@ -8,6 +8,8 @@ resources:
     type: js
   - url: /local/calendar-card/calendar-card.js?v=1.2.2
     type: module
+  - url: /customcards/atomic-calendar.js
+    type: module
 
 views:
   - title: Home
@@ -36,7 +38,7 @@ views:
           - light.front_foyer_floor_lamp_and_doorbell
           - switch.holiday_lights
       - id: 90b9dfc71cf443e991e796534d378e56  # Automatically created id
-        type: custom:calendar-card
+        type: custom:atomic-calendar
         showProgressBar: false
         entities:
           - calendar.casadeknowlesgmailcom

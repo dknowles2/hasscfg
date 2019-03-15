@@ -26,3 +26,17 @@
     ignore_availability: true
     name: Holidays in United States
     track: true
+
+- cal_id: n8qsjd923e69te69lug84m8t4k@group.calendar.google.com
+  entities:
+  - device_id: ssa_menu
+    ignore_availability: true
+    name: SSA Menu
+    track: true
+
+- cal_id: addressbook#contacts@group.v.calendar.google.com
+  entities:
+  - device_id: contacts
+    ignore_availability: true
+    name: Contacts
+    track: true

@@ -1,53 +1,22 @@
-# - alias: House Occupied
-#   trigger:
-#     platform: state
-#     entity_id: binary_sensor.people_home
-#     to: "on"
-#   action:
-#     - service: notify.ios_davids_iphone_x
-#       data:
-#         title: "Hi Felicia"
-#         message: "10 HOME\n20 SWEET\n30 GOTO 10"
-
-# - alias: All Away
-#   trigger:
-#     platform: state
-#     entity_id: binary_sensor.people_home
-#     to: "off"
-#   action:
-#     - service: notify.ios_davids_iphone_x
-#       data:
-#         title: "Bye Felicia"
-#         message: "home empty"
-
-# - alias: Presence test
-#   trigger:
-#     platform: state
-#     entity_id: binary_sensor.people_home
-#   action:
-#     - service: notify.ios_davids_iphone_x
-#       data_template:
-#         title: "Occupancy changed"
-#         message: "{{ trigger.from_state.state }} --> {{ trigger.to_state.state }}"
-
-- alias: Dark theme at night
-  initial_state: True
+- alias: Automatic theme change
   trigger:
-    - platform: sun
-      event: sunset
+    - platform: homeassistant
+      event: start
+    - platform: state
+      entity_id: sun.sun
+      to: above_horizon
+    - platform: state
+      entity_id: sun.sun
+      to: below_horizon
   action:
-    - service: frontend.set_theme
-      data:
-        name: midnight
-
-- alias: Light theme during day
-  trigger:
-    - platform: sun
-      event: sunrise
-  action:
-    - service: frontend.set_theme
-      data:
-        name: default
+    - service_template: frontend.set_theme
+      data_template:
+        name: >
+          {% if states.sun.sun.state == "above_horizon" %}
+            default
+          {% else %}
+            midnight
+          {% endif %}
 
 - alias: Washer Done
   trigger:
@@ -56,7 +25,7 @@
       to: "off"
   condition:
     condition: state
-    entity_id: device_tracker.davids_iphone_x
+    entity_id: person.david
     state: home
   action:
     - service: notify.ios_davids_iphone_x
@@ -71,7 +40,7 @@
       to: "off"
   condition:
     condition: state
-    entity_id: device_tracker.davids_iphone_x
+    entity_id: person.david
     state: home
   action:
     - service: notify.ios_davids_iphone_x

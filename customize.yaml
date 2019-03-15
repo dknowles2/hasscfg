@@ -38,3 +38,5 @@ sensor.dark_sky_temperature:
   friendly_name: Outside
 device_tracker.david_1cc2bb4451f34ab0811509cc78973093:
   entity_id: david_owntracks
+person.david:
+  gravatar: dknowles

@@ -17,6 +17,10 @@ homeassistant:
 frontend:
   themes: !include_dir_merge_named themes
 
+custom_updater:
+  card_urls:
+    - https://raw.githubusercontent.com/atomic7777/atomic_calendar/master/tracker.json
+
 # Enables configuration UI
 config:
 
@@ -24,11 +28,11 @@ config:
 hassio:
 
 http:
+  base_url: casa-de-knowles.duckdns.org:443
   # Secrets are defined in the file secrets.yaml
-  api_password: !secret http_password
+  # api_password: !secret http_password
   # Uncomment this if you are using SSL/TLS, running in Docker container, etc.
   # NOTE: Disabled in favor of nginx.
-  # base_url: casa-de-knowles.duckdns.org:443
   # ssl_certificate: /ssl/fullchain.pem
   # ssl_key: /ssl/privkey.pem
 
@@ -136,36 +140,6 @@ binary_sensor:
               is_state("device_tracker.davids_iphone_x", "home") or
               is_state("device_tracker.sarahsiphone", "home")
           }}
-  - platform: bayesian
-    prior: 0.3
-    name: "David Presence"
-    probability_threshold: 0.9
-    observations:
-      - entity_id: "device_tracker.davids_iphone_x"  # HA App
-        prob_given_true: 0.9
-        prob_given_false: 0.2
-        platform: state
-        to_state: home
-      - entity_id: "device_tracker.davidsiphonex" # unifi
-        prob_given_true: 0.9
-        prob_given_false: 0.1
-        platform: state
-        to_state: home
-      - entity_id: "device_tracker.david_1cc2bb4451f34ab0811509cc78973093" # owntracks
-        prob_given_true: 0.9
-        prob_given_false: 0.4
-        platform: state
-        to_state: home
-      - entity_id: "device_tracker.1921681100_e49adc9faac7" # kitchen
-        prob_given_true: 0.9
-        prob_given_false: 0.1
-        platform: state
-        to_state: home
-      - entity_id: "device_tracker.1921681102_e49adc9faac7" # office
-        prob_given_true: 0.9
-        prob_given_false: 0.1
-        platform: state
-        to_state: home
 
 # Text to speech
 tts:
@@ -175,9 +149,9 @@ nest:
   client_id: !secret nest_client_id
   client_secret: !secret nest_client_secret
 
-blink:
-  username: !secret blink_username
-  password: !secret blink_password
+# blink:
+#   username: !secret blink_username
+#   password: !secret blink_password
 
 lutron_caseta:
   host: 192.168.1.80
@@ -189,9 +163,9 @@ ecobee:
   api_key: !secret ecobee_api_key
 
 switch:
-  - platform: tplink
-    name: "Noisemaker"
-    host: 192.168.1.82
+#   - platform: tplink
+#     name: "Noisemaker"
+#     host: 192.168.1.82
   - platform: tplink
     name: "Washer"
     host: 192.168.1.83
@@ -206,12 +180,12 @@ ifttt:
   key: !secret ifttt_key
 
 device_tracker:
-  - platform: googlehome
-    host: 192.168.1.100
-    track_new_devices: false
-  - platform: googlehome
-    host: 192.168.1.102
-    track_new_devices: false
+  # - platform: googlehome
+  #   host: 192.168.1.100
+  #   track_new_devices: true
+  # - platform: googlehome
+  #   host: 192.168.1.102
+  #   track_new_devices: true
   - platform: unifi
     host: 192.168.1.2
     username: !secret unifi_username
@@ -223,6 +197,8 @@ device_tracker:
     detection_time: 120
     track_new_devices: false
 
+person:
+
 media_player:
   - platform: spotify
     client_id: !secret spotify_client_id
@@ -231,6 +207,11 @@ media_player:
 google:
   client_id: !secret google_client_id
   client_secret: !secret google_client_secret
+
+googlehome:
+  devices:
+    - host: 192.168.1.100
+    - host: 192.168.1.102
 
 zone:
   - name: Home

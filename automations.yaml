@@ -1,49 +1,99 @@
 - alias: Automatic theme change
   trigger:
-    - platform: homeassistant
-      event: start
-    - platform: state
-      entity_id: sun.sun
-      to: above_horizon
-    - platform: state
-      entity_id: sun.sun
-      to: below_horizon
+  - platform: homeassistant
+    event: start
+  - platform: state
+    entity_id: sun.sun
+    to: above_horizon
+  - platform: state
+    entity_id: sun.sun
+    to: below_horizon
   action:
-    - service_template: frontend.set_theme
-      data_template:
-        name: >
-          {% if states.sun.sun.state == "above_horizon" %}
-            default
-          {% else %}
-            midnight
-          {% endif %}
-
+  - service_template: frontend.set_theme
+    data_template:
+      name: "{% if states.sun.sun.state == \"above_horizon\" %}\n  default\n{% else\
+        \ %}\n  midnight\n{% endif %}\n"
+  id: 4a8c3b944e8847b890df4feefa9881cc
 - alias: Washer Done
   trigger:
-    - platform: state
-      entity_id: binary_sensor.washer
-      to: "off"
+  - platform: state
+    entity_id: binary_sensor.washer
+    to: 'off'
   condition:
     condition: state
     entity_id: person.david
     state: home
   action:
-    - service: notify.ios_davids_iphone_x
-      data:
-        title: "Washer is Done"
-        message: "Flip the damned laundry."
-
+  - service: notify.ios_davids_iphone_x
+    data:
+      title: Washer is Done
+      message: Flip the damned laundry.
+  id: 0252056b33c44354b8e81ef47fd2b065
 - alias: Dryer Done
   trigger:
-    - platform: state
-      entity_id: binary_sensor.dryer
-      to: "off"
+  - platform: state
+    entity_id: binary_sensor.dryer
+    to: 'off'
   condition:
     condition: state
     entity_id: person.david
     state: home
   action:
-    - service: notify.ios_davids_iphone_x
-      data:
-        title: "Dryer is Done"
-        message: "Fold the damned laundry."
+  - service: notify.ios_davids_iphone_x
+    data:
+      title: Dryer is Done
+      message: Fold the damned laundry.
+  id: ee45b3cd7c4747848ea8b0eae6fec103
+- id: letsencrypt-renewal
+  alias: LetsEncrypt renewal
+  trigger:
+  - platform: time
+    at: 00:00:00
+  action:
+  - service: hassio.addon_stop
+    data:
+      addon: core_nginx_proxy
+  - service: hassio.addon_restart
+    data:
+      addon: core_letsencrypt
+  - delay: 00:01:30
+  - service: hassio.addon_start
+    data:
+      addon: core_nginx_proxy
+- id: '1589629453734'
+  alias: Turn on Entryway Lamp
+  description: ''
+  trigger:
+  - event: sunset
+    offset: -01:00:00
+    platform: sun
+  - at: 06:00
+    platform: time
+  - entity_id: sun.sun
+    platform: state
+    to: below_horizon
+  - platform: template
+    value_template: "{% if is_state('sun.sun', 'below_horizon') %}true{% endif %}"
+  condition: []
+  action:
+  - device_id: d9683f68719841da94b4b132364e78fc
+    domain: switch
+    entity_id: switch.holiday_lights
+    type: turn_on
+  mode: single
+- id: '1589629505762'
+  alias: Turn off Entryway Lamp
+  description: ''
+  trigger:
+  - at: '23:10'
+    platform: time
+  - event: sunrise
+    platform: sun
+  - at: 08:00
+    platform: time
+  condition: []
+  action:
+  - device_id: d9683f68719841da94b4b132364e78fc
+    domain: switch
+    entity_id: switch.holiday_lights
+    type: turn_off

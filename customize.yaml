@@ -1,7 +1,7 @@
 light.dining_room_chandelier:
   friendly_name: Dining Room Chandelier
 light.downstairs_hallway_lights:
-  friendly_name: Downstairs Hallway Lights
+  friendly_name: Downstairs Hallway
 light.front_foyer_floor_lamp_and_doorbell:
   friendly_name: Doorbell
 media_player.kitchen:
@@ -39,4 +39,6 @@ sensor.dark_sky_temperature:
 device_tracker.david_1cc2bb4451f34ab0811509cc78973093:
   entity_id: david_owntracks
 person.david:
-  gravatar: dknowles
+  entity_picture: /local/images/david.png
+person.sarah:
+  entity_picture: /local/images/sarah.jpg

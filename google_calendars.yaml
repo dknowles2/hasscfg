@@ -40,3 +40,17 @@
     ignore_availability: true
     name: Contacts
     track: true
+
+- cal_id: t2j6hhtscl61ut9kp4nobs1funp536dt@import.calendar.google.com
+  entities:
+  - device_id: ps5
+    ignore_availability: true
+    name: PS5
+    track: true
+
+- cal_id: bd6ohg8q6uf1m1neb9mo0qdqpgjkdf35@import.calendar.google.com
+  entities:
+  - device_id: jersey_city_public_schools
+    ignore_availability: true
+    name: Jersey City Public Schools
+    track: true

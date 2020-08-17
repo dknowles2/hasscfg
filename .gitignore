@@ -16,3 +16,4 @@ known_devices.yaml
 secrets.yaml
 tts
 .google_maps_location_sharing.cookies
+custom_components

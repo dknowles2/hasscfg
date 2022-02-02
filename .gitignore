@@ -1,6 +1,6 @@
 *.conf
 *.crt
-*.db
+*.db*
 *.key
 *.token
 *~
@@ -11,9 +11,12 @@
 .uuid
 aircast.xml
 deps
-home-assistant.log
+home-assistant.log*
 known_devices.yaml
 secrets.yaml
 tts
 .google_maps_location_sharing.cookies
 custom_components
+www
+themes
+dwains-dashboard

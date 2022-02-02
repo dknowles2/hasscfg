@@ -2,8 +2,13 @@ default_config:
 homeassistant:
   customize: !include customize.yaml
 
+frontend:
+  themes: !include_dir_merge_named themes
+
 scene: !include scenes.yaml
 sensor: !include sensors.yaml
+automation: !include automations.yaml
+
 
 http:
   use_x_forwarded_for: true
@@ -29,8 +34,3 @@ influxdb:
   password: !secret influxdb_password
   max_retries: 3
   default_measurement: state
-
-automation: !include automations.yaml
-
-frontend:
-  themes: !include_dir_merge_named themes

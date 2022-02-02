@@ -1,9 +1,0 @@
-[submodule "themes/home-assistant-community-themes"]
-	path = themes/home-assistant-community-themes
-	url = https://github.com/maartenpaauw/home-assistant-community-themes.git
-[submodule "www/homeassistant-lovelace-google-calendar-card"]
-	path = www/homeassistant-lovelace-google-calendar-card
-	url = https://github.com/rdehuyss/homeassistant-lovelace-google-calendar-card.git
-[submodule "www/lovelace-slider-entity-row"]
-	path = www/lovelace-slider-entity-row
-	url = https://github.com/thomasloven/lovelace-slider-entity-row.git

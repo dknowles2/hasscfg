@@ -1,49 +1,3 @@
-- alias: Automatic theme change
-  trigger:
-  - platform: homeassistant
-    event: start
-  - platform: state
-    entity_id: sun.sun
-    to: above_horizon
-  - platform: state
-    entity_id: sun.sun
-    to: below_horizon
-  action:
-  - service_template: frontend.set_theme
-    data_template:
-      name: "{% if states.sun.sun.state == \"above_horizon\" %}\n  default\n{% else\
-        \ %}\n  midnight\n{% endif %}\n"
-  id: 4a8c3b944e8847b890df4feefa9881cc
-- alias: Washer Done
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.washer
-    to: 'off'
-  condition:
-    condition: state
-    entity_id: person.david
-    state: home
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      title: Washer is Done
-      message: Flip the damned laundry.
-  id: 0252056b33c44354b8e81ef47fd2b065
-- alias: Dryer Done
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.dryer
-    to: 'off'
-  condition:
-    condition: state
-    entity_id: person.david
-    state: home
-  action:
-  - service: notify.ios_davids_iphone_x
-    data:
-      title: Dryer is Done
-      message: Fold the damned laundry.
-  id: ee45b3cd7c4747848ea8b0eae6fec103
 - id: letsencrypt-renewal
   alias: LetsEncrypt renewal
   trigger:
@@ -60,40 +14,53 @@
   - service: hassio.addon_start
     data:
       addon: core_nginx_proxy
-- id: '1589629453734'
-  alias: Turn on Entryway Lamp
+- id: '1641092271455'
+  alias: Sync Deck Lights
+  description: ''
+  use_blueprint:
+    path: adchevrier/synchronize-the-on-off-state-of-2-entities.yaml
+    input:
+      entity_1: switch.deck_light
+      entity_2: switch.deck_string_lights
+- id: '1643764828147'
+  alias: Downstairs AM/PM On-Off
+  description: ''
+  use_blueprint:
+    path: EPMatt/on_off_schedule_state_persistence.yaml
+    input:
+      automation_target:
+        entity_id:
+        - light.foyer_lamp
+        - light.corner_lamp
+        - light.side_table_lamp
+      on_time: 06:00:00
+      off_time: '23:00:00'
+      trigger_at_homeassistant_startup: true
+- id: '1643764971872'
+  alias: Lights On At Sunset
+  description: ''
+  use_blueprint:
+    path: CyanAutomation/lights_on_at_sunset.yaml
+    input:
+      target_light:
+        entity_id:
+        - light.corner_lamp
+        - light.foyer_lamp
+        - light.side_table_lamp
+- id: '1643765594758'
+  alias: Lights on at Sunrise
   description: ''
   trigger:
-  - event: sunset
-    offset: -01:00:00
-    platform: sun
-  - at: 06:00
-    platform: time
-  - entity_id: sun.sun
-    platform: state
-    to: below_horizon
-  - platform: template
-    value_template: "{% if is_state('sun.sun', 'below_horizon') %}true{% endif %}"
-  condition: []
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: '0'
+  condition:
+  - condition: sun
+    before: sunrise
+    before_offset: 00:30
   action:
-  - device_id: d9683f68719841da94b4b132364e78fc
-    domain: switch
-    entity_id: switch.holiday_lights
-    type: turn_on
+  - service: adaptive_lighting.apply
+    data:
+      entity_id: switch.adaptive_lighting_downstairs
   mode: single
-- id: '1589629505762'
-  alias: Turn off Entryway Lamp
-  description: ''
-  trigger:
-  - at: '23:10'
-    platform: time
-  - event: sunrise
-    platform: sun
-  - at: 08:00
-    platform: time
-  condition: []
-  action:
-  - device_id: d9683f68719841da94b4b132364e78fc
-    domain: switch
-    entity_id: switch.holiday_lights
-    type: turn_off

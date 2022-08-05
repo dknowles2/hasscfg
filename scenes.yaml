@@ -61,3 +61,15 @@
       friendly_name: Office Standing Lamp
       supported_features: 32
       state: 'off'
+- id: '1655120907759'
+  name: Workshop Garage Closed
+  entities:
+    cover.workshop_garage_door:
+      device_class: garage
+      friendly_name: Workshop Garage Door
+      supported_features: 3
+      state: closed
+  icon: mdi:garage-variant-lock
+  metadata:
+    cover.workshop_garage_door:
+      entity_only: false

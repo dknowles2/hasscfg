@@ -15,12 +15,6 @@ http:
     - 127.0.0.1
     - 172.30.33.0/24
 
-nest:
-  client_id: !secret nest_client_id
-  client_secret: !secret nest_client_secret
-  project_id: !secret nest_project_id
-  subscriber_id: !secret nest_subscriber_id
-
 tts:
   - platform: google_translate
     language: "en"

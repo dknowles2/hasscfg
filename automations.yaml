@@ -23,44 +23,112 @@
       entity_1: switch.deck_light
       entity_2: switch.deck_string_lights
 - id: '1643764828147'
-  alias: Downstairs AM/PM On-Off
+  alias: Downstairs AM time schedule
   description: ''
   use_blueprint:
     path: EPMatt/on_off_schedule_state_persistence.yaml
     input:
       automation_target:
         entity_id:
-        - light.foyer_lamp
-        - light.corner_lamp
-        - light.side_table_lamp
+        - light.sconces
+        - light.lamps
       on_time: 06:00:00
-      off_time: '23:00:00'
+      off_time: 09:30:00
       trigger_at_homeassistant_startup: true
-- id: '1643764971872'
-  alias: Lights On At Sunset
-  description: ''
-  use_blueprint:
-    path: CyanAutomation/lights_on_at_sunset.yaml
-    input:
-      target_light:
-        entity_id:
-        - light.corner_lamp
-        - light.foyer_lamp
-        - light.side_table_lamp
-- id: '1643765594758'
-  alias: Lights on at Sunrise
+      custom_trigger_event: s
+- id: '1656444036964'
+  alias: Daytime Power Outage
   description: ''
   trigger:
-  - platform: numeric_state
-    entity_id: sun.sun
-    attribute: elevation
-    below: '0'
+  - platform: state
+    entity_id:
+    - binary_sensor.generator_power_outage
+    from: 'false'
+    to: 'true'
   condition:
-  - condition: sun
-    before: sunrise
-    before_offset: 00:30
+  - condition: or
+    conditions:
+    - condition: time
+      before: '19:00:00'
+      after: 08:00:00
+      weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      - sat
+      - sun
+    - condition: and
+      conditions:
+      - type: is_not_occupied
+        condition: device
+        device_id: fb3f16cafb19fcb4fa962d5e921c6df2
+        entity_id: binary_sensor.downstairs_occupancy
+        domain: binary_sensor
+      - type: is_not_occupied
+        condition: device
+        device_id: e46e919da6b49d895b1900a7b140be90
+        entity_id: binary_sensor.upstairs_occupancy
+        domain: binary_sensor
+      - type: is_not_occupied
+        condition: device
+        device_id: e52f1373f5b572bff91c6742f52b470e
+        entity_id: binary_sensor.basement_occupancy
+        domain: binary_sensor
+      - type: is_not_occupied
+        condition: device
+        device_id: 216957fddab350586feab9357425ce0a
+        entity_id: binary_sensor.jacobs_room_occupancy
+        domain: binary_sensor
+    - condition: device
+      device_id: fb3f16cafb19fcb4fa962d5e921c6df2
+      domain: climate
+      entity_id: climate.downstairs
+      type: is_preset_mode
+      preset_mode: Away
+    - condition: device
+      device_id: e46e919da6b49d895b1900a7b140be90
+      domain: climate
+      entity_id: climate.upstairs
+      type: is_preset_mode
+      preset_mode: Away
   action:
-  - service: adaptive_lighting.apply
-    data:
-      entity_id: switch.adaptive_lighting_downstairs
+  - device_id: fb3f16cafb19fcb4fa962d5e921c6df2
+    domain: climate
+    entity_id: climate.downstairs
+    type: set_preset_mode
+    preset_mode: Away
+  - device_id: e46e919da6b49d895b1900a7b140be90
+    domain: climate
+    entity_id: climate.upstairs
+    type: set_preset_mode
+    preset_mode: Away
   mode: single
+- id: '1659480564190'
+  alias: Downstairs PM time schedule
+  description: ''
+  use_blueprint:
+    path: EPMatt/on_off_schedule_state_persistence.yaml
+    input:
+      automation_target:
+        entity_id:
+        - light.sconces
+        - light.lamps
+      on_time: '18:00:00'
+      off_time: '23:00:00'
+      trigger_at_homeassistant_startup: true
+- id: '1659481168774'
+  alias: Downstairs Automatic Dimming
+  description: ''
+  use_blueprint:
+    path: EvTheFuture/dim_lights_based_on_sun_elevation.yaml
+    input:
+      target_lights:
+        entity_id:
+        - light.sconces
+        - light.lamps
+      min_brightness: 10
+      turn_on: true
+      turn_off: true
+      transition_time: 0.5

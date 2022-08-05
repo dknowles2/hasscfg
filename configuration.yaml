@@ -28,7 +28,7 @@ tts:
 influxdb:
   host: a0d7b954-influxdb
   port: 8086
-  database: homeassistant
+  database: default
   username: homeassistant
   password: !secret influxdb_password
   max_retries: 3

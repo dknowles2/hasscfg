@@ -32,6 +32,7 @@
         entity_id:
         - light.sconces
         - light.lamps
+        - switch.circadian_lighting_downstairs
       on_time: 06:00:00
       off_time: 09:30:00
       trigger_at_homeassistant_startup: true
@@ -115,20 +116,7 @@
         entity_id:
         - light.sconces
         - light.lamps
+        - switch.circadian_lighting_downstairs
       on_time: '18:00:00'
       off_time: '23:00:00'
       trigger_at_homeassistant_startup: true
-- id: '1659481168774'
-  alias: Downstairs Automatic Dimming
-  description: ''
-  use_blueprint:
-    path: EvTheFuture/dim_lights_based_on_sun_elevation.yaml
-    input:
-      target_lights:
-        entity_id:
-        - light.sconces
-        - light.lamps
-      min_brightness: 10
-      turn_on: true
-      turn_off: true
-      transition_time: 0.5

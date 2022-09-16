@@ -1,22 +1,11 @@
 blueprint:
   name: On-Off schedule with state persistence
-  description: '# On-Off schedule with state persistence
-
-
-    A simple on-off schedule, with the addition of state persistence across disruptive
-    events, making sure the target device is always in the expected state.
-
-
-    📕 Full documentation regarding this blueprint is available [here](https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/automation/on_off_schedule_state_persistence).
-
-
-    🚀 This blueprint is part of the **[Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints)
-    project**.
-
-
-    ℹ️ Version 2021.10.26
-
-    '
+  description: "# On-Off schedule with state persistence\n\nA simple on-off schedule,
+    with the addition of state persistence across disruptive events, making sure the
+    target device is always in the expected state.\n\n\U0001F4D5 Full documentation
+    regarding this blueprint is available [here](https://epmatt.github.io/awesome-ha-blueprints/docs/blueprints/automation/on_off_schedule_state_persistence).\n\n\U0001F680
+    This blueprint is part of the **[Awesome HA Blueprints](https://epmatt.github.io/awesome-ha-blueprints)
+    project**.\n\nℹ️ Version 2021.10.26\n"
   source_url: https://github.com/EPMatt/awesome-ha-blueprints/blob/main/blueprints/automation/on_off_schedule_state_persistence/on_off_schedule_state_persistence.yaml
   domain: automation
   input:
@@ -51,9 +40,9 @@ blueprint:
       selector:
         boolean: {}
 variables:
-  off_time: !input 'off_time'
-  on_time: !input 'on_time'
-  trigger_at_homeassistant_startup: !input 'trigger_at_homeassistant_startup'
+  off_time: !input off_time
+  on_time: !input on_time
+  trigger_at_homeassistant_startup: !input trigger_at_homeassistant_startup
   time_fmt: '%H:%M:%S'
   first_event: '{{ on_time if strptime(on_time,time_fmt).time() < strptime(off_time,time_fmt).time()
     else off_time }}'
@@ -64,12 +53,12 @@ max_exceeded: silent
 trigger:
 - platform: time
   at:
-  - !input 'on_time'
-  - !input 'off_time'
+  - !input on_time
+  - !input off_time
 - platform: homeassistant
   event: start
 - platform: event
-  event_type: !input 'custom_trigger_event'
+  event_type: !input custom_trigger_event
 condition:
 - condition: template
   value_template: '{{ trigger.platform!="homeassistant" or trigger_at_homeassistant_startup
@@ -82,7 +71,7 @@ action:
         now().time() < strptime(second_event,time_fmt).time() }}'
     sequence:
     - service: homeassistant.{{ "turn_on" if first_event == on_time else "turn_off"}}
-      target: !input 'automation_target'
+      target: !input automation_target
   default:
   - service: homeassistant.{{ "turn_on" if second_event == on_time else "turn_off"}}
-    target: !input 'automation_target'
+    target: !input automation_target

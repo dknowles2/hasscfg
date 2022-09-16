@@ -27,3 +27,18 @@ influxdb:
   password: !secret influxdb_password
   max_retries: 3
   default_measurement: state
+
+circadian_lighting:
+  transition: 1
+
+switch:
+  - platform: circadian_lighting
+    name: "office"
+    lights_ct:
+      - light.office
+  - platform: circadian_lighting
+    name: "downstairs"
+    lights_ct:
+      - light.lamps
+    lights_brightness:
+      - light.sconces

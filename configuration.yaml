@@ -32,7 +32,20 @@ influxdb:
 circadian_lighting:
   transition: 1
 
+hydrawise:
+  access_token: !secret hydrawise
+
+sensor:
+  - platform: hydrawise
+    monitored_conditions:
+    # next_cycle is super noisy so we exclude it
+    - watering_time
+
+binary_sensor:
+  - platform: hydrawise
+
 switch:
+  - platform: hydrawise
   - platform: circadian_lighting
     name: "office"
     lights_ct:

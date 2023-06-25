@@ -20,6 +20,16 @@ tts:
   - platform: google_translate
     language: "en"
 
+logger:
+  logs:
+    custom_components.pitboss: debug
+    pytboss: info
+  filters:
+    custom_components.audiconnect:
+      - ".*: 403, .*"
+    custom_components.pitboss:
+      - ".*Manually updated pitboss data.*"
+
 influxdb:
   host: a0d7b954-influxdb
   port: 8086
@@ -29,30 +39,28 @@ influxdb:
   max_retries: 3
   default_measurement: state
 
-circadian_lighting:
-  transition: 1
-
 hydrawise:
   access_token: !secret hydrawise
 
 sensor:
   - platform: hydrawise
     monitored_conditions:
-    # next_cycle is super noisy so we exclude it
-    - watering_time
+      # next_cycle is super noisy so we exclude it
+      - watering_time
 
 binary_sensor:
+  - platform: ping
+    host: 192.168.1.90
+    name: printer_ping
+    scan_interval: 30
   - platform: hydrawise
 
 switch:
   - platform: hydrawise
-  - platform: circadian_lighting
-    name: "office"
-    lights_ct:
-      - light.office
-  - platform: circadian_lighting
-    name: "downstairs"
-    lights_ct:
-      - light.lamps
-    lights_brightness:
-      - light.sconces
+
+adaptive_lighting:
+  min_color_temp: 2500
+  max_color_temp: 6833
+  lights:
+    - light.lamps
+    - light.office

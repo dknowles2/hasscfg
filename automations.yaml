@@ -23,7 +23,7 @@
       entity_1: switch.deck_light
       entity_2: switch.deck_string_lights
 - id: '1643764828147'
-  alias: Downstairs AM time schedule
+  alias: Downstairs time schedule - AM
   description: ''
   use_blueprint:
     path: EPMatt/on_off_schedule_state_persistence.yaml
@@ -107,7 +107,7 @@
     preset_mode: Away
   mode: single
 - id: '1659480564190'
-  alias: Downstairs PM time schedule
+  alias: Downstairs time schedule - PM
   description: ''
   use_blueprint:
     path: EPMatt/on_off_schedule_state_persistence.yaml
@@ -117,21 +117,22 @@
         - light.sconces
         - light.lamps
         - switch.circadian_lighting_downstairs
-      on_time: '18:00:00'
+      on_time: '16:00:00'
       off_time: '23:00:00'
       trigger_at_homeassistant_startup: true
 - id: '1668213805270'
   alias: Cycle Printer Power
   description: Cycles the printer power when it goes unavailable for 5 minutes.
-  trigger: []
-  condition:
-  - condition: state
-    entity_id: sensor.canon_mf741c
-    state: unavailable
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.printer_ping
+    to: 'off'
     for:
       hours: 0
       minutes: 5
       seconds: 0
+  condition: []
   action:
   - type: turn_off
     device_id: 1fca000a5a84fd7fa576a5369dc85108
@@ -152,7 +153,7 @@
       message: The printer has been power cycled due to unavailability.
   mode: single
 - id: '1666221462797'
-  alias: Holiday Lights Schedule
+  alias: Outdoor Holiday Lights Schedule
   description: ''
   trigger:
   - platform: state
@@ -176,12 +177,13 @@
     - service: switch.turn_on
       data: {}
       target:
-        entity_id: switch.holiday_lights
+        entity_id:
+        - switch.outdoor_holiday_lights
     else:
     - service: switch.turn_off
       data: {}
       target:
-        entity_id: switch.holiday_lights
+        entity_id: switch.outdoor_holiday_lights
   mode: single
 - id: '1666224817497'
   alias: Update notifications
@@ -189,7 +191,7 @@
   use_blueprint:
     path: mdegat01/update_notifications.yaml
     input:
-      reminder_hours: None
+      reminder_hours: '24'
       update_entities:
       - update.hacs_update
       - update.home_assistant_core_update
@@ -198,3 +200,325 @@
       mobile_app_device: 60d03d2db87a2e1e2a5f5bcce32b77aa
       only_after: 06:00:00
       only_before: '22:00:00'
+      send_to_ha: true
+      run_config_check: true
+- id: '1671295554466'
+  alias: Indoor Holiday Lights Schedule
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - schedule.indoor_holiday_lights_schedule
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - if:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: schedule.indoor_holiday_lights_schedule
+        state: 'on'
+    then:
+    - service: switch.turn_on
+      data: {}
+      target:
+        entity_id:
+        - switch.indoor_holiday_lights_group
+    else:
+    - service: switch.turn_off
+      data: {}
+      target:
+        entity_id:
+        - switch.indoor_holiday_lights_group
+  mode: single
+- id: '1673876754321'
+  alias: Notify on AP move
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - device_tracker.david_s_iphone_14_pro
+    attribute: ap_mac
+  condition: []
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      title: David's phone moved
+      message: 'AP: {{ state_attr(''device_tracker.david_s_iphone_14_pro'', ''ap_mac'')
+        }}'
+  mode: single
+- id: '1673876814286'
+  alias: Notify when Jacob's switch moves APs
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - device_tracker.nintendo_switch_jacob
+    attribute: ap_mac
+  condition: []
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      title: FOUND
+      message: 'AP: {{ state_attr(''device_tracker.nintendo_switch_jacob'', ''ap_mac'')
+        }}'
+  mode: single
+- id: '1673970806545'
+  alias: Office unoccupied
+  description: Turn off the office lamps when room is unoccupied
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.david_iphone
+    - sensor.sarah_iphone
+    from: office
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: input_boolean.office_guest
+    state: 'off'
+  - condition: not
+    conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: sensor.david_iphone
+        state: office
+        for:
+          hours: 0
+          minutes: 0
+          seconds: 0
+      - condition: state
+        entity_id: sensor.sarah_iphone
+        state: office
+        for:
+          hours: 0
+          minutes: 0
+          seconds: 0
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: 'The office is unoccupied '
+      title: Presence detection
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.office
+  mode: single
+- id: '1673972330662'
+  alias: Office occupied
+  description: Turn on the office lamps when the room is occupied.
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.david_iphone
+    - sensor.sarah_iphone
+    to: office
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+  condition:
+  - condition: state
+    entity_id: input_boolean.office_guest
+    state: 'off'
+  action:
+  - service: light.turn_on
+    data: {}
+    target:
+      entity_id: light.office
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: '{{ state_attr(trigger.entity_id, ''friendly_name'') }} entered the
+        office.'
+      title: Presence detection
+  mode: single
+- id: '1674225063177'
+  alias: Downstairs lux low
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.espresense_living_room_bh1750_lux_2
+  condition:
+  - condition: or
+    alias: Is morning or daytime
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.morning
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.daytime
+      state: 'on'
+  - condition: numeric_state
+    alias: Brightness is below Lower Bound
+    entity_id: sensor.espresense_living_room_bh1750_lux_2
+    below: input_number.living_room_lux_lower_bound
+  - condition: and
+    conditions:
+    - condition: state
+      alias: Lamps are off
+      entity_id: light.lamps
+      state: 'off'
+    - condition: state
+      alias: Sconces are off
+      entity_id: light.sconces
+      state: 'off'
+  action:
+  - service: light.turn_on
+    alias: Turn on lights
+    data: {}
+    target:
+      entity_id:
+      - light.lamps
+      - light.sconces
+  - service: notify.mobile_app_davids_iphone_14_pro
+    alias: Notify David
+    data:
+      message: Turning on downstairs lights because it's dim.
+      title: Lux change
+    enabled: false
+  mode: single
+- id: '1674225278399'
+  alias: Downstairs lux high
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.espresense_living_room_bh1750_lux_2
+  condition:
+  - condition: or
+    alias: Is morning or daytime
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.morning
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.daytime
+      state: 'on'
+  - condition: numeric_state
+    alias: Brightness is above Upper Bound
+    entity_id: sensor.espresense_living_room_bh1750_lux_2
+    above: input_number.living_room_lux_upper_bound
+  - condition: and
+    conditions:
+    - condition: state
+      alias: Lamps are on
+      entity_id: light.lamps
+      state: 'on'
+    - condition: state
+      alias: Sconces are on
+      entity_id: light.sconces
+      state: 'on'
+  action:
+  - service: light.turn_off
+    alias: Turn off lights
+    data: {}
+    target:
+      entity_id:
+      - light.lamps
+      - light.sconces
+  - service: notify.mobile_app_davids_iphone_14_pro
+    alias: Notify David
+    data:
+      message: Turning off downstairs lights because it's bright.
+      title: Lux change
+    enabled: false
+  mode: single
+- id: '1677684339058'
+  alias: '[TEST] Front door notification'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - lock.front_door_lock
+    to: unlocked
+  condition:
+  - condition: state
+    entity_id: lock.front_door_lock
+    attribute: changed_by
+    state: Changed by mobile device
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: Front door unlocked by mobile device
+      title: Front door unlocked
+  mode: single
+- id: '1679071951950'
+  alias: Doorbell detected person
+  description: ''
+  trigger:
+  - platform: device
+    device_id: e94f865b148d4476194fa9a57cc74f9c
+    domain: nest
+    type: camera_person
+  condition: []
+  action: []
+  mode: single
+- id: '1679071973766'
+  alias: Doorbell pressed
+  description: ''
+  trigger:
+  - platform: device
+    device_id: e94f865b148d4476194fa9a57cc74f9c
+    domain: nest
+    type: doorbell_chime
+  condition: []
+  action: []
+  mode: single
+- id: '1679071985729'
+  alias: Doorbell detected motion
+  description: ''
+  trigger:
+  - platform: device
+    device_id: e94f865b148d4476194fa9a57cc74f9c
+    domain: nest
+    type: camera_motion
+  condition: []
+  action: []
+  mode: single
+- id: '1680704667983'
+  alias: Notify David when washer is done
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.washer_wash_completed
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: person.david
+      state: home
+    - condition: state
+      entity_id: binary_sensor.dryer_dry_completed
+      state: 'on'
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: Washer is done
+  mode: single
+- id: '1680705374664'
+  alias: Notify David when dryer is done
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.dryer_dry_completed
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: person.david
+    state: home
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: Dryer is done
+  mode: single

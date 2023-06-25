@@ -2,8 +2,3 @@ person.david:
   entity_picture: /local/images/david.png
 person.sarah:
   entity_picture: /local/images/sarah.jpg
-
-switch.circadian_lighting_office:
-  friendly_name: "Office Circadian Lighting"  
-switch.circadian_lighting_downstairs:
-  friendly_name: "Downstairs Circadian Lighting"

@@ -1,0 +1,339 @@
+common:
+  generator: &generator-device
+    name: Generator
+    manufacturer: Generac
+    model: Generic Generator
+    identifiers: [generator_device]
+    configuration_url: http://genmon.home.knowles.xyz
+    suggested_area: Back Yard
+    via_device: Genmon
+
+  genmon: &genmon-device
+    name: Genmon
+    manufacturer: "github.com/jgyates/genmon"
+    model: Genmon
+    identifiers: [genmon_device]
+    configuration_url: http://genmon.home.knowles.xyz
+    suggested_area: Back Yard
+
+  dsc_door_window_sensor: &dsc-door-window-sensor-device
+    name: "%(name)s"
+    manufacturer: "DSC-Security"
+    model: DW4917 door/window sensor
+    identifiers: ["%(sn)s"]
+    via_device: rtl_433
+
+  generator_sensor_config: &generator-sensor-config
+    device: *generator-device
+    enabled_by_default: true
+    name: "%(name)s"
+    platform: mqtt
+    state_class: measurement
+    state_topic: "%(state_topic)s"
+    unique_id: "%(object_id)s"
+    object_id: "%(object_id)s"
+
+templates:
+  genmon_percentage_sensor:
+    component: sensor
+    object_id: "genmon_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device: *genmon-device
+      unit_of_measurement: "%%"
+      value_template: '{{ value | regex_replace(" *%%", "") | float | round(1) }}'
+
+  genmon_signal_strength_sensor:
+    component: sensor
+    object_id: "genmon_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device: *genmon-device
+      device_class: signal_strength
+      unit_of_measurement: dBm
+      value_template: '{{ value | regex_replace(" dBm", "") | float | round(1) }}'
+
+  genmon_temperature_sensor:
+    component: sensor
+    object_id: "genmon_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device: *genmon-device
+      device_class: temperature
+      unit_of_measurement: °F
+      value_template: '{{ value | regex_replace(" F", "") | float | round(0) }}'
+
+  generator_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      state_class: null
+
+  generator_binary_sensor:
+    component: binary_sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      payload_off: "No"
+      payload_on: "Yes"
+
+  generator_current_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device_class: current
+      unit_of_measurement: A
+      value_template: '{{ value | regex_replace(" A", "") | float | round(1) }}'
+
+  generator_duration_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device_class: duration
+      unit_of_measurement: h
+      value_template: '{{ value | regex_replace(" +h$", "") | default(0) | float }}'
+
+  generator_frequency_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device_class: frequency
+      unit_of_measurement: Hz
+      value_template: '{{ value | regex_replace(" Hz", "") | float }}'
+
+  generator_power_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device_class: power
+      unit_of_measurement: kW
+      value_template: '{{ value | regex_replace(" *[Kk]W", "") | float | round(0) }}'
+
+  generator_rpm_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      unit_of_measurement: RPM
+      value_template: "{{ value | int }}"
+
+  generator_voltage_sensor:
+    component: sensor
+    object_id: "generator_%(sanitized_name)s"
+    config:
+      <<: *generator-sensor-config
+      device_class: voltage
+      unit_of_measurement: V
+      value_template: '{{ value | regex_replace(" V", "") | float | round(1) }}'
+
+  dsc_door:
+    component: binary_sensor
+    object_id: "%(sn)s_door"
+    params:
+      sn: null # required
+    config:
+      device: *dsc-door-window-sensor-device
+      device_class: door
+      payload_off: "1"
+      payload_on: "0"
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/closed"
+      unique_id: "%(object_id)s"
+
+  dsc_window:
+    component: binary_sensor
+    object_id: "%(sn)s_window"
+    params:
+      sn: null # required
+    config:
+      device: *dsc-door-window-sensor-device
+      device_class: window
+      payload_off: "1"
+      payload_on: "0"
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/closed"
+      unique_id: "%(object_id)s"
+
+  dsc_battery:
+    component: binary_sensor
+    object_id: "%(sn)s_battery"
+    params:
+      sn: null # required
+    config:
+      device: *dsc-door-window-sensor-device
+      device_class: battery
+      payload_off: "1"
+      payload_on: "0"
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/battery_ok"
+      unique_id: "%(object_id)s"
+
+  dsc_tamper:
+    component: binary_sensor
+    object_id: "%(sn)s_tamper"
+    params:
+      sn: null # required
+    config:
+      device: *dsc-door-window-sensor-device
+      device_class: problem
+      payload_off: "0"
+      payload_on: "1"
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/tamper"
+      unique_id: "%(object_id)s"
+
+entities:
+  - params:
+      name: Back
+      sn: 2959527
+    templates: [dsc_door, dsc_battery, dsc_tamper]
+  - params:
+      name: Front
+      sn: 2898343
+    templates: [dsc_door, dsc_battery, dsc_tamper]
+  - params:
+      name: Garage
+      sn: 2651912
+    templates: [dsc_door, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2181141
+      name: Basement Back
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2885287
+      name: Basement Side
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2195683
+      name: Kitchen
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2176130
+      name: Living Room 1
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2295167
+      name: Living Room 2
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2237957
+      name: Living Room 3
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2347023
+      name: Living Room 4
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2965415
+      name: Dining Room Front 1
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2894503
+      name: Dining Room Front 2
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2402835
+      name: Dining Room Side 1
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2732723
+      name: Dining Room Side 2
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2179532
+      name: Master Bedroom 1
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2645436
+      name: Master Bedroom 2
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2630664
+      name: Sitting Room 1
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 2865005
+      name: Sitting Room 2
+    templates: [dsc_window, dsc_battery, dsc_tamper]
+
+  - params:
+      name: Utility Voltage
+      state_topic: "generator/Status/Line/Utility Voltage"
+    templates: [generator_voltage_sensor]
+  - params:
+      name: Battery Voltage
+      state_topic: "generator/Status/Engine/Battery Voltage"
+    templates: [generator_voltage_sensor]
+  - params:
+      name: Engine RPM
+      state_topic: "generator/Status/Engine/RPM"
+    templates: [generator_rpm_sensor]
+  - params:
+      name: Engine Frequency
+      state_topic: "generator/Status/Engine/Frequency"
+    templates: [generator_frequency_sensor]
+  - params:
+      name: Engine Output Voltage
+      state_topic: "generator/Status/Engine/Output Voltage"
+    templates: [generator_voltage_sensor]
+  - params:
+      name: Engine Output Current
+      state_topic: "generator/Status/Engine/Output Current"
+    templates: [generator_current_sensor]
+  - params:
+      name: Engine Output Power
+      state_topic: "generator/Status/Engine/Output Power (Single Phase)"
+    templates: [generator_power_sensor]
+  - params:
+      name: Power Outage
+      state_topic: "generator/Outage/System in Outage"
+    templates: [generator_binary_sensor]
+  - params:
+      name: Last Alarm Log
+      state_topic: "generator/Status/Last Log Entries/Logs/Alarm Log"
+    templates: [generator_sensor]
+  - params:
+      name: Last Service Log
+      state_topic: "generator/Status/Last Log Entries/Logs/Service Log"
+    templates: [generator_sensor]
+  - params:
+      name: Last Action
+      state_topic: "generator/Status/Last Log Entries/Logs/Start Stop Log"
+    templates: [generator_sensor]
+  - params:
+      name: Rated Capacity
+      state_topic: "generator/Maintenance/Rated kW"
+    templates: [generator_power_sensor]
+  - params:
+      name: Exercise Time
+      state_topic: "generator/Maintenance/Exercise/Exercise Time"
+    templates: [generator_sensor]
+  - params:
+      name: Total Run Time
+      state_topic: "generator/Maintenance/Service/Total Run Hours"
+    templates: [generator_duration_sensor]
+  - params:
+      name: Hardware Version
+      state_topic: "generator/Maintenance/Service/Hardware Version"
+    templates: [generator_sensor]
+  - params:
+      name: Firmware Version
+      state_topic: "generator/Maintenance/Service/Firmware Version"
+    templates: [generator_sensor]
+  - params:
+      name: CPU Temperature
+      state_topic: "generator/Monitor/Platform Stats/CPU Temperature"
+    templates: [genmon_temperature_sensor]
+  - params:
+      name: Load
+      state_topic: "generator/Monitor/Platform Stats/CPU Utilization"
+    templates: [genmon_percentage_sensor]
+  - params:
+      name: WLAN Signal Strength
+      state_topic: "generator/Monitor/Platform Stats/WLAN Signal Level"
+    templates: [genmon_signal_strength_sensor]

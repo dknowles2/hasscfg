@@ -116,9 +116,8 @@
         entity_id:
         - light.sconces
         - light.lamps
-        - switch.circadian_lighting_downstairs
       on_time: '16:00:00'
-      off_time: '23:00:00'
+      off_time: 00:00:00
       trigger_at_homeassistant_startup: true
 - id: '1668213805270'
   alias: Cycle Printer Power
@@ -179,11 +178,16 @@
       target:
         entity_id:
         - switch.outdoor_holiday_lights
+        - switch.outdoor_1
+        - switch.outdoor_2
     else:
     - service: switch.turn_off
       data: {}
       target:
-        entity_id: switch.outdoor_holiday_lights
+        entity_id:
+        - switch.outdoor_holiday_lights
+        - switch.outdoor_1
+        - switch.outdoor_2
   mode: single
 - id: '1666224817497'
   alias: Update notifications
@@ -338,8 +342,8 @@
       title: Presence detection
   mode: single
 - id: '1674225063177'
-  alias: Downstairs lux low
-  description: ''
+  alias: Downstairs lights lux
+  description: Turn downstairs lights on and off based on ambient brightness.
   trigger:
   - platform: state
     entity_id:
@@ -354,34 +358,37 @@
     - condition: state
       entity_id: binary_sensor.daytime
       state: 'on'
-  - condition: numeric_state
-    alias: Brightness is below Lower Bound
-    entity_id: sensor.espresense_living_room_bh1750_lux_2
-    below: input_number.living_room_lux_lower_bound
-  - condition: and
-    conditions:
-    - condition: state
-      alias: Lamps are off
-      entity_id: light.lamps
-      state: 'off'
-    - condition: state
-      alias: Sconces are off
-      entity_id: light.sconces
-      state: 'off'
+  - condition: template
+    value_template: "{{ (as_timestamp(now()) -\n  as_timestamp(state_attr('automation.downstairs_lights_lux',
+      'last_triggered') |\n  default(0)) | int) > 300\n}}"
+    alias: Debounce (5m)
   action:
-  - service: light.turn_on
-    alias: Turn on lights
-    data: {}
-    target:
-      entity_id:
-      - light.lamps
-      - light.sconces
-  - service: notify.mobile_app_davids_iphone_14_pro
-    alias: Notify David
-    data:
-      message: Turning on downstairs lights because it's dim.
-      title: Lux change
-    enabled: false
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.espresense_living_room_bh1750_lux
+      below: input_number.living_room_lux_lower_bound
+    then:
+    - service: light.turn_on
+      alias: Turn on lights
+      data:
+        transition: 5
+      target:
+        entity_id:
+        - light.lamps
+        - light.sconces
+    else:
+    - if:
+      - condition: numeric_state
+        entity_id: sensor.espresense_living_room_bh1750_lux
+        above: input_number.living_room_lux_upper_bound
+      then:
+      - service: light.turn_off
+        data:
+          transition: 5
+        target:
+          entity_id:
+          - light.lamps
+          - light.sconces
   mode: single
 - id: '1674225278399'
   alias: Downstairs lux high
@@ -521,4 +528,85 @@
   - service: notify.mobile_app_davids_iphone_14_pro
     data:
       message: Dryer is done
+  mode: single
+- id: '1689686012701'
+  alias: Notify on Front Porch Events
+  description: ''
+  use_blueprint:
+    path: SgtBatten/Stable.yaml
+    input:
+      camera: camera.front_porch
+      notify_device: 76657f931338cbcfa417bac484ad8cf4
+      message: '{{ label }} detected - {{ camera_name }}'
+      attachment: snapshot
+      update_thumbnail: true
+      ios_live_view: true
+      zone_filter: true
+      zones:
+      - porch_zone
+      - driveway_zone
+      presence_filter: person.david
+      cooldown: 60
+      debug: false
+- id: '1691000633447'
+  alias: Toggle Notification automation based on Sarah's location
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - person.sarah
+    from:
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: person.sarah
+        state: home
+      sequence:
+      - service: automation.turn_off
+        data:
+          stop_actions: true
+        target:
+          entity_id: automation.notify_on_front_porch_events
+    - conditions:
+      - condition: state
+        entity_id: person.sarah
+        state: not_home
+      sequence:
+      - service: automation.turn_on
+        data: {}
+        target:
+          entity_id: automation.notify_on_front_porch_events
+  mode: single
+- id: '1691193081488'
+  alias: Notify Sarah on Front Porch activity
+  description: ''
+  use_blueprint:
+    path: SgtBatten/Stable.yaml
+    input:
+      camera: camera.front_porch
+      notify_device: 137b7007585ffc57cc04f79c7f86bf6b
+      alert_once: false
+      ios_live_view: true
+      zone_filter: true
+      zones:
+      - porch_zone
+      update_thumbnail: true
+      debug: false
+- id: '1693766230753'
+  alias: Notify David when pork hits 203F
+  description: ''
+  trigger: []
+  condition:
+  - type: is_temperature
+    condition: device
+    device_id: 5410febb0fb5f482c60ff71e29fffc92
+    entity_id: 188be0ef5ff6181d1e88fd8df36a65d0
+    domain: sensor
+    above: 202
+  action:
+  - service: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: Pork is done
   mode: single

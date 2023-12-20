@@ -23,6 +23,13 @@ common:
     identifiers: ["%(sn)s"]
     via_device: rtl_433
 
+  govee_water_sensor: &govee-water-sensor
+    name: "%(name)s"
+    manufacturer: Govee
+    model: H5054 Water Leak Detector
+    identifiers: ["%(sn)s"]
+    via_device: rtl_433
+
   generator_sensor_config: &generator-sensor-config
     device: *generator-device
     enabled_by_default: true
@@ -187,7 +194,45 @@ templates:
       state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/tamper"
       unique_id: "%(object_id)s"
 
+  govee_water_leak:
+    component: binary_sensor
+    object_id: "%(sn)s_moisture"
+    params:
+      sn: null # required
+    config:
+      device: *govee-water-sensor
+      device_class: moisture
+      payload_on: "1"
+      payload_off: "0"
+      off_delay: 30
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/Govee-Water/%(sn)s/detect_wet"
+      unique_id: "%(object_id)s"
+
+  govee_battery:
+    component: sensor
+    object_id: "%(sn)s_battery"
+    params:
+      sn: null # required
+    config:
+      device: *govee-water-sensor
+      device_class: battery
+      state_class: measurement
+      value_template: "{{ (value_json | float * 100) | int }}"
+      unit_of_measurement: "%%"
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/Govee-Water/%(sn)s/battery_ok"
+      unique_id: "%(object_id)s"
+
 entities:
+  - params:
+      name: Utility Closet
+      sn: 17345
+    templates: [govee_water_leak, govee_battery]
+  - params:
+      name: Sump Pump
+      sn: 15903
+    templates: [govee_water_leak, govee_battery]
   - params:
       name: Back
       sn: 2959527

@@ -1,0 +1,51 @@
+esphome:
+  name: "living-room-esphome"
+  friendly_name: Living Room ESPHome
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "YF0Q9A64LnDuYBXcpXT+MIK8yffk86G8BmfFrxQlRlU="
+
+ota:
+  - platform: esphome
+    password: "9f585a4afe4ffc8739bc18862f6e44f5"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Living-Room Fallback Hotspot"
+    password: "4qgwJIk7DbFi"
+
+captive_portal:
+    
+bluetooth_proxy:
+  active: true
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+  id: bus_a
+
+sensor:
+- platform: bh1750
+  name: "illuminance"
+  address: 0x23
+  update_interval: 1s
+  filters:
+    - heartbeat: 5s
+    - debounce: 0.5s
+    - throttle_average: 10s

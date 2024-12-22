@@ -6,7 +6,6 @@ esp32:
   board: esp32dev
   framework:
     type: arduino
-    # type: esp-idf
 
 # Enable logging
 logger:
@@ -18,6 +17,7 @@ api:
     key: "xSJKbkaQcjCYR3JSIF4T1AogwMSnlM1SbHn7a80QyvM="
 
 ota:
+  - platform: esphome
     password: "emohpse"
 
 wifi:

@@ -415,3 +415,19 @@ entities:
       name: WLAN Signal Strength
       state_topic: "generator/Monitor/Platform Stats/WLAN Signal Level"
     templates: [genmon_signal_strength_sensor]
+republish:
+  # Dining Room Front Privacy Shade
+  - topic: "homeassistant/cover/0x6cfd22fffee7a08d/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"
+  # Living Room Left Privacy Shade
+  - topic: "homeassistant/cover/0x6cfd22fffee7ac03/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"
+  # Living Room Right Privacy Shade
+  - topic: "homeassistant/cover/0x4c97a1fffe560c06/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"

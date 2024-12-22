@@ -7,6 +7,7 @@ frontend:
 
 scene: !include scenes.yaml
 automation: !include automations.yaml
+script: !include scripts.yaml
 
 http:
   use_x_forwarded_for: true
@@ -15,10 +16,6 @@ http:
     - 172.30.33.0/24
     - 192.168.1.3
     - 192.168.1.4
-
-tts:
-  - platform: google_translate
-    language: "en"
 
 logger:
   logs:
@@ -29,3 +26,12 @@ logger:
       - ".*: 403, .*"
     custom_components.pitboss:
       - ".*Manually updated pitboss data.*"
+
+influxdb:
+  host: a0d7b954-influxdb
+  port: 8086
+  database: homeassistant
+  username: homeassistant
+  password: !secret influxdb_password
+  max_retries: 3
+  default_measurement: state

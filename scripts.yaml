@@ -1,0 +1,58 @@
+turn_on_front_lights:
+  alias: Turn on front lights
+  sequence:
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      device_id: 63aa3ed82cdc99ea126e49458082e686
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      device_id:
+      - 56510fac7071615ced3225c4deaf174e
+      - 43176dc73c6b37a7aa863e31fd4a0739
+      - 9160846f78bf009a92f3577fedfad312
+  description: ''
+  icon: mdi:lightbulb
+turn_off_front_lights:
+  alias: Turn off front lights
+  sequence:
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      device_id:
+      - 56510fac7071615ced3225c4deaf174e
+      - 43176dc73c6b37a7aa863e31fd4a0739
+      - 9160846f78bf009a92f3577fedfad312
+  description: ''
+  icon: mdi:lightbulb
+perform_action_when_entity_becomes_available:
+  alias: Perform action when entity becomes available
+  sequence:
+  - action: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: Waiting for {{ entity_id }} to become available before calling {{ action
+        }}
+  - wait_template: '{{ not is_state(entity_id, "unavailable") }}'
+    continue_on_timeout: false
+  - action: '{{ action }}'
+    target:
+      entity_id: '{{ entity_id }}'
+  - action: notify.mobile_app_davids_iphone_14_pro
+    data:
+      message: Calling {{ action }} on {{ entity_id }} ({{ state_translated(entity_id)
+        }})
+  fields:
+    entity_id:
+      selector:
+        entity: {}
+      name: Entity
+      required: true
+    action:
+      selector:
+        action: {}
+      name: Action
+  description: ''

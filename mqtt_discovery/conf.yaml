@@ -23,6 +23,13 @@ common:
     identifiers: ["%(sn)s"]
     via_device: rtl_433
 
+  dsc_motion_sensor: &dsc-motion-sensor-device
+    name: "%(name)s"
+    manufacturer: "DSC-Security"
+    model: motion sensor
+    identifiers: ["%(sn)s"]
+    via_device: rtl_433
+
   govee_water_sensor: &govee-water-sensor
     name: "%(name)s"
     manufacturer: Govee
@@ -138,6 +145,20 @@ templates:
       unit_of_measurement: V
       value_template: '{{ value | regex_replace(" V", "") | float | round(1) }}'
 
+  dsc_motion:
+    component: binary_sensor
+    object_id: "%(sn)s_motion"
+    params:
+      sn: null # required
+    config:
+      device: *dsc-motion-sensor-device
+      device_class: motion
+      payload_off: "0"
+      payload_on: "1"
+      platform: mqtt
+      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/event"
+      unique_id: "%(object_id)s"
+
   dsc_door:
     component: binary_sensor
     object_id: "%(sn)s_door"
@@ -226,6 +247,14 @@ templates:
 
 entities:
   - params:
+      name: Guest Bathroom Sink
+      sn: 16810
+    templates: [govee_water_leak, govee_battery]
+  - params:
+      name: Jacob's Sink
+      sn: 19634
+    templates: [govee_water_leak, govee_battery]
+  - params:
       name: Utility Closet
       sn: 17345
     templates: [govee_water_leak, govee_battery]
@@ -305,6 +334,10 @@ entities:
       sn: 2865005
       name: Sitting Room 2
     templates: [dsc_window, dsc_battery, dsc_tamper]
+  - params:
+      sn: 3720927
+      name: Foyer
+    templates: [dsc_motion, dsc_battery, dsc_tamper]
 
   - params:
       name: Utility Voltage

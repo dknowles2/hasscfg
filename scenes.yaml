@@ -1,1 +1,66 @@
-[]
+- id: '1731983858179'
+  name: New scene
+  entities:
+    light.driveway_lights:
+      supported_color_modes:
+      - onoff
+      color_mode: onoff
+      icon: mdi:outdoor-lamp
+      friendly_name: Driveway Lights
+      supported_features: 0
+      state: 'on'
+    switch.front_porch_lights:
+      icon: mdi:lightbulb-group
+      friendly_name: Front Porch Lights
+      state: 'on'
+    light.front_door:
+      min_color_temp_kelvin: 2500
+      max_color_temp_kelvin: 9000
+      min_mireds: 111
+      max_mireds: 400
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      brightness: 191
+      color_temp_kelvin: 2700
+      color_temp: 370
+      hs_color:
+      - 28.395
+      - 65.723
+      rgb_color:
+      - 255
+      - 166
+      - 87
+      xy_color:
+      - 0.526
+      - 0.387
+      friendly_name: Front Door
+      supported_features: 32
+      state: 'on'
+    light.front_porch:
+      min_color_temp_kelvin: 2500
+      max_color_temp_kelvin: 6500
+      min_mireds: 153
+      max_mireds: 400
+      supported_color_modes:
+      - color_temp
+      - hs
+      color_mode: color_temp
+      brightness: 191
+      color_temp_kelvin: 2700
+      color_temp: 370
+      hs_color:
+      - 28.395
+      - 65.723
+      rgb_color:
+      - 255
+      - 166
+      - 87
+      xy_color:
+      - 0.526
+      - 0.387
+      friendly_name: Front Porch
+      supported_features: 32
+      state: 'on'
+  metadata: {}

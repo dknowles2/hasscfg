@@ -431,3 +431,23 @@ republish:
     override:
       state_open: "CLOSE"
       state_closed: "OPEN"
+  # Dining Room Side Privacy Shade
+  - topic: "homeassistant/cover/0x6cfd22fffee7ac15/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"
+  # Sitting Room Privacy Shade
+  - topic: "homeassistant/cover/0x6cfd22fffee7a093/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"
+  # Living Room Center Privacy Shade
+  - topic: "homeassistant/cover/0x4c97a1fffe560bde/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"
+  # Kitchen Privacy Shade
+  - topic: "homeassistant/cover/0x4c97a1fffe560243/cover/config"
+    override:
+      state_open: "CLOSE"
+      state_closed: "OPEN"

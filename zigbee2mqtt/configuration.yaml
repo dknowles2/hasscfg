@@ -39,7 +39,7 @@ advanced:
     pid: process.pid
     port: 514
     protocol: udp4
-    type: "5424"
+    type: '5424'
   last_seen: ISO_8601
 mqtt:
   server: mqtt://core-mosquitto:1883
@@ -53,54 +53,63 @@ device_options:
   legacy: false
 permit_join: false
 devices:
-  "0xa4c138e64baf1fec":
+  '0xa4c138e64baf1fec':
     friendly_name: Office Presence
-  "0x00158d0009eef81e":
+  '0x00158d0009eef81e':
     friendly_name: Office Button
-  "0x0cae5ffffe899d86":
+  '0x0cae5ffffe899d86':
     friendly_name: Office Blackout Shade
     invert_cover: false
-  "0x0cae5ffffe89a007":
+  '0x0cae5ffffe89a007':
     friendly_name: Office Privacy Shade
-  "0x0cae5ffffe89801c":
+  '0x0cae5ffffe89801c':
     friendly_name: Sarah Privacy Shade
-  "0x0cae5ffffe89a378":
+  '0x0cae5ffffe89a378':
     friendly_name: Sarah Blackout Shade
-  "0x0cae5ffffe89a165":
+  '0x0cae5ffffe89a165':
     friendly_name: David Privacy Shade
-  "0x0cae5ffffe89a005":
+  '0x0cae5ffffe89a005':
     friendly_name: David Blackout Shade
-  "0x0cae5ffffe89b0b6":
+  '0x0cae5ffffe89b0b6':
     friendly_name: Primary Bedroom Privacy Shade
-  "0x0cae5ffffe899d83":
+  '0x0cae5ffffe899d83':
     friendly_name: Primary Bedroom Blackout Shade
-  "0x0cae5ffffe8980be":
+  '0x0cae5ffffe8980be':
     friendly_name: Jacob Privacy Shade
-  "0x0cae5ffffe89a009":
+  '0x0cae5ffffe89a009':
     friendly_name: Jacob Blackout Shade
-  "0x0cae5ffffe89a003":
+  '0x0cae5ffffe89a003':
     friendly_name: Guest Bedroom Privacy Shade
-  "0x0cae5ffffe89a167":
+  '0x0cae5ffffe89a167':
     friendly_name: Guest Bedroom Blackout Shade
-  "0x6cfd22fffe429e71":
+  '0x6cfd22fffe429e71':
     friendly_name: Living Room Zigbee Repeater
-  "0x6cfd22fffe42aae9":
+  '0x6cfd22fffe42aae9':
     friendly_name: Jacob's Room Zigbee Repeater
-  "0x6cfd22fffe40e941":
+  '0x6cfd22fffe40e941':
     friendly_name: Primary Bedroom Zigbee Repeater
-  "0x0ceff6fffe78d817":
+  '0x0ceff6fffe78d817':
     friendly_name: Primary Bedroom Sensor
-  "0x6cfd22fffee7a08d":
+  '0x6cfd22fffee7a08d':
     friendly_name: Dining Room Front Privacy Shade
     invert_cover: true
-  "0x6cfd22fffee7ac03":
+    cover_position_tilt_disable_report: false
+  '0x6cfd22fffee7ac03':
     friendly_name: Living Room Left Privacy Shade
     invert_cover: true
-  "0x4c97a1fffe560c06":
+  '0x4c97a1fffe560c06':
     friendly_name: Living Room Right Privacy Shade
     invert_cover: true
+  '0x6cfd22fffee7ac15':
+    friendly_name: Dining Room Side Privacy Shade
+  '0x6cfd22fffee7a093':
+    friendly_name: Sitting Room Privacy Shade
+  '0x4c97a1fffe560bde':
+    friendly_name: Living Room Center Privacy Shade
+  '0x4c97a1fffe560243':
+    friendly_name: Kitchen Privacy Shade
 groups:
-  "1":
+  '1':
     friendly_name: primary_bedroom_blackout_shades
 availability:
   active:

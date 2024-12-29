@@ -38,6 +38,7 @@ perform_action_when_entity_becomes_available:
         }}
   - wait_template: '{{ not is_state(entity_id, "unavailable") }}'
     continue_on_timeout: false
+    timeout: 01:00:00
   - action: '{{ action }}'
     target:
       entity_id: '{{ entity_id }}'
@@ -56,3 +57,5 @@ perform_action_when_entity_becomes_available:
         action: {}
       name: Action
   description: ''
+  mode: parallel
+  max: 10

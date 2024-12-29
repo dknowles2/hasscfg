@@ -11,7 +11,8 @@ blueprint:
         as soon as one is available.
       selector:
         entity:
-          domain: update
+          domain:
+          - update
           multiple: true
     mobile_app_device:
       name: Mobile app device
@@ -54,6 +55,7 @@ blueprint:
           - '24'
           multiple: false
           custom_value: false
+          sort: false
     take_backup:
       name: Take backup
       description: Do a partial backup before updating if able

@@ -54,7 +54,7 @@
       target:
         entity_id: '{{ entities }}'
       action: switch.turn_off
-  mode: single
+  mode: restart
 - id: '1671295554466'
   alias: Indoor Holiday Lights Schedule
   description: ''
@@ -84,7 +84,7 @@
         entity_id:
         - switch.indoor_holiday_lights_group
       action: switch.turn_off
-  mode: single
+  mode: restart
 - id: '1674225063177'
   alias: Downstairs lights lux
   description: Turn downstairs lights on and off based on ambient brightness.
@@ -148,20 +148,20 @@
 - id: '1679071973766'
   alias: Doorbell pressed
   description: ''
-  trigger:
-  - platform: device
-    device_id: e94f865b148d4476194fa9a57cc74f9c
+  triggers:
+  - device_id: e94f865b148d4476194fa9a57cc74f9c
     domain: nest
     type: doorbell_chime
-  condition: []
-  action:
-  - service: notify.mobile_app_davids_iphone_14_pro
-    data:
+    trigger: device
+  conditions: []
+  actions:
+  - data:
       message: Doorbell Pressed
       data:
         image: /api/nest/event_media/{{ trigger.event.data.device_id }}/{{ trigger.event.data.nest_event_id
           }}/thumbnail
-  mode: single
+    action: notify.mobile_app_davids_iphone_14_pro
+  mode: restart
 - id: '1680704667983'
   alias: Washer run completed
   description: ''
@@ -190,7 +190,7 @@
     metadata: {}
     data:
       message: Washer is done
-  mode: single
+  mode: restart
 - id: '1680705374664'
   alias: Dryer run completed
   description: ''
@@ -208,38 +208,7 @@
     metadata: {}
     data:
       message: Dryer is done
-  mode: single
-- id: '1691000633447'
-  alias: Toggle Notification automation based on Sarah's location
-  description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - person.sarah
-    from:
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: person.sarah
-        state: home
-      sequence:
-      - service: automation.turn_off
-        data:
-          stop_actions: true
-        target:
-          entity_id: automation.notify_on_front_porch_events
-    - conditions:
-      - condition: state
-        entity_id: person.sarah
-        state: not_home
-      sequence:
-      - service: automation.turn_on
-        data: {}
-        target:
-          entity_id: automation.notify_on_front_porch_events
-  mode: single
+  mode: restart
 - id: '1691193081488'
   alias: Front Porch activity
   description: ''
@@ -314,20 +283,20 @@
 - id: '1710280107429'
   alias: 'Office Button Click: Toggle Office Lights'
   description: ''
-  trigger:
-  - platform: device
-    domain: mqtt
+  triggers:
+  - domain: mqtt
     device_id: 79254273acc4e9e3b753409a81122ecc
     type: action
     subtype: single
-  condition: []
-  action:
-  - service: light.toggle
-    metadata: {}
+    trigger: device
+  conditions: []
+  actions:
+  - metadata: {}
     data: {}
     target:
       area_id: fabc481884a040388de605a88425f981
-  mode: single
+    action: light.toggle
+  mode: restart
 - id: '1710282525950'
   alias: Turn on Office Lights when occupied
   description: ''
@@ -382,20 +351,20 @@
 - id: '1711029019780'
   alias: 'Office Button Double Click: Toggle Presence Automation'
   description: ''
-  trigger:
-  - platform: device
-    domain: mqtt
+  triggers:
+  - domain: mqtt
     device_id: 79254273acc4e9e3b753409a81122ecc
     type: action
     subtype: double
-  condition: []
-  action:
-  - service: automation.toggle
-    metadata: {}
+    trigger: device
+  conditions: []
+  actions:
+  - metadata: {}
     data: {}
     target:
       entity_id: automation.turn_off_office_lights_when_unoccupied
-  mode: single
+    action: automation.toggle
+  mode: restart
 - id: '1711589046805'
   alias: Sync ecobee vacation hold
   description: ''
@@ -455,18 +424,18 @@
 - id: '1723471744681'
   alias: Cleaners Arrived
   description: ''
-  trigger:
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - lock.front_door
     from: locked
     to: unlocked
-  condition:
+    trigger: state
+  conditions:
   - condition: state
     entity_id: lock.front_door
     attribute: changed_by
     state: keypad - Cleaners
-  action:
+  actions:
   - action: cover.open_cover
     metadata: {}
     data: {}
@@ -485,21 +454,21 @@
     data: {}
     target:
       entity_id: input_boolean.cleaners_present
-  mode: single
+  mode: restart
 - id: '1723472237810'
   alias: Cleaners Departed
   description: ''
-  trigger:
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - lock.front_door
     from: unlocked
     to: locked
-  condition:
+    trigger: state
+  conditions:
   - condition: state
     entity_id: input_boolean.cleaners_present
     state: 'on'
-  action:
+  actions:
   - action: cover.close_cover
     target:
       entity_id:
@@ -529,7 +498,7 @@
     data: {}
     target:
       device_id: 163b30812c96045873bdc81491a670d8
-  mode: single
+  mode: restart
 - id: '1733495528901'
   alias: Downstairs Lights Schedule
   description: ''
@@ -559,7 +528,7 @@
       data: {}
       target:
         entity_id: '{{ lights }}'
-  mode: single
+  mode: restart
 - id: '1733516878650'
   alias: Privacy Shades Schedule
   description: ''
@@ -578,12 +547,14 @@
         }}'
       shade_action: "{% if is_closing %}\n  cover.close_cover\n{% else %}\n  cover.open_cover\n{%
         endif %}"
-  - repeat:
+  - alias: For each shade
+    repeat:
       for_each: '{{ shades }}'
       sequence:
       - if:
         - condition: template
           value_template: '{{ is_state(repeat.item, ''unavailable'') }}'
+          alias: If shade is unavailable
         then:
         - action: script.turn_on
           target:
@@ -592,11 +563,13 @@
             variables:
               entity_id: '{{ repeat.item }}'
               action: '{{ shade_action }}'
+          alias: Toggle the shade when it becomes available
         else:
         - action: '{{ shade_action }}'
           target:
             entity_id: '{{ repeat.item }}'
-  mode: single
+          alias: Toggle the shade now
+  mode: restart
 - id: '1733517013251'
   alias: Blackout Shades Schedule
   description: ''
@@ -628,7 +601,7 @@
           target:
             entity_id: '{{ repeat.item }}'
       for_each: '{{ shades }}'
-  mode: single
+  mode: restart
 - id: '1733523145702'
   alias: Outdoor Lights Schedule
   description: ''
@@ -666,4 +639,23 @@
       target:
         entity_id: '{{ entities }}'
       action: light.turn_off
+  mode: restart
+- id: '1735237130826'
+  alias: Position Shades to block sun
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.sun_solar_elevation
+    below: 24
+  conditions: []
+  actions:
+  - action: cover.set_cover_position
+    metadata: {}
+    data:
+      position: 50
+    target:
+      area_id:
+      - bdcb7ca4222240698bcf7409aa3d5673
+      - 7a3554928d104e479d761a095b7fe175
   mode: single

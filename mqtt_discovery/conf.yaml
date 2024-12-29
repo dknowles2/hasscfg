@@ -156,7 +156,7 @@ templates:
       payload_off: "0"
       payload_on: "1"
       platform: mqtt
-      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/event"
+      state_topic: "rtl_433/devices/DSC-Security/%(sn)s/event"
       unique_id: "%(object_id)s"
 
   dsc_door:
@@ -170,7 +170,7 @@ templates:
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
-      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/closed"
+      state_topic: "rtl_433/devices/DSC-Security/%(sn)s/closed"
       unique_id: "%(object_id)s"
 
   dsc_window:
@@ -184,7 +184,7 @@ templates:
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
-      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/closed"
+      state_topic: "rtl_433/devices/DSC-Security/%(sn)s/closed"
       unique_id: "%(object_id)s"
 
   dsc_battery:
@@ -198,7 +198,7 @@ templates:
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
-      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/battery_ok"
+      state_topic: "rtl_433/devices/DSC-Security/%(sn)s/battery_ok"
       unique_id: "%(object_id)s"
 
   dsc_tamper:
@@ -212,7 +212,7 @@ templates:
       payload_off: "0"
       payload_on: "1"
       platform: mqtt
-      state_topic: "rtl_433/+/devices/DSC-Security/%(sn)s/tamper"
+      state_topic: "rtl_433/devices/DSC-Security/%(sn)s/tamper"
       unique_id: "%(object_id)s"
 
   govee_water_leak:
@@ -227,7 +227,7 @@ templates:
       payload_off: "0"
       off_delay: 30
       platform: mqtt
-      state_topic: "rtl_433/+/devices/Govee-Water/%(sn)s/detect_wet"
+      state_topic: "rtl_433/devices/Govee-Water/%(sn)s/detect_wet"
       unique_id: "%(object_id)s"
 
   govee_battery:
@@ -242,7 +242,7 @@ templates:
       value_template: "{{ (value_json | float * 100) | int }}"
       unit_of_measurement: "%%"
       platform: mqtt
-      state_topic: "rtl_433/+/devices/Govee-Water/%(sn)s/battery_ok"
+      state_topic: "rtl_433/devices/Govee-Water/%(sn)s/battery_ok"
       unique_id: "%(object_id)s"
 
 entities:

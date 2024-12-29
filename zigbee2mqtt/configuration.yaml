@@ -102,12 +102,16 @@ devices:
     invert_cover: true
   '0x6cfd22fffee7ac15':
     friendly_name: Dining Room Side Privacy Shade
+    invert_cover: true
   '0x6cfd22fffee7a093':
     friendly_name: Sitting Room Privacy Shade
+    invert_cover: true
   '0x4c97a1fffe560bde':
     friendly_name: Living Room Center Privacy Shade
+    invert_cover: true
   '0x4c97a1fffe560243':
     friendly_name: Kitchen Privacy Shade
+    invert_cover: true
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

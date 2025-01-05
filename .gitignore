@@ -23,3 +23,5 @@ dwains-dashboard
 node-red/**
 nest/**
 homeassistant
+zigbee2mqtt/configuration_backup*
+zigbee2mqtt/migration*

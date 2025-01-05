@@ -153,7 +153,7 @@ templates:
     config:
       device: *dsc-motion-sensor-device
       device_class: motion
-      payload_off: "0"
+      off_delay: 30
       payload_on: "1"
       platform: mqtt
       state_topic: "rtl_433/devices/DSC-Security/%(sn)s/event"

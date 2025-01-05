@@ -1,4 +1,5 @@
-homeassistant: true
+homeassistant:
+  enabled: true
 advanced:
   network_key:
     - 30
@@ -27,9 +28,6 @@ advanced:
     - 183
     - 61
     - 3
-  homeassistant_legacy_entity_attributes: false
-  legacy_api: false
-  legacy_availability_payload: false
   log_syslog:
     app_name: Zigbee2MQTT
     eol: /n
@@ -46,12 +44,11 @@ mqtt:
   user: addons
   password: eeheephai1Pun0eoshuoPah6doo4ootongoalooyo5AveeDohpi7Baevohchoodo
 frontend:
+  enabled: true
   port: 8099
 serial:
   port: /dev/ttyUSB0
-device_options:
-  legacy: false
-permit_join: false
+device_options: {}
 devices:
   '0xa4c138e64baf1fec':
     friendly_name: Office Presence
@@ -116,7 +113,9 @@ groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades
 availability:
+  enabled: true
   active:
     timeout: 5
   passive:
     timeout: 1500
+version: 4

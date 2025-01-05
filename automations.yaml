@@ -648,14 +648,92 @@
     entity_id:
     - sensor.sun_solar_elevation
     below: 24
-  conditions: []
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.casa_de_knowles_cloud_cover
+    below: 80
   actions:
   - action: cover.set_cover_position
     metadata: {}
     data:
-      position: 50
+      position: 65
     target:
-      area_id:
-      - bdcb7ca4222240698bcf7409aa3d5673
-      - 7a3554928d104e479d761a095b7fe175
+      entity_id:
+      - cover.dining_room_front_privacy_shade
+  - action: cover.set_cover_position
+    metadata: {}
+    data:
+      position: 80
+    target:
+      entity_id:
+      - cover.dining_room_side_privacy_shade
+  mode: single
+- id: '1735483900049'
+  alias: Toggle lights on brightness changes
+  description: ''
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.living_room_esphome_illuminance
+    above: input_number.living_room_lux_upper_bound
+  - trigger: numeric_state
+    entity_id:
+    - sensor.living_room_esphome_illuminance
+    below: input_number.living_room_lux_lower_bound
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.casa_de_knowles_cloud_cover
+    above: 45
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: binary_sensor.morning
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.daytime
+      state: 'on'
+  actions:
+  - if:
+    - condition: numeric_state
+      entity_id: sensor.living_room_esphome_illuminance
+      below: input_number.living_room_lux_lower_bound
+    then:
+    - action: light.turn_on
+      metadata: {}
+      data: {}
+      target:
+        entity_id:
+        - light.lamps
+        - light.sconces
+    - delay:
+        hours: 0
+        minutes: 5
+        seconds: 0
+    else:
+    - condition: numeric_state
+      entity_id: sensor.living_room_esphome_illuminance
+      above: input_number.living_room_lux_upper_bound
+    - action: light.turn_off
+      metadata: {}
+      data: {}
+      target:
+        entity_id:
+        - light.lamps
+        - light.sconces
+    - delay:
+        hours: 0
+        minutes: 5
+        seconds: 0
+  mode: single
+- id: '1735852517153'
+  alias: Restart Studio Code Server Nightly
+  description: ''
+  triggers:
+  - at: 00:00:00
+    trigger: time
+  conditions: []
+  actions:
+  - data:
+      addon: a0d7b954_vscode
+    action: hassio.addon_restart
   mode: single

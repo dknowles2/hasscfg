@@ -1,0 +1,19 @@
+{% macro get_shade_position(entity_id) -%}
+  {%- set _open = 100 -%}
+  {%- set _closed = 0 -%}
+  {%- set _labels = labels(entity_id) -%}
+  {%- set _manual = "manual_open" in _labels and "manual_close" in _labels -%}
+  {%- set _current_pos = state_attr(entity_id, 'current_position') -%}
+  {%- if _manual or ("blackout" not in _labels and "privacy" not in _labels) -%}
+    {{ _current_pos }}
+  {%- else -%}
+    {%- set _position_id = entity_id | regex_replace("^cover\." ,"sensor.") + "_position" -%}
+    {%- set _shade_type = iif('blackout' in _labels, 'blackout', 'privacy') -%}
+    {%- set _schedule = 'binary_sensor.' + _shade_type + '_shades_schedule' -%}
+    {%- if states(_position_id) == 'unknown' -%}
+      {{ iif(states(_schedule) == 'on', _open, _closed) }}
+    {%- else -%}
+      {{ int(states(_position_id)) }}
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}

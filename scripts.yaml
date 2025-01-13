@@ -59,3 +59,40 @@ perform_action_when_entity_becomes_available:
   description: ''
   mode: parallel
   max: 10
+set_shade_position:
+  alias: Set shade position
+  sequence:
+  - if:
+    - condition: template
+      value_template: '{{ is_state(entity_id, ''unavailable'') }}'
+    then:
+    - action: notify.mobile_app_davids_iphone_14_pro
+      data:
+        message: Waiting for {{ entity_id }} to become available before setting posiiton
+          to {{ position }}
+    - wait_template: '{{ not is_state(entity_id, ''unavailable'') }}'
+      continue_on_timeout: false
+      timeout: 01:00:00
+    - action: notify.mobile_app_davids_iphone_14_pro
+      data:
+        message: Setting {{ entity_id}} position to {{ position }}
+  - action: cover.set_cover_position
+    target:
+      entity_id: '{{ entity_id }}'
+    data:
+      position: '{{ position }}'
+  fields:
+    entity_id:
+      selector:
+        entity: {}
+      name: Entity
+      required: true
+    position:
+      selector:
+        number:
+          min: 0
+          max: 100
+      name: Position
+  description: ''
+  mode: parallel
+  max: 20

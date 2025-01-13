@@ -560,8 +560,8 @@
                 - azimuth
               - alias: If has a position helper
                 condition: template
-                value_template: '{{ states(entity_id | regex_replace("^cover\." ,"sensor.")
-                  + "_position") != ''unknown'' }}      '
+                value_template: '{{ states(repeat.item | regex_replace("^cover\."
+                  ,"sensor.") + "_position") != ''unknown'' }}      '
           - condition: template
             value_template: '{{ state_attr(repeat.item, ''current_position'') != position
               }}'

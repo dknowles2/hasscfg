@@ -109,6 +109,8 @@ devices:
   '0x4c97a1fffe560243':
     friendly_name: Kitchen Privacy Shade
     invert_cover: true
+  '0x0ceff6fffeee717f':
+    friendly_name: Jacob Sensor
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

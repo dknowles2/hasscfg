@@ -177,7 +177,7 @@
     - condition: state
       entity_id: person.david
       state: home
-    - condition: not
+    - condition: or
       conditions:
       - condition: state
         entity_id: sensor.dryer_current_status
@@ -209,21 +209,6 @@
     data:
       message: Dryer is done
   mode: restart
-- id: '1691193081488'
-  alias: Front Porch activity
-  description: ''
-  use_blueprint:
-    path: SgtBatten/Stable.yaml
-    input:
-      camera: camera.front_porch
-      notify_device: 137b7007585ffc57cc04f79c7f86bf6b
-      alert_once: false
-      ios_live_view: true
-      zone_filter: true
-      zones:
-      - porch_zone
-      update_thumbnail: true
-      debug: false
 - id: '1693766230753'
   alias: Smoker meat at 230F
   description: ''
@@ -536,7 +521,11 @@
   - trigger: state
     entity_id:
     - binary_sensor.privacy_shades_schedule
-  conditions: []
+    id: schedule
+  - trigger: state
+    entity_id:
+    - sensor.sun_solar_azimuth
+    id: azimuth
   actions:
   - variables:
       is_closing: '{{ is_state(''binary_sensor.privacy_shades_schedule'', ''off'')
@@ -551,24 +540,40 @@
     repeat:
       for_each: '{{ shades }}'
       sequence:
+      - variables:
+          position: '{% from ''shades.jinja'' import get_shade_position %}
+
+            {{ get_shade_position(repeat.item) }}'
       - if:
-        - condition: template
-          value_template: '{{ is_state(repeat.item, ''unavailable'') }}'
-          alias: If shade is unavailable
+        - condition: and
+          conditions:
+          - condition: or
+            conditions:
+            - condition: trigger
+              id:
+              - schedule
+            - alias: If triggered by azimuth and has a position helper
+              condition: and
+              conditions:
+              - condition: trigger
+                id:
+                - azimuth
+              - alias: If has a position helper
+                condition: template
+                value_template: '{{ states(entity_id | regex_replace("^cover\." ,"sensor.")
+                  + "_position") != ''unknown'' }}      '
+          - condition: template
+            value_template: '{{ state_attr(repeat.item, ''current_position'') != position
+              }}'
         then:
         - action: script.turn_on
           target:
-            entity_id: script.perform_action_when_entity_becomes_available
+            entity_id: script.set_shade_position
           data:
             variables:
               entity_id: '{{ repeat.item }}'
-              action: '{{ shade_action }}'
-          alias: Toggle the shade when it becomes available
-        else:
-        - action: '{{ shade_action }}'
-          target:
-            entity_id: '{{ repeat.item }}'
-          alias: Toggle the shade now
+              position: '{{ int(position) }}'
+          alias: Set shade position
   mode: restart
 - id: '1733517013251'
   alias: Blackout Shades Schedule
@@ -687,7 +692,7 @@
   - condition: or
     conditions:
     - condition: state
-      entity_id: binary_sensor.morning
+      entity_id: binary_sensor.downstairs_lights_schedule
       state: 'on'
     - condition: state
       entity_id: binary_sensor.daytime
@@ -700,7 +705,8 @@
     then:
     - action: light.turn_on
       metadata: {}
-      data: {}
+      data:
+        transition: 2
       target:
         entity_id:
         - light.lamps
@@ -715,7 +721,8 @@
       above: input_number.living_room_lux_upper_bound
     - action: light.turn_off
       metadata: {}
-      data: {}
+      data:
+        transition: 2
       target:
         entity_id:
         - light.lamps

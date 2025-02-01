@@ -1,0 +1,35 @@
+esphome:
+  name: mud-room-esphome
+  friendly_name: Mud Room ESPHome
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "oPzESVukNnHq8CFgr3b2BgUVYEJPIf3hozBtY2fw0iA="
+
+ota:
+  - platform: esphome
+    password: "8d7ec2c7e752051b9307a9d4dc889d39"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Mud-Room-Esphome"
+    password: "Gq0zmOFxW2m0"
+
+captive_portal:
+
+bluetooth_proxy:
+  active: true

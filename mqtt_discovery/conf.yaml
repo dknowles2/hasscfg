@@ -6,7 +6,7 @@ common:
     identifiers: [generator_device]
     configuration_url: https://genmon.home.knowles.xyz
     suggested_area: Back Yard
-    via_device: Genmon
+    via_device: genmon_device
 
   genmon: &genmon-device
     name: Genmon

@@ -85,55 +85,6 @@
         - switch.indoor_holiday_lights_group
       action: switch.turn_off
   mode: restart
-- id: '1674225063177'
-  alias: Downstairs lights lux
-  description: Turn downstairs lights on and off based on ambient brightness.
-  trigger:
-  - platform: state
-    entity_id:
-    - sensor.living_room_esphome_illuminance
-  condition:
-  - condition: or
-    alias: Is morning or daytime
-    conditions:
-    - condition: state
-      entity_id: binary_sensor.morning
-      state: 'on'
-    - condition: state
-      entity_id: binary_sensor.daytime
-      state: 'on'
-  - condition: template
-    value_template: "{{ (as_timestamp(now()) -\n  as_timestamp(state_attr('automation.downstairs_lights_lux',
-      'last_triggered') |\n  default(0)) | int) > 300\n}}"
-    alias: Debounce (5m)
-  action:
-  - if:
-    - condition: numeric_state
-      entity_id: sensor.living_room_esphome_illuminance
-      below: input_number.living_room_lux_lower_bound
-    then:
-    - service: light.turn_on
-      alias: Turn on lights
-      data:
-        transition: 5
-      target:
-        entity_id:
-        - light.lamps
-        - light.sconces
-    else:
-    - if:
-      - condition: numeric_state
-        entity_id: sensor.living_room_esphome_illuminance
-        above: input_number.living_room_lux_upper_bound
-      then:
-      - service: light.turn_off
-        data:
-          transition: 5
-        target:
-          entity_id:
-          - light.lamps
-          - light.sconces
-  mode: single
 - id: '1679071951950'
   alias: Doorbell detected person
   description: ''
@@ -527,6 +478,11 @@
     - sensor.sun_solar_azimuth
     id: azimuth
   actions:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    alias: Delay for 10 seconds (wait for sensors to update)
   - variables:
       is_closing: '{{ is_state(''binary_sensor.privacy_shades_schedule'', ''off'')
         }}'

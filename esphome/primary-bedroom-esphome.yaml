@@ -1,0 +1,35 @@
+esphome:
+  name: primary-bedroom-esphome
+  friendly_name: Primary Bedroom ESPHome
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "fkg7AgKTVcflQM4nC+/APhGcjr+I7jmPGiYeQUvC5es="
+
+ota:
+  - platform: esphome
+    password: "afa4fdc8322aa9407eabf187f5cd8078"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Primary-Bedroom-Esphome"
+    password: "mooq36ut0WTz"
+
+captive_portal:
+
+bluetooth_proxy:
+  active: true

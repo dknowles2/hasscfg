@@ -4,7 +4,7 @@ common:
     manufacturer: Generac
     model: Generic Generator
     identifiers: [generator_device]
-    configuration_url: http://genmon.home.knowles.xyz
+    configuration_url: https://genmon.home.knowles.xyz
     suggested_area: Back Yard
     via_device: Genmon
 
@@ -13,7 +13,7 @@ common:
     manufacturer: "github.com/jgyates/genmon"
     model: Genmon
     identifiers: [genmon_device]
-    configuration_url: http://genmon.home.knowles.xyz
+    configuration_url: https://genmon.home.knowles.xyz
     suggested_area: Back Yard
 
   dsc_door_window_sensor: &dsc-door-window-sensor-device

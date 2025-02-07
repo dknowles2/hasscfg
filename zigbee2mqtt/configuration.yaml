@@ -50,8 +50,6 @@ serial:
   port: /dev/ttyUSB0
 device_options: {}
 devices:
-  '0xa4c138e64baf1fec':
-    friendly_name: Office Presence
   '0x00158d0009eef81e':
     friendly_name: Office Button
   '0x0cae5ffffe899d86':
@@ -59,26 +57,37 @@ devices:
     invert_cover: false
   '0x0cae5ffffe89a007':
     friendly_name: Office Privacy Shade
+    invert_cover: false
   '0x0cae5ffffe89801c':
     friendly_name: Sarah Privacy Shade
+    invert_cover: false
   '0x0cae5ffffe89a378':
     friendly_name: Sarah Blackout Shade
+    invert_cover: false
   '0x0cae5ffffe89a165':
     friendly_name: David Privacy Shade
+    invert_cover: false
   '0x0cae5ffffe89a005':
     friendly_name: David Blackout Shade
+    invert_cover: false
   '0x0cae5ffffe89b0b6':
     friendly_name: Primary Bedroom Privacy Shade
+    invert_cover: false
   '0x0cae5ffffe899d83':
     friendly_name: Primary Bedroom Blackout Shade
+    invert_cover: false
   '0x0cae5ffffe8980be':
     friendly_name: Jacob Privacy Shade
+    invert_cover: false
   '0x0cae5ffffe89a009':
     friendly_name: Jacob Blackout Shade
+    invert_cover: false
   '0x0cae5ffffe89a003':
     friendly_name: Guest Bedroom Privacy Shade
+    invert_cover: false
   '0x0cae5ffffe89a167':
     friendly_name: Guest Bedroom Blackout Shade
+    invert_cover: false
   '0x6cfd22fffe429e71':
     friendly_name: Living Room Zigbee Repeater
   '0x6cfd22fffe42aae9':

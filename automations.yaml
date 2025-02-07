@@ -233,74 +233,6 @@
       area_id: fabc481884a040388de605a88425f981
     action: light.toggle
   mode: restart
-- id: '1710282525950'
-  alias: Turn on Office Lights when occupied
-  description: ''
-  trigger:
-  - type: present
-    platform: device
-    device_id: b9b42095010c7ac4092b82c82485038f
-    entity_id: ef79e0d2e7008c369bb0cd0314220b39
-    domain: binary_sensor
-  condition:
-  - condition: state
-    entity_id: light.office
-    state: 'off'
-  action:
-  - service: light.turn_on
-    target:
-      area_id:
-      - fabc481884a040388de605a88425f981
-    data: {}
-  - service: notify.mobile_app_davids_iphone_14_pro
-    metadata: {}
-    data:
-      message: Office lights turned on
-    enabled: false
-  mode: single
-- id: '1710282572000'
-  alias: Turn off Office Lights when unoccupied
-  description: ''
-  trigger:
-  - type: not_present
-    platform: device
-    device_id: b9b42095010c7ac4092b82c82485038f
-    entity_id: ef79e0d2e7008c369bb0cd0314220b39
-    domain: binary_sensor
-    for:
-      hours: 0
-      minutes: 10
-      seconds: 0
-  condition: []
-  action:
-  - service: light.turn_off
-    metadata: {}
-    data: {}
-    target:
-      area_id: fabc481884a040388de605a88425f981
-  - service: notify.mobile_app_davids_iphone_14_pro
-    metadata: {}
-    data:
-      message: Office lights turned off
-    enabled: false
-  mode: single
-- id: '1711029019780'
-  alias: 'Office Button Double Click: Toggle Presence Automation'
-  description: ''
-  triggers:
-  - domain: mqtt
-    device_id: 79254273acc4e9e3b753409a81122ecc
-    type: action
-    subtype: double
-    trigger: device
-  conditions: []
-  actions:
-  - metadata: {}
-    data: {}
-    target:
-      entity_id: automation.turn_off_office_lights_when_unoccupied
-    action: automation.toggle
-  mode: restart
 - id: '1711589046805'
   alias: Sync ecobee vacation hold
   description: ''
@@ -549,6 +481,7 @@
       - if:
         - condition: template
           value_template: '{{ is_state(repeat.item, ''unavailable'') }}'
+          alias: If shade is unavailable
         then:
         - action: script.turn_on
           target:

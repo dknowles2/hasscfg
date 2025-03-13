@@ -13,8 +13,8 @@
     {%- if _specific_state == 'unknown' -%}
       {%- if _fallback_state == 'on' -%}
         100
-      {%- elif _fallback_state == None -%}
-        None
+      {%- elif _fallback_state == 'unknown' -%}
+        -1
       {%- else -%}
         0
       {%- endif -%}

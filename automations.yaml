@@ -433,26 +433,14 @@
 
             {{ get_shade_position(repeat.item) }}'
       - if:
-        - condition: and
-          conditions:
-          - condition: or
-            conditions:
-            - condition: trigger
-              id:
-              - schedule
-            - alias: If triggered by azimuth and has a position helper
-              condition: and
-              conditions:
-              - condition: trigger
-                id:
-                - azimuth
-              - alias: If has a position helper
-                condition: template
-                value_template: '{{ states(repeat.item | regex_replace("^cover\."
-                  ,"sensor.") + "_position") != ''unknown'' }}      '
-          - condition: template
-            value_template: '{{ state_attr(repeat.item, ''current_position'') != position
-              }}'
+        - alias: If position doesn't match expected
+          condition: template
+          value_template: '{{ position != None and state_attr(repeat.item, ''current_position'')
+            != position }}'
+        - condition: template
+          value_template: '{{ now() - states[repeat.item].last_changed > timedelta(hours=2)
+            }}'
+          alias: If state hasn't changed for 2 hours
         then:
         - action: script.turn_on
           target:
@@ -578,14 +566,9 @@
   - condition: numeric_state
     entity_id: sensor.casa_de_knowles_cloud_cover
     above: 45
-  - condition: or
-    conditions:
-    - condition: state
-      entity_id: binary_sensor.downstairs_lights_schedule
-      state: 'on'
-    - condition: state
-      entity_id: binary_sensor.daytime
-      state: 'on'
+  - condition: state
+    entity_id: binary_sensor.daytime
+    state: 'on'
   actions:
   - if:
     - condition: numeric_state
@@ -632,4 +615,24 @@
   - data:
       addon: a0d7b954_vscode
     action: hassio.addon_restart
+  mode: single
+- id: '1741378804726'
+  alias: Turn off Jacob's lamp during power outage
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - switch.jacob_plug
+    from: unavailable
+    to:
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.generator_engine_output_voltage
+    above: 0
+  actions:
+  - action: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.jacob_plug
   mode: single

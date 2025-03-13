@@ -403,7 +403,7 @@
   triggers:
   - trigger: state
     entity_id:
-    - binary_sensor.privacy_shades_schedule
+    - sensor.privacy_shades_position
     id: schedule
   - trigger: state
     entity_id:
@@ -416,8 +416,7 @@
       seconds: 10
     alias: Delay for 10 seconds (wait for sensors to update)
   - variables:
-      is_closing: '{{ is_state(''binary_sensor.privacy_shades_schedule'', ''off'')
-        }}'
+      is_closing: '{{ states(''sensor.privacy_shades_position'', 0) }}'
       ignore_shades: '{{ label_entities(iif(is_closing, ''Manual Close'', ''Manual
         Open'')) }}'
       shades: '{{ label_entities(''Privacy'') | reject(''in'', ignore_shades) | list
@@ -435,12 +434,12 @@
       - if:
         - alias: If position doesn't match expected
           condition: template
-          value_template: '{{ position != None and state_attr(repeat.item, ''current_position'')
+          value_template: '{{ position > -1 and state_attr(repeat.item, ''current_position'')
             != position }}'
-        - condition: template
-          value_template: '{{ now() - states[repeat.item].last_changed > timedelta(hours=2)
+        - alias: If state hasn't changed for 1 hour
+          condition: template
+          value_template: '{{ utcnow() - states[repeat.item].last_updated > timedelta(hours=1)
             }}'
-          alias: If state hasn't changed for 2 hours
         then:
         - action: script.turn_on
           target:

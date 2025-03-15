@@ -32,6 +32,11 @@ turn_off_front_lights:
 perform_action_when_entity_becomes_available:
   alias: Perform action when entity becomes available
   sequence:
+  - if:
+    - condition: template
+      value_template: '{{ utcnow() - states[repeat.item].last_updated > cooldown }}'
+    then: []
+    enabled: false
   - action: notify.mobile_app_davids_iphone_14_pro
     data:
       message: Waiting for {{ state_attr(entity_id, 'friendly_name') }} to become
@@ -50,12 +55,20 @@ perform_action_when_entity_becomes_available:
     entity_id:
       selector:
         entity: {}
-      name: Entity
+      name: Entity ID
       required: true
     action:
       selector:
         action: {}
       name: Action
+    cooldown:
+      selector:
+        duration: {}
+      name: Cooldown
+      default:
+        hours: 1
+        minutes: 0
+        seconds: 0
   description: ''
   mode: parallel
   max: 10

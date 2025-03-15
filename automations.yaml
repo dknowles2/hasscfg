@@ -160,19 +160,6 @@
     data:
       message: Dryer is done
   mode: restart
-- id: '1693766230753'
-  alias: Smoker meat at 230F
-  description: ''
-  trigger: []
-  condition:
-  - type: is_temperature
-    condition: device
-    device_id: 5410febb0fb5f482c60ff71e29fffc92
-    entity_id: 188be0ef5ff6181d1e88fd8df36a65d0
-    domain: sensor
-    above: 202
-  action: []
-  mode: single
 - id: '1703026402697'
   alias: Water Leak Detected
   description: ''
@@ -403,7 +390,7 @@
   triggers:
   - trigger: state
     entity_id:
-    - sensor.privacy_shades_position
+    - sensor.privacy_shades_target_position
     id: schedule
   - trigger: state
     entity_id:
@@ -416,39 +403,52 @@
       seconds: 10
     alias: Delay for 10 seconds (wait for sensors to update)
   - variables:
-      is_closing: '{{ states(''sensor.privacy_shades_position'', 0) }}'
-      ignore_shades: '{{ label_entities(iif(is_closing, ''Manual Close'', ''Manual
-        Open'')) }}'
-      shades: '{{ label_entities(''Privacy'') | reject(''in'', ignore_shades) | list
+      shades: '{{ label_entities(''Privacy'') | list }}'
+      cooldown_hours: '{{ int(states(''input_number.shade_automation_cooldown''))
         }}'
-      shade_action: "{% if is_closing %}\n  cover.close_cover\n{% else %}\n  cover.open_cover\n{%
-        endif %}"
+      cooldown: '{{ timedelta(hours=cooldown_hours) }}'
   - alias: For each shade
     repeat:
       for_each: '{{ shades }}'
       sequence:
       - variables:
-          position: '{% from ''shades.jinja'' import get_shade_position %}
+          target_position: '{% from ''shades.jinja'' import get_shade_position %}
 
             {{ get_shade_position(repeat.item) }}'
-      - if:
-        - alias: If position doesn't match expected
-          condition: template
-          value_template: '{{ position > -1 and state_attr(repeat.item, ''current_position'')
-            != position }}'
-        - alias: If state hasn't changed for 1 hour
-          condition: template
-          value_template: '{{ utcnow() - states[repeat.item].last_updated > timedelta(hours=1)
+          current_position: '{{ state_attr(repeat.item, ''current_position'') }}'
+          time_since_last_update: '{{ utcnow() - states[repeat.item].last_updated
             }}'
+          in_cooldown: '{{ time_since_last_update < cooldown }}'
+          is_closing: '{{ int(target_position) == 0 }}'
+          skip_label: '{{ iif(is_closing, ''manual_close'', ''manual_open'') }}'
+          shade_labels: '{{ labels(repeat.item) }}'
+          should_skip: '{{ skip_label in shade_labels }}'
+      - if:
+        - alias: If requires manual action
+          condition: template
+          value_template: '{{ not should_skip }}'
+        - alias: If target position is known
+          condition: template
+          value_template: '{{ target_position > -1 }}'
+        - alias: If target position doesn't match expected
+          condition: template
+          value_template: '{{ target_position != current_position }}'
+        - alias: If not in cooldown
+          condition: template
+          value_template: '{{ not in_cooldown }}'
+          enabled: false
         then:
-        - action: script.turn_on
+        - alias: Set shade position
+          action: script.turn_on
           target:
             entity_id: script.set_shade_position
           data:
             variables:
               entity_id: '{{ repeat.item }}'
-              position: '{{ int(position) }}'
-          alias: Set shade position
+              position: '{{ int(target_position) }}'
+              cooldown: '{{ cooldown }}'
+  trace:
+    stored_traces: 100
   mode: restart
 - id: '1733517013251'
   alias: Blackout Shades Schedule
@@ -456,32 +456,65 @@
   triggers:
   - trigger: state
     entity_id:
-    - binary_sensor.blackout_shades_schedule
-    to: 'off'
-  conditions: []
+    - sensor.blackout_shades_target_position
+    id: schedule
+  - trigger: state
+    entity_id:
+    - sensor.sun_solar_azimuth
+    id: azimuth
   actions:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    alias: Delay for 10 seconds (wait for sensors to update)
   - variables:
-      shades: '{{ label_entities(''Blackout'') | reject(''in'', label_entities(''Manual
-        Close'')) | list }}'
-  - repeat:
+      shades: '{{ label_entities(''Blackout'') | list }}'
+      cooldown_hours: '{{ int(states(''input_number.shade_automation_cooldown''))
+        }}'
+      cooldown: '{{ timedelta(hours=cooldown_hours) }}'
+  - alias: For each shade
+    repeat:
+      for_each: '{{ shades }}'
       sequence:
+      - variables:
+          target_position: '{% from ''shades.jinja'' import get_shade_position %}
+
+            {{ get_shade_position(repeat.item) }}'
+          current_position: '{{ state_attr(repeat.item, ''current_position'') }}'
+          time_since_last_update: '{{ utcnow() - states[repeat.item].last_updated
+            }}'
+          in_cooldown: '{{ time_since_last_update < cooldown }}'
+          is_closing: '{{ int(target_position) == 0 }}'
+          skip_label: '{{ iif(is_closing, ''manual_close'', ''manual_open'') }}'
+          shade_labels: '{{ labels(repeat.item) }}'
+          should_skip: '{{ skip_label in shade_labels }}'
       - if:
-        - condition: template
-          value_template: '{{ is_state(repeat.item, ''unavailable'') }}'
-          alias: If shade is unavailable
+        - alias: If requires manual action
+          condition: template
+          value_template: '{{ not should_skip }}'
+        - alias: If target position is known
+          condition: template
+          value_template: '{{ target_position > -1 }}'
+        - alias: If target position doesn't match expected
+          condition: template
+          value_template: '{{ target_position != current_position }}'
+        - alias: If not in cooldown
+          condition: template
+          value_template: '{{ not in_cooldown }}'
+          enabled: false
         then:
-        - action: script.turn_on
+        - alias: Set shade position
+          action: script.turn_on
           target:
-            entity_id: script.perform_action_when_entity_becomes_available
+            entity_id: script.set_shade_position
           data:
             variables:
               entity_id: '{{ repeat.item }}'
-              action: cover.close_cover
-        else:
-        - action: cover.close_cover
-          target:
-            entity_id: '{{ repeat.item }}'
-      for_each: '{{ shades }}'
+              position: '{{ int(target_position) }}'
+              cooldown: '{{ cooldown }}'
+  trace:
+    stored_traces: 100
   mode: restart
 - id: '1733523145702'
   alias: Outdoor Lights Schedule
@@ -521,34 +554,6 @@
         entity_id: '{{ entities }}'
       action: light.turn_off
   mode: restart
-- id: '1735237130826'
-  alias: Position Shades to block sun
-  description: ''
-  triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.sun_solar_elevation
-    below: 24
-  conditions:
-  - condition: numeric_state
-    entity_id: sensor.casa_de_knowles_cloud_cover
-    below: 80
-  actions:
-  - action: cover.set_cover_position
-    metadata: {}
-    data:
-      position: 65
-    target:
-      entity_id:
-      - cover.dining_room_front_privacy_shade
-  - action: cover.set_cover_position
-    metadata: {}
-    data:
-      position: 80
-    target:
-      entity_id:
-      - cover.dining_room_side_privacy_shade
-  mode: single
 - id: '1735483900049'
   alias: Toggle lights on brightness changes
   description: ''

@@ -6,17 +6,15 @@
     {{ _current_pos }}
   {%- else -%}
     {%- set _shade_type = iif('blackout' in _labels, 'blackout', 'privacy') -%}
-    {%- set _specific_id = entity_id | regex_replace("^cover\." ,"sensor.") + "_position" -%}
-    {%- set _fallback_id = 'sensor.' + _shade_type + '_shades_position' -%}
+    {%- set _specific_id = entity_id | regex_replace("^cover\." ,"sensor.") + "_target_position" -%}
+    {%- set _fallback_id = 'sensor.' + _shade_type + '_shades_target_position' -%}
     {%- set _specific_state = states(_specific_id) -%}
     {%- set _fallback_state = states(_fallback_id) -%}
-    {%- if _specific_state == 'unknown' -%}
-      {%- if _fallback_state == 'on' -%}
-        100
-      {%- elif _fallback_state == 'unknown' -%}
+    {%- if _specific_state in ('unknown', '-1', -1) -%}
+      {%- if _fallback_state == 'unknown' -%}
         -1
       {%- else -%}
-        0
+        {{_fallback_state}}
       {%- endif -%}
     {%- else -%}
       {{ _specific_state }}

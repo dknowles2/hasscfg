@@ -120,6 +120,8 @@ devices:
     invert_cover: true
   '0x0ceff6fffeee717f':
     friendly_name: Jacob Sensor
+  '0x00124b002fa14bfa':
+    friendly_name: Jacob Plug
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

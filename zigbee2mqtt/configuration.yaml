@@ -89,7 +89,7 @@ devices:
     friendly_name: Guest Bedroom Blackout Shade
     invert_cover: false
   '0x6cfd22fffe429e71':
-    friendly_name: Living Room Zigbee Repeater
+    friendly_name: Guest Bedroom Zigbee Repeater
   '0x6cfd22fffe42aae9':
     friendly_name: Jacob's Room Zigbee Repeater
   '0x6cfd22fffe40e941':
@@ -122,6 +122,21 @@ devices:
     friendly_name: Jacob Sensor
   '0x00124b002fa14bfa':
     friendly_name: Jacob Plug
+  '0x00124b002fa05907':
+    friendly_name: Upstairs Plug
+  '0x00124b002fa14bec':
+    friendly_name: Office Plug
+  '0x8c6fb9fffe2dabca':
+    friendly_name: Kitchen Overhead
+    simulated_brightness: {}
+  '0x8c6fb9fffe2c5b23':
+    friendly_name: Kitchen Island
+    transition: 2
+    simulated_brightness: {}
+  '0x8c6fb9fffe2b759a':
+    friendly_name: Kitchen Table
+    transition: 2
+    simulated_brightness: {}
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

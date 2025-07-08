@@ -41,6 +41,7 @@ perform_action_when_entity_becomes_available:
     data:
       message: Waiting for {{ state_attr(entity_id, 'friendly_name') }} to become
         available before calling {{ action }}
+    enabled: false
   - wait_template: '{{ not is_state(entity_id, "unavailable") }}'
     continue_on_timeout: false
     timeout: 01:00:00
@@ -84,6 +85,7 @@ set_shade_position:
       data:
         message: Waiting for {{ state_attr(entity_id, 'friendly_name') }} to become
           available before setting posiiton to {{ position }}
+      enabled: false
     - wait_template: '{{ not is_state(entity_id, ''unavailable'') }}'
       continue_on_timeout: false
       timeout: 01:00:00
@@ -110,4 +112,4 @@ set_shade_position:
       name: Position
   description: ''
   mode: parallel
-  max: 20
+  max: 30

@@ -106,12 +106,8 @@
     trigger: device
   conditions: []
   actions:
-  - data:
-      message: Doorbell Pressed
-      data:
-        image: /api/nest/event_media/{{ trigger.event.data.device_id }}/{{ trigger.event.data.nest_event_id
-          }}/thumbnail
-    action: notify.mobile_app_davids_iphone_14_pro
+  - action: notify.mobile_app_davids_iphone
+    data: {}
   mode: restart
 - id: '1680704667983'
   alias: Washer run completed
@@ -137,7 +133,7 @@
         entity_id: sensor.dryer_current_status
         state: end
   actions:
-  - action: notify.mobile_app_davids_iphone_14_pro
+  - action: notify.mobile_app_davids_iphone
     metadata: {}
     data:
       message: Washer is done
@@ -155,7 +151,7 @@
     entity_id: person.david
     state: home
   actions:
-  - action: notify.mobile_app_davids_iphone_14_pro
+  - action: notify.mobile_app_davids_iphone
     metadata: {}
     data:
       message: Dryer is done
@@ -163,19 +159,18 @@
 - id: '1703026402697'
   alias: Water Leak Detected
   description: ''
-  trigger:
-  - platform: state
-    entity_id:
+  triggers:
+  - entity_id:
     - binary_sensor.utility_closet_moisture
     - binary_sensor.sump_pump_moisture
     - binary_sensor.guest_bathroom_sink_moisture
     - binary_sensor.jacob_s_sink_moisture
     from:
     to: 'on'
-  condition: []
-  action:
-  - service: notify.mobile_app_davids_iphone_14_pro
-    data:
+    trigger: state
+  conditions: []
+  actions:
+  - data:
       message: '{{ trigger.to_state.attributes.friendly_name }} Detected!'
       data:
         url: https://casa.knowles.xyz/history/?entity_id={{ trigger.entity_id }}
@@ -185,6 +180,7 @@
             name: default
             critical: 1
             volume: 1
+    action: notify.mobile_app_davids_iphone
   mode: single
 - id: '1708958981471'
   alias: 'iOS Action: Toggle Office Lights'
@@ -419,7 +415,8 @@
           time_since_last_update: '{{ utcnow() - states[repeat.item].last_updated
             }}'
           in_cooldown: '{{ time_since_last_update < cooldown }}'
-          is_closing: '{{ int(target_position) == 0 }}'
+          is_closing: '{{ int(target_position if target_position is not none else
+            -1) == 0 }}'
           skip_label: '{{ iif(is_closing, ''manual_close'', ''manual_open'') }}'
           shade_labels: '{{ labels(repeat.item) }}'
           should_skip: '{{ skip_label in shade_labels }}'
@@ -485,7 +482,8 @@
           time_since_last_update: '{{ utcnow() - states[repeat.item].last_updated
             }}'
           in_cooldown: '{{ time_since_last_update < cooldown }}'
-          is_closing: '{{ int(target_position) == 0 }}'
+          is_closing: '{{ int(target_position if target_position is not none else
+            -1) == 0 }}'
           skip_label: '{{ iif(is_closing, ''manual_close'', ''manual_open'') }}'
           shade_labels: '{{ labels(repeat.item) }}'
           should_skip: '{{ skip_label in shade_labels }}'
@@ -639,4 +637,40 @@
     data: {}
     target:
       entity_id: switch.jacob_plug
+  mode: single
+- id: '1750290045798'
+  alias: Foyer motion sensitive lights
+  description: ''
+  triggers:
+  - type: motion
+    device_id: eb7863ed46b80ef15f1eb27a1f554ee7
+    entity_id: 824f24f46d0342571b60796d5b038e10
+    domain: binary_sensor
+    metadata:
+      secondary: false
+    trigger: device
+  conditions:
+  - condition: device
+    type: is_off
+    device_id: 8623fc09450516cb7673582690bd056e
+    entity_id: b10969a3e106e64a5e77b8d9e3e36ee9
+    domain: light
+  actions:
+  - repeat:
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 30
+          milliseconds: 0
+      while:
+      - type: is_motion
+        condition: device
+        device_id: eb7863ed46b80ef15f1eb27a1f554ee7
+        entity_id: 824f24f46d0342571b60796d5b038e10
+        domain: binary_sensor
+  - type: turn_off
+    device_id: 8623fc09450516cb7673582690bd056e
+    entity_id: b10969a3e106e64a5e77b8d9e3e36ee9
+    domain: light
   mode: single

@@ -5,7 +5,7 @@ common:
     model: Generic Generator
     identifiers: [generator_device]
     configuration_url: https://genmon.home.knowles.xyz
-    suggested_area: Back Yard
+    suggested_area: "Back Yard"
     via_device: genmon_device
 
   genmon: &genmon-device
@@ -14,7 +14,7 @@ common:
     model: Genmon
     identifiers: [genmon_device]
     configuration_url: https://genmon.home.knowles.xyz
-    suggested_area: Back Yard
+    suggested_area: "Back Yard"
 
   dsc_door_window_sensor: &dsc-door-window-sensor-device
     name: "%(name)s"
@@ -45,7 +45,7 @@ common:
     state_class: measurement
     state_topic: "%(state_topic)s"
     unique_id: "%(object_id)s"
-    object_id: "%(object_id)s"
+    default_entity_id: "sensor.%(object_id)s"
 
 templates:
   genmon_percentage_sensor:

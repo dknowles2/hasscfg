@@ -107,7 +107,8 @@
   conditions: []
   actions:
   - action: notify.mobile_app_davids_iphone
-    data: {}
+    data:
+      message: Doorbell pressed
   mode: restart
 - id: '1680704667983'
   alias: Washer run completed
@@ -213,7 +214,7 @@
   - metadata: {}
     data: {}
     target:
-      area_id: fabc481884a040388de605a88425f981
+      entity_id: light.office
     action: light.toggle
   mode: restart
 - id: '1711589046805'
@@ -568,6 +569,7 @@
   - condition: numeric_state
     entity_id: sensor.casa_de_knowles_cloud_cover
     above: 45
+    enabled: false
   - condition: state
     entity_id: binary_sensor.daytime
     state: 'on'
@@ -585,10 +587,6 @@
         entity_id:
         - light.lamps
         - light.sconces
-    - delay:
-        hours: 0
-        minutes: 5
-        seconds: 0
     else:
     - condition: numeric_state
       entity_id: sensor.living_room_esphome_illuminance
@@ -601,10 +599,10 @@
         entity_id:
         - light.lamps
         - light.sconces
-    - delay:
-        hours: 0
-        minutes: 5
-        seconds: 0
+  - delay:
+      hours: 0
+      minutes: 5
+      seconds: 0
   mode: single
 - id: '1735852517153'
   alias: Restart Studio Code Server Nightly
@@ -642,20 +640,20 @@
   alias: Foyer motion sensitive lights
   description: ''
   triggers:
-  - type: motion
-    device_id: eb7863ed46b80ef15f1eb27a1f554ee7
-    entity_id: 824f24f46d0342571b60796d5b038e10
-    domain: binary_sensor
-    metadata:
-      secondary: false
-    trigger: device
+  - trigger: state
+    entity_id:
+    - binary_sensor.foyer_motion
+    to: 'on'
   conditions:
-  - condition: device
-    type: is_off
-    device_id: 8623fc09450516cb7673582690bd056e
-    entity_id: b10969a3e106e64a5e77b8d9e3e36ee9
-    domain: light
+  - condition: state
+    entity_id: light.lamps
+    state: 'off'
   actions:
+  - action: light.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.foyer_lamp_2
   - repeat:
       sequence:
       - delay:
@@ -664,13 +662,128 @@
           seconds: 30
           milliseconds: 0
       while:
-      - type: is_motion
-        condition: device
-        device_id: eb7863ed46b80ef15f1eb27a1f554ee7
-        entity_id: 824f24f46d0342571b60796d5b038e10
-        domain: binary_sensor
-  - type: turn_off
-    device_id: 8623fc09450516cb7673582690bd056e
-    entity_id: b10969a3e106e64a5e77b8d9e3e36ee9
-    domain: light
+      - condition: state
+        entity_id: binary_sensor.foyer_motion
+        state: 'on'
+  - action: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.foyer_lamp_2
+  mode: single
+- id: '1753536717982'
+  alias: Scooter Presence
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - device_tracker.e2_pro_0216
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: device_tracker.e2_pro_0216
+        state: home
+      - condition: device
+        device_id: 60c16963445d84c8a32bdface2f913dd
+        domain: cover
+        entity_id: b51d2b53b87fe5973143075338fa1cba
+        type: is_closed
+      sequence:
+      - device_id: 60c16963445d84c8a32bdface2f913dd
+        domain: cover
+        entity_id: b51d2b53b87fe5973143075338fa1cba
+        type: open
+      - action: notify.mobile_app_davids_iphone
+        metadata: {}
+        data:
+          message: 'Scooter automation executed '
+    - conditions:
+      - condition: state
+        entity_id: device_tracker.e2_pro_0216
+        state: not_home
+      - condition: device
+        device_id: 60c16963445d84c8a32bdface2f913dd
+        domain: cover
+        entity_id: b51d2b53b87fe5973143075338fa1cba
+        type: is_open
+      sequence:
+      - device_id: 60c16963445d84c8a32bdface2f913dd
+        domain: cover
+        entity_id: b51d2b53b87fe5973143075338fa1cba
+        type: close
+      - action: notify.mobile_app_davids_iphone
+        metadata: {}
+        data:
+          message: 'Scooter automation executed '
+  mode: single
+- id: '1754924767384'
+  alias: Jacob Sensor Battery Low
+  description: ''
+  triggers:
+  - type: battery_level
+    device_id: cfe332e99ea32c67c8618d3e9c68c112
+    entity_id: 99c88a39157ebe4338a4eda681c15c45
+    domain: sensor
+    trigger: device
+    below: 10
+  conditions: []
+  actions:
+  - action: persistent_notification.create
+    metadata: {}
+    data:
+      title: Jacob Sensor Battery Low
+      message: Jacob Sensor battery is below 10%
+  - action: notify.notify
+    metadata: {}
+    data:
+      title: Jacob Sensor Battery Low
+      message: Jacob Sensor battery is below 10%
+  mode: single
+- id: '1754925445057'
+  alias: Primary Bedroom Sensor Battery Low
+  description: ''
+  triggers:
+  - type: battery_level
+    device_id: 25ad93c1281c91e672d4f25a2fc7d1a6
+    entity_id: 1123b5f0d9391e76062b11776985a191
+    domain: sensor
+    trigger: device
+    below: 10
+  conditions: []
+  actions:
+  - action: persistent_notification.create
+    metadata: {}
+    data:
+      title: Primary Bedroom Sensor Battery Low
+      message: Primary Bedroom Sensor battery is below 10%
+  - action: notify.notify
+    metadata: {}
+    data:
+      title: Primary Bedroom Sensor Battery Low
+      message: Primary Bedroom Sensor battery is below 10%
+  mode: single
+- id: '1756340236690'
+  alias: Notify when print is done
+  description: ''
+  triggers:
+  - device_id: f22f507343236e56c84d20afb6bfdfdf
+    domain: bambu_lab
+    type: event_print_finished
+    trigger: device
+  conditions: []
+  actions:
+  - action: camera.snapshot
+    metadata: {}
+    data:
+      filename: /media/printy.jpg
+    target:
+      entity_id: camera.printy_camera
+  - action: notify.mobile_app_davids_iphone
+    metadata: {}
+    data:
+      message: '{{ states(''sensor.printy_task_name'') }} has finished printing.'
+      data:
+        image: /media/local/printy.jpg
   mode: single

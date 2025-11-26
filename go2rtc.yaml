@@ -1,2 +1,0 @@
-streams:
-  doorbell: hass://supervisor?entity_id=camera.doorbell

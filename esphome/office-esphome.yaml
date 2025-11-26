@@ -5,7 +5,7 @@ esphome:
 esp32:
   board: esp32dev
   framework:
-    type: arduino
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -27,7 +27,7 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Office-Esphome Fallback Hotspot"
-    password: "SxqwRfH3lA4L"
+    password: "esphome1"
 
 captive_portal:
 
@@ -39,3 +39,34 @@ captive_portal:
 
 bluetooth_proxy:
   active: true
+
+esp32_ble_beacon:
+  type: iBeacon
+  # casa.knowles.xyz
+  uuid: '63617361-2e6b-6e6f-776c-65732e78797a'
+  major: 2
+  minor: 1
+
+button:
+  - platform: restart
+    name: "Restart"
+
+sensor:
+  - platform: uptime
+    type: seconds
+    name: Uptime
+
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: "diagnostic"
+    device_class: ""

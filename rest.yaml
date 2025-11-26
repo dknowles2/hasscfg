@@ -1,0 +1,89 @@
+- scan_interval: 60
+  resource: https://www.njtransit.com/api/graphql/graphql
+  method: POST
+  payload: '{"operationName":"TrainDepartureScreens","variables":{"station":"Short Hills Station"},"query":"query TrainDepartureScreens($station: String!) { getTrainDepartureScreens(station: $station) { items { background color departureDate destination inlineMessage line lineAbbreviation status track trainID } } }"}'
+  sensor:
+    - name: Next Train - Short Hills
+      value_template: "{{ value_json.data.getTrainDepartureScreens['items'][0].departureDate }}"
+      json_attributes_path: "$.data.getTrainDepartureScreens.items[0]"
+      json_attributes:
+        - background
+        - color
+        - departureDate
+        - destination
+        - inlineMessage
+        - line
+        - lineAbbreviation
+        - status
+        - track
+        - trainID
+    - name: Next Train - Short Hills (1)
+      value_template: "{{ value_json.data.getTrainDepartureScreens['items'][1].departureDate }}"
+      json_attributes_path: "$.data.getTrainDepartureScreens.items[1]"
+      json_attributes:
+        - background
+        - color
+        - departureDate
+        - destination
+        - inlineMessage
+        - line
+        - lineAbbreviation
+        - status
+        - track
+        - trainID
+    - name: Next Train - Short Hills (2)
+      value_template: "{{ value_json.data.getTrainDepartureScreens['items'][2].departureDate }}"
+      json_attributes_path: "$.data.getTrainDepartureScreens.items[2]"
+      json_attributes:
+        - background
+        - color
+        - departureDate
+        - destination
+        - inlineMessage
+        - line
+        - lineAbbreviation
+        - status
+        - track
+        - trainID
+    - name: Next Train - Short Hills (3)
+      value_template: "{{ value_json.data.getTrainDepartureScreens['items'][3].departureDate }}"
+      json_attributes_path: "$.data.getTrainDepartureScreens.items[3]"
+      json_attributes:
+        - background
+        - color
+        - departureDate
+        - destination
+        - inlineMessage
+        - line
+        - lineAbbreviation
+        - status
+        - track
+        - trainID
+    - name: Next Train - Short Hills (4)
+      value_template: "{{ value_json.data.getTrainDepartureScreens['items'][4].departureDate }}"
+      json_attributes_path: "$.data.getTrainDepartureScreens.items[4]"
+      json_attributes:
+        - background
+        - color
+        - departureDate
+        - destination
+        - inlineMessage
+        - line
+        - lineAbbreviation
+        - status
+        - track
+        - trainID
+    - name: Next Train - Short Hills (5)
+      value_template: "{{ value_json.data.getTrainDepartureScreens['items'][5].departureDate }}"
+      json_attributes_path: "$.data.getTrainDepartureScreens.items[5]"
+      json_attributes:
+        - background
+        - color
+        - departureDate
+        - destination
+        - inlineMessage
+        - line
+        - lineAbbreviation
+        - status
+        - track
+        - trainID

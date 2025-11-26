@@ -8,6 +8,9 @@ frontend:
 scene: !include scenes.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
+sensor: !include sensors.yaml
+rest: !include rest.yaml
+yahoofinance: !include yahoofinance.yaml
 
 http:
   use_x_forwarded_for: true
@@ -22,16 +25,17 @@ logger:
     custom_components.pitboss: debug
     pytboss: info
   filters:
-    custom_components.audiconnect:
+    custom_components.audiconnect.audi_connect_account:
       - ".*: 403, .*"
+      - ".*status=403.*"
+      - ".*SSLCertVerificationError.*"
     custom_components.pitboss:
       - ".*Manually updated pitboss data.*"
-
-influxdb:
-  host: a0d7b954-influxdb
-  port: 8086
-  database: homeassistant
-  username: homeassistant
-  password: !secret influxdb_password
-  max_retries: 3
-  default_measurement: state
+# influxdb:
+#   host: a0d7b954-influxdb
+#   port: 8086
+#   database: homeassistant
+#   username: homeassistant
+#   password: !secret influxdb_password
+#   max_retries: 3
+#   default_measurement: state

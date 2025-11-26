@@ -5,6 +5,7 @@
 *.token
 *~
 .HA_VERSION
+.ha_run_lock
 .cloud
 .spotify-token-cache
 .storage

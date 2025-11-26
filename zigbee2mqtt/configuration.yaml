@@ -131,12 +131,24 @@ devices:
     simulated_brightness: {}
   '0x8c6fb9fffe2c5b23':
     friendly_name: Kitchen Island
-    transition: 2
+    transition: 0
     simulated_brightness: {}
   '0x8c6fb9fffe2b759a':
     friendly_name: Kitchen Table
-    transition: 2
     simulated_brightness: {}
+  '0x001788010e99c662':
+    friendly_name: Foyer Lamp
+  '0x04e3e5fffe5f424b':
+    friendly_name: Primary Bedroom Sconces
+  '0xbc8d7efffed8e981':
+    friendly_name: Primary Bathroom Privacy Shade
+    invert_cover: true
+  '0x001788010e999b57':
+    friendly_name: Side Table Lamp
+  '0x001788010e99c003':
+    friendly_name: Corner Lamp
+  '0x00124b002fa08d4a':
+    friendly_name: Christmas Tree
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

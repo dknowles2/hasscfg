@@ -88,13 +88,19 @@
 - id: '1679071951950'
   alias: Doorbell detected person
   description: ''
-  trigger:
-  - platform: device
-    device_id: e94f865b148d4476194fa9a57cc74f9c
+  triggers:
+  - device_id: e94f865b148d4476194fa9a57cc74f9c
     domain: nest
     type: camera_person
-  condition: []
-  action: []
+    trigger: device
+  conditions: []
+  actions:
+  - action: notify.mobile_app_davids_iphone
+    metadata: {}
+    data:
+      message: Person Detected at the Front Door.
+      data:
+        image: '{{ trigger.event.data.attachment.image }}'
   mode: single
 - id: '1679071973766'
   alias: Doorbell pressed
@@ -109,6 +115,7 @@
   - action: notify.mobile_app_davids_iphone
     data:
       message: Doorbell pressed
+      image: '{{ trigger.event.data.attachment.image }}'
   mode: restart
 - id: '1680704667983'
   alias: Washer run completed
@@ -182,23 +189,6 @@
             critical: 1
             volume: 1
     action: notify.mobile_app_davids_iphone
-  mode: single
-- id: '1708958981471'
-  alias: 'iOS Action: Toggle Office Lights'
-  description: ''
-  trigger:
-  - event_type: ios.action_fired
-    platform: event
-    event_data:
-      actionID: D1C24577-8376-4CB6-BA77-F29C3B5BB549
-  condition: []
-  action:
-  - service: light.toggle
-    metadata: {}
-    data:
-      transition: 2
-    target:
-      entity_id: light.office
   mode: single
 - id: '1710280107429'
   alias: 'Office Button Click: Toggle Office Lights'
@@ -787,3 +777,22 @@
       data:
         image: /media/local/printy.jpg
   mode: single
+- id: '1764382802130'
+  alias: 'Basement Button Click: Toggle Basement Lights'
+  description: ''
+  triggers:
+  - domain: mqtt
+    device_id: 91254156db06d5263088775e266d07e6
+    type: action
+    subtype: single
+    trigger: device
+    alias: Button is single-clicked
+  conditions: []
+  actions:
+  - metadata: {}
+    data: {}
+    target:
+      entity_id:
+      - light.basement_lamps
+    action: light.toggle
+  mode: restart

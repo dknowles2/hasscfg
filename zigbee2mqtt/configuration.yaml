@@ -1,5 +1,6 @@
 homeassistant:
   enabled: true
+  experimental_event_entities: true
 advanced:
   network_key:
     - 30
@@ -149,6 +150,8 @@ devices:
     friendly_name: Corner Lamp
   '0x00124b002fa08d4a':
     friendly_name: Christmas Tree
+  '0x282c02bfffe3dce9':
+    friendly_name: Basement Button
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

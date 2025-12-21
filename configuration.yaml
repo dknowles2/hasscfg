@@ -10,7 +10,11 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 sensor: !include sensors.yaml
 rest: !include rest.yaml
+rest_command: !include rest_command.yaml
 yahoofinance: !include yahoofinance.yaml
+device_tracker:
+  - platform: bluetooth_le_tracker
+    track_new_devices: false
 
 http:
   use_x_forwarded_for: true

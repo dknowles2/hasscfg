@@ -1,0 +1,5 @@
+transit_alerts:
+  url: https://www.njtransit.com/api/graphql/graphql
+  method: POST
+  content_type: "application/json"
+  payload: '{"query": "{ getSystemStatus { abbreviation message service advisoryAlert } }" }'

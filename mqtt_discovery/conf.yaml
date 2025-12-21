@@ -15,20 +15,20 @@ common:
     identifiers: [genmon_device]
     configuration_url: https://genmon.home.knowles.xyz
     suggested_area: "Back Yard"
-
+  
   dsc_door_window_sensor: &dsc-door-window-sensor-device
     name: "%(name)s"
     manufacturer: "DSC-Security"
     model: DW4917 door/window sensor
     identifiers: ["%(sn)s"]
-    via_device: rtl_433
+    via_device: dsc_panel
 
   dsc_motion_sensor: &dsc-motion-sensor-device
     name: "%(name)s"
     manufacturer: "DSC-Security"
-    model: motion sensor
+    model: DSC Motion Sensor
     identifiers: ["%(sn)s"]
-    via_device: rtl_433
+    via_device: dsc_panel
 
   govee_water_sensor: &govee-water-sensor
     name: "%(name)s"
@@ -48,6 +48,22 @@ common:
     default_entity_id: "sensor.%(object_id)s"
 
 templates:
+  rtl_433:
+    component: device
+    object_id: rtl_433
+    config:
+      state_topic: "rtl_433/events"
+      name: null
+      device:
+        name: "RTL 433"
+        manufacturer: "RTL 433"
+        model: "RTL 433"
+        identifiers: [rtl_433]
+      origin:
+        name: "RTL 433"
+        sw_version: "unknown"
+        support_url: "unknown"
+
   genmon_percentage_sensor:
     component: sensor
     object_id: "genmon_%(sanitized_name)s"
@@ -145,6 +161,30 @@ templates:
       unit_of_measurement: V
       value_template: '{{ value | regex_replace(" V", "") | float | round(1) }}'
 
+  dsc_panel:
+    component: device
+    object_id: "dsc_panel"
+    config:
+      name: "DSC Impassa control panel"
+      state_topic: "rtl_433/devices/DSC-Security/"
+      device:
+        name: "DSC Impassa control panel"
+        manufacturer: "DSC-Security"
+        model: "DSC Impassa 9057"
+        identifiers: [dsc_panel]
+        via_device: rtl_433
+      origin:
+        name: "RTL 433"
+        sw_version: "unknown"
+        support_url: "unknown"
+      components:
+        dsc_panel_connected:
+          name: Connected
+          platform: binary_sensor
+          device_class: connectivity
+          state_topic: "rtl_433/devices/DSC-Security"
+          value_template: "on"
+
   dsc_motion:
     component: binary_sensor
     object_id: "%(sn)s_motion"
@@ -167,6 +207,7 @@ templates:
     config:
       device: *dsc-door-window-sensor-device
       device_class: door
+      name: null
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
@@ -181,6 +222,7 @@ templates:
     config:
       device: *dsc-door-window-sensor-device
       device_class: window
+      name: null
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
@@ -195,6 +237,7 @@ templates:
     config:
       device: *dsc-door-window-sensor-device
       device_class: battery
+      name: null
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
@@ -246,6 +289,9 @@ templates:
       unique_id: "%(object_id)s"
 
 entities:
+  - templates: [rtl_433]
+
+  # Water leak sensors
   - params:
       name: Guest Bathroom Sink
       sn: 16810
@@ -262,83 +308,87 @@ entities:
       name: Sump Pump
       sn: 15903
     templates: [govee_water_leak, govee_battery]
+
+  # Security system
+  - templates: [dsc_panel]
   - params:
-      name: Back
+      name: Back Door
       sn: 2959527
     templates: [dsc_door, dsc_battery, dsc_tamper]
   - params:
-      name: Front
+      name: Front Door
       sn: 2898343
     templates: [dsc_door, dsc_battery, dsc_tamper]
   - params:
-      name: Garage
+      name: Garage Door
       sn: 2651912
     templates: [dsc_door, dsc_battery, dsc_tamper]
   - params:
       sn: 2181141
-      name: Basement Back
+      name: Basement Back Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2885287
-      name: Basement Side
+      name: Basement Side Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2195683
-      name: Kitchen
+      name: Kitchen Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2176130
-      name: Living Room 1
+      name: Living Room 1 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2295167
-      name: Living Room 2
+      name: Living Room 2 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2237957
-      name: Living Room 3
+      name: Living Room 3 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2347023
-      name: Living Room 4
+      name: Living Room 4 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2965415
-      name: Dining Room Front 1
+      name: Dining Room Front 1 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2894503
-      name: Dining Room Front 2
+      name: Dining Room Front 2 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2402835
-      name: Dining Room Side 1
+      name: Dining Room Side 1 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2732723
-      name: Dining Room Side 2
+      name: Dining Room Side 2 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2179532
-      name: Master Bedroom 1
+      name: Master Bedroom 1 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2645436
-      name: Master Bedroom 2
+      name: Master Bedroom 2 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2630664
-      name: Sitting Room 1
+      name: Sitting Room 1 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 2865005
-      name: Sitting Room 2
+      name: Sitting Room 2 Window
     templates: [dsc_window, dsc_battery, dsc_tamper]
   - params:
       sn: 3720927
-      name: Foyer
+      name: Foyer Motion Sensor
     templates: [dsc_motion, dsc_battery, dsc_tamper]
 
+  # Generator
   - params:
       name: Utility Voltage
       state_topic: "generator/Status/Line/Utility Voltage"

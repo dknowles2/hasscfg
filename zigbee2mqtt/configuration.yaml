@@ -124,7 +124,7 @@ devices:
   '0x00124b002fa14bfa':
     friendly_name: Jacob Plug
   '0x00124b002fa05907':
-    friendly_name: Upstairs Plug
+    friendly_name: Holiday Plug
   '0x00124b002fa14bec':
     friendly_name: Office Plug
   '0x8c6fb9fffe2dabca':
@@ -152,6 +152,8 @@ devices:
     friendly_name: Christmas Tree
   '0x282c02bfffe3dce9':
     friendly_name: Basement Button
+  '0x001788010ebaf33c':
+    friendly_name: Outdoor Sensor
 groups:
   '1':
     friendly_name: primary_bedroom_blackout_shades

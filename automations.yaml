@@ -348,12 +348,10 @@
   - trigger: state
     entity_id:
     - binary_sensor.downstairs_lights_schedule
+  - trigger: time_pattern
+    minutes: /5
   conditions: []
   actions:
-  - variables:
-      lights:
-      - light.lamps
-      - light.sconces
   - if:
     - condition: state
       entity_id: binary_sensor.downstairs_lights_schedule
@@ -361,15 +359,19 @@
     then:
     - action: light.turn_on
       metadata: {}
-      data: {}
       target:
-        entity_id: '{{ lights }}'
+        entity_id:
+        - light.lamps
+        - light.sconces
+      data: {}
     else:
     - action: light.turn_off
       metadata: {}
       data: {}
       target:
-        entity_id: '{{ lights }}'
+        entity_id:
+        - light.lamps
+        - light.sconces
   mode: restart
 - id: '1733516878650'
   alias: Privacy Shades Schedule
@@ -547,22 +549,16 @@
   alias: Toggle lights on brightness changes
   description: ''
   triggers:
-  - trigger: numeric_state
+  - trigger: state
     entity_id:
     - sensor.living_room_esphome_illuminance
-    above: input_number.living_room_lux_upper_bound
-  - trigger: numeric_state
-    entity_id:
-    - sensor.living_room_esphome_illuminance
-    below: input_number.living_room_lux_lower_bound
   conditions:
-  - condition: numeric_state
-    entity_id: sensor.casa_de_knowles_cloud_cover
-    above: 45
-    enabled: false
   - condition: state
     entity_id: binary_sensor.daytime
     state: 'on'
+  - condition: numeric_state
+    entity_id: sensor.outdoor_sensor_illuminance
+    below: 1000
   actions:
   - if:
     - condition: numeric_state
@@ -796,3 +792,32 @@
       - light.basement_lamps
     action: light.toggle
   mode: restart
+- id: '1766330078608'
+  alias: Kitchen Cabinet Lights Schedule
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - schedule.cabinet_lights_schedule
+  - trigger: time_pattern
+    minutes: /5
+  conditions: []
+  actions:
+  - if:
+    - condition: state
+      entity_id: schedule.cabinet_lights_schedule
+      state:
+      - 'on'
+    then:
+    - action: light.turn_on
+      metadata: {}
+      target:
+        entity_id: light.kitchen_cabinets
+      data: {}
+    else:
+    - action: light.turn_off
+      metadata: {}
+      target:
+        entity_id: light.kitchen_cabinets
+      data: {}
+  mode: single

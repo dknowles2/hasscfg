@@ -535,15 +535,21 @@
         device_id: 63aa3ed82cdc99ea126e49458082e686
     - data: {}
       metadata: {}
-      target:
-        entity_id: '{{ entities }}'
       action: light.turn_on
+      target:
+        entity_id:
+        - light.front_door
+        - light.front_porch
+        - light.driveway_lights
     else:
     - data: {}
       metadata: {}
-      target:
-        entity_id: '{{ entities }}'
       action: light.turn_off
+      target:
+        entity_id:
+        - light.front_door
+        - light.front_porch
+        - light.driveway_lights
   mode: restart
 - id: '1735483900049'
   alias: Toggle lights on brightness changes
@@ -552,43 +558,76 @@
   - trigger: state
     entity_id:
     - sensor.living_room_esphome_illuminance
-  conditions:
-  - condition: state
-    entity_id: binary_sensor.daytime
-    state: 'on'
-  - condition: numeric_state
-    entity_id: sensor.outdoor_sensor_illuminance
-    below: 1000
+  - trigger: state
+    entity_id:
+    - binary_sensor.downstairs_lights_schedule
+  conditions: []
   actions:
   - if:
-    - condition: numeric_state
-      entity_id: sensor.living_room_esphome_illuminance
-      below: input_number.living_room_lux_lower_bound
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: binary_sensor.downstairs_lights_schedule
+        state:
+        - 'on'
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.daytime
+          state:
+          - 'on'
+        - condition: numeric_state
+          entity_id: sensor.living_room_esphome_illuminance
+          below: input_number.living_room_lux_lower_bound
     then:
-    - action: light.turn_on
+    - action: adaptive_lighting.apply
       metadata: {}
       data:
-        transition: 2
-      target:
-        entity_id:
+        lights:
         - light.lamps
+        turn_on_lights: true
+        transition: '10'
+        adapt_brightness: true
+        adapt_color: true
+      enabled: true
+      alias: Turn on lamps
+    - action: adaptive_lighting.apply
+      metadata: {}
+      data:
+        lights:
         - light.sconces
+        turn_on_lights: true
+        transition: '10'
+        adapt_brightness: true
+      enabled: true
+      alias: Turn on sconces
     else:
-    - condition: numeric_state
-      entity_id: sensor.living_room_esphome_illuminance
-      above: input_number.living_room_lux_upper_bound
-    - action: light.turn_off
-      metadata: {}
-      data:
-        transition: 2
-      target:
-        entity_id:
-        - light.lamps
-        - light.sconces
+    - if:
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.living_room_esphome_illuminance
+          above: input_number.living_room_lux_upper_bound
+        - condition: state
+          entity_id: binary_sensor.downstairs_lights_schedule
+          state:
+          - 'off'
+      then:
+      - action: light.turn_off
+        metadata: {}
+        data:
+          transition: 10
+        target:
+          entity_id:
+          - light.lamps
+          - light.sconces
   - delay:
       hours: 0
       minutes: 5
       seconds: 0
+      milliseconds: 0
+  trace:
+    stored_traces: 200
   mode: single
 - id: '1735852517153'
   alias: Restart Studio Code Server Nightly
@@ -664,7 +703,11 @@
   - trigger: state
     entity_id:
     - device_tracker.e2_pro_0216
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: schedule.evening_commute
+    state:
+    - 'on'
   actions:
   - choose:
     - conditions:

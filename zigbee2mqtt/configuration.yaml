@@ -126,13 +126,13 @@ devices:
   '0x00124b002fa05907':
     friendly_name: Holiday Plug
   '0x00124b002fa14bec':
-    friendly_name: Office Plug
+    friendly_name: FiOS Plug
   '0x8c6fb9fffe2dabca':
     friendly_name: Kitchen Overhead
     simulated_brightness: {}
   '0x8c6fb9fffe2c5b23':
     friendly_name: Kitchen Island
-    transition: 0
+    transition: 5
     simulated_brightness: {}
   '0x8c6fb9fffe2b759a':
     friendly_name: Kitchen Table

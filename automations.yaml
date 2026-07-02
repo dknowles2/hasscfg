@@ -14,20 +14,12 @@
   - service: hassio.addon_start
     data:
       addon: core_nginx_proxy
-- id: '1641092271455'
-  alias: Sync Deck Lights
-  description: ''
-  use_blueprint:
-    path: adchevrier/synchronize-the-on-off-state-of-2-entities.yaml
-    input:
-      entity_1: switch.deck_light
-      entity_2: switch.deck_string_lights
 - id: '1666221462797'
-  alias: Outdoor Holiday Lights Schedule
+  alias: Lights - Outdoor Holiday Lights
   description: ''
   triggers:
   - entity_id:
-    - binary_sensor.outdoor_lights_schedule
+    - schedule.outdoor_lights_off
     trigger: state
   - event: start
     trigger: homeassistant
@@ -40,27 +32,28 @@
       - switch.outdoor_2
   - if:
     - condition: state
-      entity_id: binary_sensor.outdoor_lights_schedule
-      state: 'on'
+      entity_id: schedule.outdoor_lights_off
+      state:
+      - 'on'
     then:
     - data: {}
       metadata: {}
       target:
         entity_id: '{{ entities }}'
-      action: switch.turn_on
+      action: switch.turn_off
     else:
     - data: {}
       metadata: {}
       target:
         entity_id: '{{ entities }}'
-      action: switch.turn_off
+      action: switch.turn_on
   mode: restart
 - id: '1671295554466'
-  alias: Indoor Holiday Lights Schedule
+  alias: Lights - Indoor Holiday Lights
   description: ''
   triggers:
   - entity_id:
-    - schedule.indoor_holiday_lights_schedule
+    - schedule.indoor_holiday_lights
     trigger: state
   - event: start
     trigger: homeassistant
@@ -68,34 +61,34 @@
   actions:
   - if:
     - condition: state
-      entity_id: schedule.indoor_holiday_lights_schedule
+      entity_id: schedule.indoor_holiday_lights
       state: 'on'
     then:
     - data: {}
       metadata: {}
       target:
         entity_id:
-        - switch.indoor_holiday_lights_group
+        - switch.indoor_holiday_lights
       action: switch.turn_on
     else:
     - data: {}
       metadata: {}
       target:
         entity_id:
-        - switch.indoor_holiday_lights_group
+        - switch.indoor_holiday_lights
       action: switch.turn_off
   mode: restart
 - id: '1679071951950'
-  alias: Doorbell detected person
+  alias: Doorbell - Person Detected
   description: ''
   triggers:
-  - device_id: e94f865b148d4476194fa9a57cc74f9c
+  - device_id: 060c4fa266ef2956a88d658c825c2b1c
     domain: nest
     type: camera_person
     trigger: device
   conditions: []
   actions:
-  - action: notify.mobile_app_davids_iphone
+  - action: notify.mobile_app_davids_iphone_16_pro
     metadata: {}
     data:
       message: Person Detected at the Front Door.
@@ -103,22 +96,22 @@
         image: '{{ trigger.event.data.attachment.image }}'
   mode: single
 - id: '1679071973766'
-  alias: Doorbell pressed
+  alias: Doorbell - Pressed
   description: ''
   triggers:
-  - device_id: e94f865b148d4476194fa9a57cc74f9c
+  - device_id: 060c4fa266ef2956a88d658c825c2b1c
     domain: nest
     type: doorbell_chime
     trigger: device
   conditions: []
   actions:
-  - action: notify.mobile_app_davids_iphone
+  - action: notify.mobile_app_davids_iphone_16_pro
     data:
       message: Doorbell pressed
       image: '{{ trigger.event.data.attachment.image }}'
   mode: restart
 - id: '1680704667983'
-  alias: Washer run completed
+  alias: Laundry - Washer Run Completed
   description: ''
   triggers:
   - entity_id:
@@ -130,8 +123,9 @@
   - condition: and
     conditions:
     - condition: state
-      entity_id: person.david
-      state: home
+      entity_id: person.david_knowles
+      state:
+      - home
     - condition: or
       conditions:
       - condition: state
@@ -141,13 +135,13 @@
         entity_id: sensor.dryer_current_status
         state: end
   actions:
-  - action: notify.mobile_app_davids_iphone
+  - action: notify.mobile_app_davids_iphone_16_pro
     metadata: {}
     data:
       message: Washer is done
   mode: restart
 - id: '1680705374664'
-  alias: Dryer run completed
+  alias: Laundry - Dryer Run Completed
   description: ''
   triggers:
   - entity_id:
@@ -156,10 +150,11 @@
     trigger: state
   conditions:
   - condition: state
-    entity_id: person.david
-    state: home
+    entity_id: person.david_knowles
+    state:
+    - home
   actions:
-  - action: notify.mobile_app_davids_iphone
+  - action: notify.mobile_app_davids_iphone_16_pro
     metadata: {}
     data:
       message: Dryer is done
@@ -188,65 +183,27 @@
             name: default
             critical: 1
             volume: 1
-    action: notify.mobile_app_davids_iphone
+    action: notify.mobile_app_davids_iphone_16_pro
   mode: single
 - id: '1710280107429'
-  alias: 'Office Button Click: Toggle Office Lights'
+  alias: Button - Office
   description: ''
   triggers:
-  - domain: mqtt
-    device_id: 79254273acc4e9e3b753409a81122ecc
-    type: action
-    subtype: single
-    trigger: device
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: b4de6ee01618f6ad5f5ef725006a3fab
+      command: single
+    alias: When Office Button is clicked
   conditions: []
   actions:
   - metadata: {}
     data: {}
     target:
-      entity_id: light.office
+      entity_id:
+      - light.office_lamps
     action: light.toggle
   mode: restart
-- id: '1711589046805'
-  alias: Sync ecobee vacation hold
-  description: ''
-  trigger:
-  - platform: calendar
-    event: start
-    offset: '-48:0:0'
-    entity_id: calendar.casa_de_knowles
-  condition:
-  - condition: template
-    value_template: '{{ trigger.calendar_event.summary is match("A/C Hold", ignorecase=True)
-      }}'
-  action:
-  - repeat:
-      for_each:
-      - climate.downstairs
-      - climate.upstairs
-      sequence:
-      - service: ecobee.create_vacation
-        alias: Add vacation for {{ repeat.item }}
-        data:
-          fan_mode: auto
-          entity_id: '{{ repeat.item }}'
-          vacation_name: '{{ vacation_start_date }}'
-          start_date: '{{ vacation_start_date }}'
-          start_time: '{{ vacation_start_time }}'
-          end_date: '{{ vacation_end_date }}'
-          end_time: '{{ vacation_end_time }}'
-          cool_temp: 75
-          heat_temp: 60
-  variables:
-    vacation_start_date: '{{ as_timestamp(trigger.calendar_event.start) | timestamp_custom(''%Y-%m-%d'')
-      }}'
-    vacation_start_time: '{{ as_timestamp(trigger.calendar_event.start) | timestamp_custom(''%H:%M:00'')
-      }}'
-    vacation_end_date: '{{ as_timestamp(trigger.calendar_event.end) | timestamp_custom(''%Y-%m-%d'')
-      }}'
-    vacation_end_time: '{{ as_timestamp(trigger.calendar_event.end) | timestamp_custom(''%H:%M:00'')
-      }}'
-  mode: parallel
 - id: '1719230656280'
   alias: Restart Frigate
   description: Restarts Frigate at 5am and 3pm
@@ -264,7 +221,7 @@
       payload: '1'
   mode: single
 - id: '1723471744681'
-  alias: Cleaners Arrived
+  alias: Presence - Cleaners Arrived
   description: ''
   triggers:
   - entity_id:
@@ -282,7 +239,7 @@
     metadata: {}
     data: {}
     target:
-      floor_id: second_floor
+      floor_id: upstairs
   - action: climate.set_temperature
     metadata: {}
     data:
@@ -298,7 +255,7 @@
       entity_id: input_boolean.cleaners_present
   mode: restart
 - id: '1723472237810'
-  alias: Cleaners Departed
+  alias: Presence - Cleaners Departed
   description: ''
   triggers:
   - entity_id:
@@ -314,7 +271,6 @@
   - action: cover.close_cover
     target:
       entity_id:
-      - cover.jacob_privacy_shade
       - cover.office_privacy_shade
       - cover.guest_bedroom_privacy_shade
       - cover.primary_bedroom_privacy_shades
@@ -329,40 +285,38 @@
     data: {}
     target:
       area_id:
-      - 1e2306abb00749aa931ba30c183537e9
-      - 66a838f11a316bbbc5753120f4cb8484
-      - 3fd03a10e28e47aa8ca8ffb10da65137
+      - kitchen
       - mud_room
-      - 257560448cec20937ef049245016db71
-      floor_id: second_floor
+      - back_yard
   - action: lock.lock
     metadata: {}
     data: {}
     target:
-      device_id: 163b30812c96045873bdc81491a670d8
+      entity_id: lock.back_door
   mode: restart
 - id: '1733495528901'
-  alias: Downstairs Lights Schedule
+  alias: Lights - Downstairs
   description: ''
   triggers:
   - trigger: state
     entity_id:
-    - binary_sensor.downstairs_lights_schedule
-  - trigger: time_pattern
-    minutes: /5
+    - schedule.downstairs_lights
+  - trigger: homeassistant
+    event: start
   conditions: []
   actions:
   - if:
     - condition: state
-      entity_id: binary_sensor.downstairs_lights_schedule
-      state: 'on'
+      entity_id: schedule.downstairs_lights
+      state:
+      - 'on'
     then:
     - action: light.turn_on
       metadata: {}
       target:
         entity_id:
-        - light.lamps
         - light.sconces
+        - light.downstairs_lamps
       data: {}
     else:
     - action: light.turn_off
@@ -370,152 +324,24 @@
       data: {}
       target:
         entity_id:
-        - light.lamps
         - light.sconces
-  mode: restart
-- id: '1733516878650'
-  alias: Privacy Shades Schedule
-  description: ''
-  triggers:
-  - trigger: state
-    entity_id:
-    - sensor.privacy_shades_target_position
-    id: schedule
-  - trigger: state
-    entity_id:
-    - sensor.sun_solar_azimuth
-    id: azimuth
-  actions:
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 10
-    alias: Delay for 10 seconds (wait for sensors to update)
-  - variables:
-      shades: '{{ label_entities(''Privacy'') | list }}'
-      cooldown_hours: '{{ int(states(''input_number.shade_automation_cooldown''))
-        }}'
-      cooldown: '{{ timedelta(hours=cooldown_hours) }}'
-  - alias: For each shade
-    repeat:
-      for_each: '{{ shades }}'
-      sequence:
-      - variables:
-          target_position: '{% from ''shades.jinja'' import get_shade_position %}
-
-            {{ get_shade_position(repeat.item) }}'
-          current_position: '{{ state_attr(repeat.item, ''current_position'') }}'
-          time_since_last_update: '{{ utcnow() - states[repeat.item].last_updated
-            }}'
-          in_cooldown: '{{ time_since_last_update < cooldown }}'
-          is_closing: '{{ int(target_position if target_position is not none else
-            -1) == 0 }}'
-          skip_label: '{{ iif(is_closing, ''manual_close'', ''manual_open'') }}'
-          shade_labels: '{{ labels(repeat.item) }}'
-          should_skip: '{{ skip_label in shade_labels }}'
-      - if:
-        - alias: If requires manual action
-          condition: template
-          value_template: '{{ not should_skip }}'
-        - alias: If target position is known
-          condition: template
-          value_template: '{{ target_position > -1 }}'
-        - alias: If target position doesn't match expected
-          condition: template
-          value_template: '{{ target_position != current_position }}'
-        - alias: If not in cooldown
-          condition: template
-          value_template: '{{ not in_cooldown }}'
-          enabled: false
-        then:
-        - alias: Set shade position
-          action: script.turn_on
-          target:
-            entity_id: script.set_shade_position
-          data:
-            variables:
-              entity_id: '{{ repeat.item }}'
-              position: '{{ int(target_position) }}'
-              cooldown: '{{ cooldown }}'
-  trace:
-    stored_traces: 100
-  mode: restart
-- id: '1733517013251'
-  alias: Blackout Shades Schedule
-  description: ''
-  triggers:
-  - trigger: state
-    entity_id:
-    - sensor.blackout_shades_target_position
-    id: schedule
-  - trigger: state
-    entity_id:
-    - sensor.sun_solar_azimuth
-    id: azimuth
-  actions:
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 10
-    alias: Delay for 10 seconds (wait for sensors to update)
-  - variables:
-      shades: '{{ label_entities(''Blackout'') | list }}'
-      cooldown_hours: '{{ int(states(''input_number.shade_automation_cooldown''))
-        }}'
-      cooldown: '{{ timedelta(hours=cooldown_hours) }}'
-  - alias: For each shade
-    repeat:
-      for_each: '{{ shades }}'
-      sequence:
-      - variables:
-          target_position: '{% from ''shades.jinja'' import get_shade_position %}
-
-            {{ get_shade_position(repeat.item) }}'
-          current_position: '{{ state_attr(repeat.item, ''current_position'') }}'
-          time_since_last_update: '{{ utcnow() - states[repeat.item].last_updated
-            }}'
-          in_cooldown: '{{ time_since_last_update < cooldown }}'
-          is_closing: '{{ int(target_position if target_position is not none else
-            -1) == 0 }}'
-          skip_label: '{{ iif(is_closing, ''manual_close'', ''manual_open'') }}'
-          shade_labels: '{{ labels(repeat.item) }}'
-          should_skip: '{{ skip_label in shade_labels }}'
-      - if:
-        - alias: If requires manual action
-          condition: template
-          value_template: '{{ not should_skip }}'
-        - alias: If target position is known
-          condition: template
-          value_template: '{{ target_position > -1 }}'
-        - alias: If target position doesn't match expected
-          condition: template
-          value_template: '{{ target_position != current_position }}'
-        - alias: If not in cooldown
-          condition: template
-          value_template: '{{ not in_cooldown }}'
-          enabled: false
-        then:
-        - alias: Set shade position
-          action: script.turn_on
-          target:
-            entity_id: script.set_shade_position
-          data:
-            variables:
-              entity_id: '{{ repeat.item }}'
-              position: '{{ int(target_position) }}'
-              cooldown: '{{ cooldown }}'
-  trace:
-    stored_traces: 100
+        - light.downstairs_lamps
   mode: restart
 - id: '1733523145702'
-  alias: Outdoor Lights Schedule
+  alias: Lights - Outdoors
   description: ''
   triggers:
   - entity_id:
-    - binary_sensor.outdoor_lights_schedule
+    - schedule.outdoor_lights_off
     trigger: state
   - event: start
     trigger: homeassistant
+  - trigger: sun
+    event: sunrise
+    offset: -00:30:00
+  - trigger: sun
+    event: sunset
+    offset: -00:30:00
   conditions: []
   actions:
   - variables:
@@ -525,23 +351,10 @@
       - light.driveway_lights
   - if:
     - condition: state
-      entity_id: binary_sensor.outdoor_lights_schedule
-      state: 'on'
+      entity_id: schedule.outdoor_lights_off
+      state:
+      - 'on'
     then:
-    - action: switch.turn_on
-      metadata: {}
-      data: {}
-      target:
-        device_id: 63aa3ed82cdc99ea126e49458082e686
-    - data: {}
-      metadata: {}
-      action: light.turn_on
-      target:
-        entity_id:
-        - light.front_door
-        - light.front_porch
-        - light.driveway_lights
-    else:
     - data: {}
       metadata: {}
       action: light.turn_off
@@ -550,9 +363,23 @@
         - light.front_door
         - light.front_porch
         - light.driveway_lights
+    else:
+    - action: switch.turn_on
+      metadata: {}
+      data: {}
+      target:
+        entity_id: switch.front_porch_lights
+    - data: {}
+      metadata: {}
+      action: light.turn_on
+      target:
+        entity_id:
+        - light.front_door
+        - light.front_porch
+        - light.driveway_lights
   mode: restart
 - id: '1735483900049'
-  alias: Toggle lights on brightness changes
+  alias: Lights - Downstairs Brightness
   description: ''
   triggers:
   - trigger: state
@@ -560,22 +387,18 @@
     - sensor.living_room_esphome_illuminance
   - trigger: state
     entity_id:
-    - binary_sensor.downstairs_lights_schedule
+    - schedule.downstairs_lights
   conditions: []
   actions:
   - if:
     - condition: or
       conditions:
       - condition: state
-        entity_id: binary_sensor.downstairs_lights_schedule
+        entity_id: schedule.downstairs_lights
         state:
         - 'on'
       - condition: and
         conditions:
-        - condition: state
-          entity_id: binary_sensor.daytime
-          state:
-          - 'on'
         - condition: numeric_state
           entity_id: sensor.living_room_esphome_illuminance
           below: input_number.living_room_lux_lower_bound
@@ -609,7 +432,7 @@
           entity_id: sensor.living_room_esphome_illuminance
           above: input_number.living_room_lux_upper_bound
         - condition: state
-          entity_id: binary_sensor.downstairs_lights_schedule
+          entity_id: schedule.downstairs_lights
           state:
           - 'off'
       then:
@@ -619,8 +442,8 @@
           transition: 10
         target:
           entity_id:
-          - light.lamps
           - light.sconces
+          - light.downstairs_lamps
   - delay:
       hours: 0
       minutes: 5
@@ -630,7 +453,7 @@
     stored_traces: 200
   mode: single
 - id: '1735852517153'
-  alias: Restart Studio Code Server Nightly
+  alias: Studio Code Server - Restart Nightly
   description: ''
   triggers:
   - at: 00:00:00
@@ -647,8 +470,9 @@
   triggers:
   - trigger: state
     entity_id:
-    - switch.jacob_plug
-    from: unavailable
+    - switch.jacobs_bedroom_plug
+    from:
+    - unavailable
     to:
   conditions:
   - condition: numeric_state
@@ -659,26 +483,30 @@
     metadata: {}
     data: {}
     target:
-      entity_id: switch.jacob_plug
+      entity_id:
+      - switch.jacobs_bedroom_plug
   mode: single
 - id: '1750290045798'
-  alias: Foyer motion sensitive lights
+  alias: Lights - Foyer Motion Detected
   description: ''
   triggers:
   - trigger: state
     entity_id:
-    - binary_sensor.foyer_motion
-    to: 'on'
+    - binary_sensor.foyer_motion_sensor_motion
+    to:
+    - 'on'
   conditions:
   - condition: state
-    entity_id: light.lamps
-    state: 'off'
+    entity_id: light.foyer_lamp
+    state:
+    - 'off'
   actions:
   - action: light.turn_on
     metadata: {}
     data: {}
     target:
-      entity_id: light.foyer_lamp_2
+      entity_id:
+      - light.foyer_lamp
   - repeat:
       sequence:
       - delay:
@@ -688,74 +516,94 @@
           milliseconds: 0
       while:
       - condition: state
-        entity_id: binary_sensor.foyer_motion
-        state: 'on'
+        entity_id: binary_sensor.foyer_motion_sensor_motion
+        state:
+        - 'on'
   - action: light.turn_off
     metadata: {}
     data: {}
     target:
-      entity_id: light.foyer_lamp_2
+      entity_id:
+      - light.foyer_lamp
   mode: single
 - id: '1753536717982'
-  alias: Scooter Presence
+  alias: Presence - eScooter
   description: ''
   triggers:
   - trigger: state
     entity_id:
     - device_tracker.e2_pro_0216
+    from:
+    - not_home
+    to:
+    - home
+  - trigger: state
+    entity_id:
+    - device_tracker.e2_pro_0216
+    from:
+    - home
+    to:
+    - not_home
   conditions:
-  - condition: state
-    entity_id: schedule.evening_commute
-    state:
-    - 'on'
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: schedule.morning_commute
+      state:
+      - 'on'
+    - condition: state
+      entity_id: schedule.evening_commute
+      state:
+      - 'on'
   actions:
   - choose:
     - conditions:
       - condition: state
         entity_id: device_tracker.e2_pro_0216
         state: home
-      - condition: device
-        device_id: 60c16963445d84c8a32bdface2f913dd
-        domain: cover
-        entity_id: b51d2b53b87fe5973143075338fa1cba
-        type: is_closed
+      - condition: state
+        entity_id: cover.david_s_car
+        state:
+        - closed
+        enabled: true
       sequence:
-      - device_id: 60c16963445d84c8a32bdface2f913dd
-        domain: cover
-        entity_id: b51d2b53b87fe5973143075338fa1cba
-        type: open
-      - action: notify.mobile_app_davids_iphone
+      - action: notify.mobile_app_davids_iphone_16_pro
         metadata: {}
         data:
-          message: 'Scooter automation executed '
+          message: Garage door opened because eScooter arrived
+      - action: cover.open_cover
+        metadata: {}
+        target:
+          entity_id: cover.david_s_car
+        data: {}
+        enabled: true
     - conditions:
       - condition: state
         entity_id: device_tracker.e2_pro_0216
         state: not_home
-      - condition: device
-        device_id: 60c16963445d84c8a32bdface2f913dd
-        domain: cover
-        entity_id: b51d2b53b87fe5973143075338fa1cba
-        type: is_open
+      - condition: state
+        entity_id: cover.david_s_car
+        state:
+        - open
+        enabled: true
       sequence:
-      - device_id: 60c16963445d84c8a32bdface2f913dd
-        domain: cover
-        entity_id: b51d2b53b87fe5973143075338fa1cba
-        type: close
-      - action: notify.mobile_app_davids_iphone
+      - action: notify.mobile_app_davids_iphone_16_pro
         metadata: {}
         data:
-          message: 'Scooter automation executed '
+          message: Garage door close because eScooter left
+      - action: cover.close_cover
+        metadata: {}
+        target:
+          entity_id: cover.david_s_car
+        data: {}
   mode: single
 - id: '1754924767384'
-  alias: Jacob Sensor Battery Low
+  alias: Battery Low - Jacob's Bedroom Sensor
   description: ''
   triggers:
-  - type: battery_level
-    device_id: cfe332e99ea32c67c8618d3e9c68c112
-    entity_id: 99c88a39157ebe4338a4eda681c15c45
-    domain: sensor
-    trigger: device
+  - trigger: numeric_state
+    entity_id:
+    - sensor.jacob_s_bedroom_sensor_battery
     below: 10
   conditions: []
   actions:
@@ -771,14 +619,12 @@
       message: Jacob Sensor battery is below 10%
   mode: single
 - id: '1754925445057'
-  alias: Primary Bedroom Sensor Battery Low
+  alias: Battery Low - Primary Bedroom Sensor
   description: ''
   triggers:
-  - type: battery_level
-    device_id: 25ad93c1281c91e672d4f25a2fc7d1a6
-    entity_id: 1123b5f0d9391e76062b11776985a191
-    domain: sensor
-    trigger: device
+  - trigger: numeric_state
+    entity_id:
+    - sensor.primary_bedroom_sensor_battery
     below: 10
   conditions: []
   actions:
@@ -817,15 +663,15 @@
         image: /media/local/printy.jpg
   mode: single
 - id: '1764382802130'
-  alias: 'Basement Button Click: Toggle Basement Lights'
+  alias: Button - Basement
   description: ''
   triggers:
-  - domain: mqtt
-    device_id: 91254156db06d5263088775e266d07e6
-    type: action
-    subtype: single
-    trigger: device
-    alias: Button is single-clicked
+  - trigger: event
+    event_type: zha_event
+    event_data:
+      device_id: db99526e5298b7443854efc0af8aa877
+      command: toggle
+    alias: When Basement Button is clicked
   conditions: []
   actions:
   - metadata: {}
@@ -834,21 +680,26 @@
       entity_id:
       - light.basement_lamps
     action: light.toggle
-  mode: restart
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
+  mode: single
 - id: '1766330078608'
-  alias: Kitchen Cabinet Lights Schedule
+  alias: Lights - Kitchen Cabinets
   description: ''
   triggers:
   - trigger: state
     entity_id:
-    - schedule.cabinet_lights_schedule
-  - trigger: time_pattern
-    minutes: /5
+    - schedule.kitchen_cabinets_lights
+  - trigger: homeassistant
+    event: start
   conditions: []
   actions:
   - if:
     - condition: state
-      entity_id: schedule.cabinet_lights_schedule
+      entity_id: schedule.kitchen_cabinets_lights
       state:
       - 'on'
     then:
@@ -864,3 +715,114 @@
         entity_id: light.kitchen_cabinets
       data: {}
   mode: single
+- id: '1768245871262'
+  alias: Shades - Privacy
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: -00:30:00
+  - trigger: state
+    entity_id:
+    - schedule.privacy_shades_open
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.sun_solar_rising
+        state:
+        - 'on'
+      - condition: state
+        entity_id: schedule.privacy_shades_open
+        state:
+        - 'on'
+      sequence:
+      - action: cover.open_cover
+        metadata: {}
+        data: {}
+        target:
+          label_id:
+          - privacy
+        alias: Open Privacy Shades
+      alias: If Sun is rising and Schedule is active
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.sun_solar_rising
+        state:
+        - 'off'
+      sequence:
+      - action: cover.close_cover
+        metadata: {}
+        data: {}
+        target:
+          label_id: privacy_auto_close
+        alias: Close Privacy Shades
+      alias: If Sun is setting
+  mode: single
+- id: '1768247378753'
+  alias: Shades - Blackout
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+  - trigger: state
+    entity_id:
+    - schedule.blackout_shades_open_schedule
+    to:
+    - 'off'
+  conditions: []
+  actions:
+  - action: cover.close_cover
+    metadata: {}
+    target:
+      label_id: blackout_auto_close
+    data: {}
+    alias: Close Blackout Shades
+  mode: single
+- id: '1769391212832'
+  alias: Sync - Back Deck Lights
+  description: ''
+  use_blueprint:
+    path: aderusha/link_multiple_devices.yaml
+    input:
+      linked_entities:
+      - light.back_deck_outdoor_plug_string_lights
+      - light.deck_light
+- id: '1781560644926'
+  alias: Thermapro temperature
+  description: ''
+  triggers: []
+  conditions:
+  - condition: temperature.is_value
+    target:
+      entity_id: sensor.thermopro_probe_1_internal_tip_temperature
+    options:
+      behavior: any
+      for: 00:00:00
+      threshold:
+        type: above
+        value:
+          active_choice: number
+          unit_of_measurement: °F
+          number: 125
+  actions:
+  - action: notify.mobile_app_davids_iphone_16_pro
+    metadata: {}
+    data:
+      message: 'Probe at temperature '
+      title: Meat is cooked
+  mode: single
+- id: '1782780654041'
+  alias: Office Remote
+  description: ''
+  use_blueprint:
+    path: ericf89/shelly_blu_rc_button_4_zha.yaml
+    input:
+      remote: 171cb8ab11dac79cf08fe732a843de69
+      button_1_single:
+      - action: light.toggle
+        metadata: {}
+        target:
+          entity_id: light.office_lamps
+        data: {}

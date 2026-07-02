@@ -15,7 +15,7 @@ common:
     identifiers: [genmon_device]
     configuration_url: https://genmon.home.knowles.xyz
     suggested_area: "Back Yard"
-  
+
   dsc_door_window_sensor: &dsc-door-window-sensor-device
     name: "%(name)s"
     manufacturer: "DSC-Security"
@@ -62,7 +62,6 @@ templates:
       origin:
         name: "RTL 433"
         sw_version: "unknown"
-        support_url: "unknown"
 
   genmon_percentage_sensor:
     component: sensor
@@ -165,7 +164,7 @@ templates:
     component: device
     object_id: "dsc_panel"
     config:
-      name: "DSC Impassa control panel"
+      # name: "DSC Impassa control panel"
       state_topic: "rtl_433/devices/DSC-Security/"
       device:
         name: "DSC Impassa control panel"
@@ -176,10 +175,11 @@ templates:
       origin:
         name: "RTL 433"
         sw_version: "unknown"
-        support_url: "unknown"
       components:
         dsc_panel_connected:
           name: Connected
+          default_entity_id: "dsc_panel_connected"
+          unique_id: "%(default_entity_id)s"
           platform: binary_sensor
           device_class: connectivity
           state_topic: "rtl_433/devices/DSC-Security"

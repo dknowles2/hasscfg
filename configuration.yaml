@@ -28,6 +28,10 @@ logger:
   logs:
     custom_components.pitboss: debug
     pytboss: info
+    homeassistant.components.rest: debug
+    homeassistant.components.rest.sensor: debug
+    homeassistant.components.rest.binary_sensor: debug
+    homeassistant.components.rest_command: debug
   filters:
     custom_components.audiconnect.audi_connect_account:
       - ".*: 403, .*"

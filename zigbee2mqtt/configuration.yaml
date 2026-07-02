@@ -43,7 +43,7 @@ advanced:
 mqtt:
   server: mqtt://core-mosquitto:1883
   user: addons
-  password: eeheephai1Pun0eoshuoPah6doo4ootongoalooyo5AveeDohpi7Baevohchoodo
+  password: EemuaSaecuayai5deice4iujiux4uy5fah2fughei8voobahthie1oosohfai3no
 frontend:
   enabled: true
   port: 8099

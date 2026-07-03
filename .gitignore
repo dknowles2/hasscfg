@@ -10,6 +10,10 @@
 .cloud
 .spotify-token-cache
 .storage/*
+!.storage/core.area_registry
+!.storage/core.category_registry
+!.storage/core.floor_registry
+!.storage/core.label_registry
 !.storage/input_boolean
 !.storage/input_number
 !.storage/lovelace*

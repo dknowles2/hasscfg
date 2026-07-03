@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "minor_version": 3,
+  "key": "core.floor_registry",
+  "data": {
+    "floors": [
+      {
+        "aliases": [],
+        "floor_id": "house",
+        "icon": "mdi:home",
+        "level": null,
+        "name": "House",
+        "created_at": "2026-01-13T02:30:22.511878+00:00",
+        "modified_at": "2026-01-13T02:30:22.511880+00:00"
+      },
+      {
+        "aliases": [],
+        "floor_id": "downstairs",
+        "icon": "mdi:home-floor-1",
+        "level": 1,
+        "name": "Downstairs",
+        "created_at": "2026-01-12T02:55:19.366288+00:00",
+        "modified_at": "2026-01-12T02:55:19.366290+00:00"
+      },
+      {
+        "aliases": [],
+        "floor_id": "upstairs",
+        "icon": "mdi:home-floor-2",
+        "level": 2,
+        "name": "Upstairs",
+        "created_at": "2026-01-12T03:45:05.669184+00:00",
+        "modified_at": "2026-01-12T03:45:05.669186+00:00"
+      },
+      {
+        "aliases": [],
+        "floor_id": "basement",
+        "icon": "mdi:home-floor-b",
+        "level": 0,
+        "name": "Basement",
+        "created_at": "2026-01-12T03:46:40.406220+00:00",
+        "modified_at": "2026-01-12T03:46:40.406222+00:00"
+      },
+      {
+        "aliases": [],
+        "floor_id": "outside",
+        "icon": "mdi:forest",
+        "level": 1,
+        "name": "Outside",
+        "created_at": "2026-01-12T04:39:26.370314+00:00",
+        "modified_at": "2026-01-12T04:39:26.370317+00:00"
+      },
+      {
+        "aliases": [],
+        "floor_id": "attic",
+        "icon": "mdi:home-floor-a",
+        "level": 3,
+        "name": "Attic",
+        "created_at": "2026-01-12T04:50:38.527659+00:00",
+        "modified_at": "2026-01-12T04:50:38.527662+00:00"
+      }
+    ]
+  }
+}

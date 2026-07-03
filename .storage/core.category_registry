@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "minor_version": 2,
+  "key": "core.category_registry",
+  "data": {
+    "categories": {
+      "helpers": [
+        {
+          "category_id": "01KES6EYX9GDSJCM9VAK1286WJ",
+          "created_at": "2026-01-12T13:31:24.969121+00:00",
+          "icon": "mdi:calendar-clock",
+          "modified_at": "2026-01-12T13:31:24.969123+00:00",
+          "name": "Schedule"
+        },
+        {
+          "category_id": "01KES6FGQPBE2D45TQFS7E88VG",
+          "created_at": "2026-01-12T13:31:43.222422+00:00",
+          "icon": "mdi:account-group",
+          "modified_at": "2026-01-12T13:31:43.222425+00:00",
+          "name": "Group"
+        },
+        {
+          "category_id": "01KESP1G1VJYPDJQCEWEN2KR78",
+          "created_at": "2026-01-12T18:03:40.987738+00:00",
+          "icon": "mdi:mirror",
+          "modified_at": "2026-01-12T18:03:40.987740+00:00",
+          "name": "Doppelgänger"
+        },
+        {
+          "category_id": "01KF3N61EETHZEQXN343TK32FE",
+          "created_at": "2026-01-16T15:01:05.614276+00:00",
+          "icon": "mdi:radar",
+          "modified_at": "2026-01-16T15:01:05.614281+00:00",
+          "name": "Presence"
+        }
+      ],
+      "automation": [
+        {
+          "category_id": "01KWJ79QJ31XTBD0R46RCNRDJD",
+          "created_at": "2026-07-02T20:11:06.691568+00:00",
+          "icon": "mdi:alert",
+          "modified_at": "2026-07-02T20:11:06.691570+00:00",
+          "name": "Notification"
+        },
+        {
+          "category_id": "01KWJ7ASNR504FWAA2BMG4CXWT",
+          "created_at": "2026-07-02T20:11:41.624310+00:00",
+          "icon": "mdi:lightbulb",
+          "modified_at": "2026-07-02T20:11:41.624313+00:00",
+          "name": "Lights"
+        },
+        {
+          "category_id": "01KWJ7BN0PF0PAWX3T8YZ05KE8",
+          "created_at": "2026-07-02T20:12:09.622921+00:00",
+          "icon": "mdi:radar",
+          "modified_at": "2026-07-02T20:12:09.622923+00:00",
+          "name": "Presense"
+        },
+        {
+          "category_id": "01KWJ7C5J6DX1FYW5R6AFHM2Q5",
+          "created_at": "2026-07-02T20:12:26.566345+00:00",
+          "icon": "mdi:roller-shade",
+          "modified_at": "2026-07-02T20:12:26.566349+00:00",
+          "name": "Shades"
+        },
+        {
+          "category_id": "01KWJ7DDE32E3SKSKAQJVB2H2J",
+          "created_at": "2026-07-02T20:13:07.395138+00:00",
+          "icon": "mdi:remote",
+          "modified_at": "2026-07-02T20:13:07.395141+00:00",
+          "name": "Buttons & Remotes"
+        }
+      ]
+    }
+  }
+}

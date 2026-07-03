@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "minor_version": 2,
+  "key": "core.label_registry",
+  "data": {
+    "labels": [
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:incognito",
+        "label_id": "privacy",
+        "name": "Privacy Auto-Open",
+        "created_at": "2026-01-12T12:49:46.468628+00:00",
+        "modified_at": "2026-01-12T19:32:03.179849+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:power-socket-us",
+        "label_id": "plug",
+        "name": "Plug",
+        "created_at": "2026-01-12T13:25:53.959241+00:00",
+        "modified_at": "2026-01-12T13:25:53.959244+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:calendar-clock",
+        "label_id": "schedule",
+        "name": "Schedule",
+        "created_at": "2026-01-12T13:30:41.933789+00:00",
+        "modified_at": "2026-01-12T13:30:41.933792+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:gesture-tap-button",
+        "label_id": "button",
+        "name": "Button",
+        "created_at": "2026-01-12T13:45:07.255387+00:00",
+        "modified_at": "2026-01-12T13:45:07.255390+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:brightness-5",
+        "label_id": "blackout",
+        "name": "Blackout Auto-Open",
+        "created_at": "2026-01-12T13:52:13.136953+00:00",
+        "modified_at": "2026-01-12T19:32:38.285959+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:antenna",
+        "label_id": "sensor",
+        "name": "Sensor",
+        "created_at": "2026-01-12T14:09:07.211669+00:00",
+        "modified_at": "2026-01-12T14:09:07.211672+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:incognito-off",
+        "label_id": "privacy_auto_close",
+        "name": "Privacy Auto-Close",
+        "created_at": "2026-01-12T19:30:38.230151+00:00",
+        "modified_at": "2026-01-12T19:32:06.522116+00:00"
+      },
+      {
+        "color": null,
+        "description": null,
+        "icon": "mdi:brightness-7",
+        "label_id": "blackout_auto_close",
+        "name": "Blackout Auto-Close",
+        "created_at": "2026-01-12T19:31:58.938077+00:00",
+        "modified_at": "2026-01-12T19:31:58.938080+00:00"
+      }
+    ]
+  }
+}

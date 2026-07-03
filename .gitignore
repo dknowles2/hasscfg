@@ -9,7 +9,12 @@
 .cache/**
 .cloud
 .spotify-token-cache
-.storage
+.storage/*
+!.storage/input_boolean
+!.storage/input_number
+!.storage/lovelace*
+!.storage/person
+!.storage/schedule
 .uuid
 aircast.xml
 deps

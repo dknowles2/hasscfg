@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "input_number",
+  "data": {
+    "items": [
+      {
+        "id": "living_room_lux_lower_bound",
+        "min": 0.0,
+        "max": 100.0,
+        "name": "Living Room Lux Lower Bound",
+        "unit_of_measurement": "lx",
+        "mode": "box",
+        "icon": "mdi:brightness-7",
+        "step": 1.0
+      },
+      {
+        "id": "living_room_lux_upper_bound",
+        "min": 0.0,
+        "max": 100.0,
+        "name": "Living Room Lux Upper Bound",
+        "icon": "mdi:brightness-5",
+        "mode": "box",
+        "unit_of_measurement": "lx",
+        "step": 1.0
+      }
+    ]
+  }
+}

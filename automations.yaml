@@ -1,19 +1,3 @@
-- id: letsencrypt-renewal
-  alias: LetsEncrypt renewal
-  trigger:
-  - platform: time
-    at: 00:00:00
-  action:
-  - service: hassio.addon_stop
-    data:
-      addon: core_nginx_proxy
-  - service: hassio.addon_restart
-    data:
-      addon: core_letsencrypt
-  - delay: 00:01:30
-  - service: hassio.addon_start
-    data:
-      addon: core_nginx_proxy
 - id: '1666221462797'
   alias: Lights - Outdoor Holiday Lights
   description: ''
@@ -110,55 +94,15 @@
       message: Doorbell pressed
       image: '{{ trigger.event.data.attachment.image }}'
   mode: restart
-- id: '1680704667983'
-  alias: Laundry - Washer Run Completed
+- id: '1783007007551'
+  alias: Laundry Notifications
   description: ''
-  triggers:
-  - entity_id:
-    - sensor.washer_current_status
-    from:
-    to: end
-    trigger: state
-  conditions:
-  - condition: and
-    conditions:
-    - condition: state
-      entity_id: person.david_knowles
-      state:
-      - home
-    - condition: or
-      conditions:
-      - condition: state
-        entity_id: sensor.dryer_current_status
-        state: power_off
-      - condition: state
-        entity_id: sensor.dryer_current_status
-        state: end
-  actions:
-  - action: notify.mobile_app_davids_iphone_16_pro
-    metadata: {}
-    data:
-      message: Washer is done
-  mode: restart
-- id: '1680705374664'
-  alias: Laundry - Dryer Run Completed
-  description: ''
-  triggers:
-  - entity_id:
-    - sensor.dryer_current_status
-    to: end
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: person.david_knowles
-    state:
-    - home
-  actions:
-  - action: notify.mobile_app_davids_iphone_16_pro
-    metadata: {}
-    data:
-      message: Dryer is done
-  mode: restart
+  use_blueprint:
+    path: local/laundry_live_activity.yaml
+    input:
+      presence_entity: person.david_knowles
+      notify_service: notify.mobile_app_davids_iphone_16_pro
+      live_activity_enabled: true
 - id: '1703026402697'
   alias: Water Leak Detected
   description: ''
@@ -204,22 +148,6 @@
       - light.office_lamps
     action: light.toggle
   mode: restart
-- id: '1719230656280'
-  alias: Restart Frigate
-  description: Restarts Frigate at 5am and 3pm
-  trigger:
-  - platform: time
-    at: 05:00:00
-  - platform: time
-    at: '15:00:00'
-  condition: []
-  action:
-  - service: mqtt.publish
-    metadata: {}
-    data:
-      topic: frigate/restart
-      payload: '1'
-  mode: single
 - id: '1723471744681'
   alias: Presence - Cleaners Arrived
   description: ''
@@ -789,30 +717,6 @@
       linked_entities:
       - light.back_deck_outdoor_plug_string_lights
       - light.deck_light
-- id: '1781560644926'
-  alias: Thermapro temperature
-  description: ''
-  triggers: []
-  conditions:
-  - condition: temperature.is_value
-    target:
-      entity_id: sensor.thermopro_probe_1_internal_tip_temperature
-    options:
-      behavior: any
-      for: 00:00:00
-      threshold:
-        type: above
-        value:
-          active_choice: number
-          unit_of_measurement: °F
-          number: 125
-  actions:
-  - action: notify.mobile_app_davids_iphone_16_pro
-    metadata: {}
-    data:
-      message: 'Probe at temperature '
-      title: Meat is cooked
-  mode: single
 - id: '1782780654041'
   alias: Office Remote
   description: ''
@@ -826,3 +730,119 @@
         target:
           entity_id: light.office_lamps
         data: {}
+- id: '1751500001'
+  alias: ThermoPro - Probe Detected
+  description: Sends or clears actionable notification based on probe availability
+  triggers:
+    - trigger: state
+      entity_id:
+        - sensor.thermopro_black_probe_ambient_temperature
+        - sensor.thermopro_white_probe_ambient_temperature
+      from: unavailable
+      id: probe_online
+    - trigger: state
+      entity_id:
+        - sensor.thermopro_black_probe_ambient_temperature
+        - sensor.thermopro_white_probe_ambient_temperature
+      to: unavailable
+      id: probe_offline
+  conditions: []
+  actions:
+    - variables:
+        tag: "thermopro_{{ trigger.entity_id.split('_')[1] }}_probe"
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: probe_online
+          sequence:
+            - action: notify.mobile_app_davids_iphone_16_pro
+              data:
+                title: ThermoPro Probes Online
+                message: Set up monitoring in the Tools dashboard.
+                data:
+                  tag: "{{ tag }}"
+                  actions:
+                    - action: URI
+                      title: Set Up
+                      uri: /dashboard-tools/meat-probe
+        - conditions:
+            - condition: trigger
+              id: probe_offline
+          sequence:
+            - action: notify.mobile_app_davids_iphone_16_pro
+              data:
+                message: clear_notification
+                data:
+                  tag: "{{ tag }}"
+  mode: single
+- id: '1751500002'
+  alias: ThermoPro - Start Monitoring
+  description: Starts probe monitoring when user responds to probe detected notification
+  triggers:
+  - trigger: event
+    event_type: mobile_app_notification_action
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.event.data.action.startswith(''PROBE_'') }}'
+  actions:
+  - variables:
+      parts: '{{ trigger.event.data.action.split(''_'') }}'
+      probe: '{{ trigger.event.data.action.split(''_'')[1] | title }}'
+      temp_raw: '{{ trigger.event.data.action.split(''_'')[2] }}'
+      target_temp: "{% if trigger.event.data.action.split('_')[2] == 'CUSTOM' %}\n
+        \ {{ trigger.event.data.reply_text | int(0) }}\n{% else %}\n  {{ trigger.event.data.action.split('_')[2]
+        | int }}\n{% endif %}"
+      sensor: '{{ ''Internal Tip'' if trigger.event.data.action.split(''_'')[1] ==
+        ''WHITE'' else ''Internal Center'' }}'
+  - action: script.monitor_meat_probe
+    data:
+      probe: '{{ probe }}'
+      sensor: '{{ sensor }}'
+      target_temp: '{{ target_temp }}'
+  mode: single
+- id: '1783022818951'
+  alias: Frigate Notifications - Driveway
+  description: ''
+  use_blueprint:
+    path: SgtBatten/Stable.yaml
+    input:
+      camera:
+      - camera.driveway
+      notify_device: 2a27233f44fb7770ee97377d85a716bc
+      alert_once: true
+      final_update: false
+      video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
+      icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
+        else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
+      ios_live_view: camera.driveway
+      zone_filter: true
+      zones: []
+      labels:
+      - car
+      - person
+      attachment: '{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg'
+      base_url: https://casa.knowles.xyz
+- id: '1783022970608'
+  alias: Frigate Notifications - Front Porch
+  description: ''
+  use_blueprint:
+    path: SgtBatten/Stable.yaml
+    input:
+      camera:
+      - camera.front_porch
+      notify_device: 2a27233f44fb7770ee97377d85a716bc
+      alert_once: true
+      final_update: false
+      video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
+      icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
+        else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
+      ios_live_view: camera.driveway
+      zone_filter: true
+      zones: []
+      labels:
+      - person
+      - package
+      attachment: '{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg'
+      initial_delay: 1
+      base_url: https://casa.knowles.xyz
+      attachment_2: ''

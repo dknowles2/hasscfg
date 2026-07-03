@@ -47,3 +47,36 @@ logger:
 #   password: !secret influxdb_password
 #   max_retries: 3
 #   default_measurement: state
+
+input_select:
+  meat_probe_white_sensor:
+    name: White Probe Sensor
+    options:
+      - Internal Tip
+      - Internal End
+      - Ambient
+    initial: Internal Tip
+  meat_probe_black_sensor:
+    name: Black Probe Sensor
+    options:
+      - Internal Center
+      - Ambient
+    initial: Internal Center
+
+input_number:
+  meat_probe_white_target_temp:
+    name: White Probe Target Temp
+    min: 100
+    max: 250
+    step: 1
+    unit_of_measurement: '°F'
+    initial: 165
+    mode: box
+  meat_probe_black_target_temp:
+    name: Black Probe Target Temp
+    min: 100
+    max: 250
+    step: 1
+    unit_of_measurement: '°F'
+    initial: 165
+    mode: box

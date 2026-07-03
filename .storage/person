@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "minor_version": 1,
+  "key": "person",
+  "data": {
+    "items": [
+      {
+        "id": "david_knowles",
+        "name": "David Knowles",
+        "user_id": "cc22e3428ba742dfb0f4040a3af0719d",
+        "device_trackers": [
+          "device_tracker.davids_iphone_16_pro",
+          "device_tracker.davids_ipad_air"
+        ]
+      },
+      {
+        "id": "sarah_knowles",
+        "name": "Sarah Knowles",
+        "device_trackers": [
+          "device_tracker.sarah_s_iphone"
+        ],
+        "user_id": "8048b02710ac40b7b6d184ede1128584",
+        "picture": null
+      },
+      {
+        "id": "bathroom_kiosk",
+        "name": "Bathroom Kiosk",
+        "device_trackers": [],
+        "user_id": "c4f06a8f93b644ca8357e5a78962934a",
+        "picture": null
+      },
+      {
+        "id": "office_kiosk",
+        "name": "Office Kiosk",
+        "device_trackers": [],
+        "user_id": "b9b55e35c7224b44a611fcc18a201e14",
+        "picture": null
+      }
+    ]
+  }
+}

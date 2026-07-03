@@ -82,3 +82,100 @@ set_shade_position:
   description: ''
   mode: parallel
   max: 30
+monitor_meat_probe:
+  alias: Monitor Meat Probe
+  description: Monitors a ThermoPro probe and notifies when target temperature is
+    reached
+  mode: parallel
+  max: 2
+  fields:
+    probe:
+      name: Probe
+      required: true
+    sensor:
+      name: Sensor
+      required: true
+      default: Internal Tip
+    target_temp:
+      name: Target Temperature (°F)
+      required: true
+      selector:
+        number:
+          min: 100
+          max: 250
+          unit_of_measurement: °F
+  sequence:
+  - variables:
+      entity_id: sensor.thermopro_{{ probe | lower | trim }}_probe_{{ sensor | lower
+        | trim | replace(' ', '_') }}_temperature
+  - if:
+    - condition: template
+      value_template: '{{ states(entity_id) in [''unknown'', ''unavailable''] }}'
+    then:
+    - action: notify.mobile_app_davids_iphone_16_pro
+      data:
+        message: Can't find sensor {{ entity_id }} — check probe/sensor selection.
+    - stop: Entity unavailable
+  - action: notify.mobile_app_davids_iphone_16_pro
+    data:
+      message: Monitoring {{ probe }} Probe ({{ sensor }}) — target {{ target_temp
+        }}°F
+      data:
+        push:
+          live_activity_update_type: start
+          activity_id: meat_probe_{{ probe | lower }}
+          attributes:
+            probe: '{{ probe }}'
+            sensor: '{{ sensor }}'
+            target_temp: '{{ target_temp }}'
+          content_state:
+            current_temp: '{{ states(entity_id) | float | round(1) }}'
+            target_temp: '{{ target_temp }}'
+  - repeat:
+      while:
+      - condition: template
+        value_template: '{{ states(entity_id) | float(0) < target_temp | float }}'
+      sequence:
+      - delay:
+          seconds: 60
+      - action: notify.mobile_app_davids_iphone_16_pro
+        data:
+          message: ''
+          data:
+            push:
+              live_activity_update_type: update
+              activity_id: meat_probe_{{ probe | lower }}
+              content_state:
+                current_temp: '{{ states(entity_id) | float | round(1) }}'
+                target_temp: '{{ target_temp }}'
+  - action: notify.mobile_app_davids_iphone_16_pro
+    data:
+      title: Meat is ready!
+      message: '{{ probe }} Probe hit {{ target_temp }}°F'
+      data:
+        push:
+          live_activity_update_type: end
+          activity_id: meat_probe_{{ probe | lower }}
+          interruption-level: critical
+          sound:
+            name: default
+            critical: 1
+            volume: 1
+start_white_probe_monitoring:
+  alias: Start White Probe Monitoring
+  sequence:
+    - action: script.monitor_meat_probe
+      data:
+        probe: White
+        sensor: "{{ states('input_select.meat_probe_white_sensor') }}"
+        target_temp: "{{ states('input_number.meat_probe_white_target_temp') | int }}"
+  mode: single
+start_black_probe_monitoring:
+  alias: Start Black Probe Monitoring
+  sequence:
+    - action: script.monitor_meat_probe
+      data:
+        probe: Black
+        sensor: "{{ states('input_select.meat_probe_black_sensor') }}"
+        target_temp: "{{ states('input_number.meat_probe_black_target_temp') | int }}"
+  mode: single

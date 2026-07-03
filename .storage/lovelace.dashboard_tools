@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_tools",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Meat Probe",
+          "path": "meat-probe",
+          "icon": "mdi:thermometer",
+          "cards": [
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "glance",
+                  "title": "White Probe",
+                  "entities": [
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_tip_temperature",
+                      "name": "Internal Tip"
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_end_temperature",
+                      "name": "Internal End"
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_ambient_temperature",
+                      "name": "Ambient"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "input_select.meat_probe_white_sensor",
+                      "name": "Sensor"
+                    },
+                    {
+                      "entity": "input_number.meat_probe_white_target_temp",
+                      "name": "Target Temp"
+                    }
+                  ]
+                },
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Chicken",
+                      "icon": "mdi:food-drumstick",
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "input_number.set_value",
+                        "service_data": {
+                          "entity_id": "input_number.meat_probe_white_target_temp",
+                          "value": 165
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Pork",
+                      "icon": "mdi:food",
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "input_number.set_value",
+                        "service_data": {
+                          "entity_id": "input_number.meat_probe_white_target_temp",
+                          "value": 145
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Beef",
+                      "icon": "mdi:food-steak",
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "input_number.set_value",
+                        "service_data": {
+                          "entity_id": "input_number.meat_probe_white_target_temp",
+                          "value": 135
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Start",
+                      "icon": "mdi:play",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.start_white_probe_monitoring"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Stop",
+                      "icon": "mdi:stop",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.turn_off",
+                        "service_data": {
+                          "entity_id": "script.monitor_meat_probe"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "glance",
+                  "title": "Black Probe",
+                  "entities": [
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_center_temperature",
+                      "name": "Internal Center"
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_ambient_temperature",
+                      "name": "Ambient"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "input_select.meat_probe_black_sensor",
+                      "name": "Sensor"
+                    },
+                    {
+                      "entity": "input_number.meat_probe_black_target_temp",
+                      "name": "Target Temp"
+                    }
+                  ]
+                },
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Chicken",
+                      "icon": "mdi:food-drumstick",
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "input_number.set_value",
+                        "service_data": {
+                          "entity_id": "input_number.meat_probe_black_target_temp",
+                          "value": 165
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Pork",
+                      "icon": "mdi:food",
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "input_number.set_value",
+                        "service_data": {
+                          "entity_id": "input_number.meat_probe_black_target_temp",
+                          "value": 145
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Beef",
+                      "icon": "mdi:food-steak",
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "input_number.set_value",
+                        "service_data": {
+                          "entity_id": "input_number.meat_probe_black_target_temp",
+                          "value": 135
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Start",
+                      "icon": "mdi:play",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.start_black_probe_monitoring"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Stop",
+                      "icon": "mdi:stop",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "call-service",
+                        "service": "script.turn_off",
+                        "service_data": {
+                          "entity_id": "script.monitor_meat_probe"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

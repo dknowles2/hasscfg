@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_kiosk",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Home",
+          "type": "sections",
+          "badges": [
+            {
+              "type": "entity",
+              "show_name": true,
+              "show_state": true,
+              "show_icon": true,
+              "entity": "sensor.washer_remaining_time",
+              "visibility": [
+                {
+                  "condition": "state",
+                  "entity": "sensor.washer_current_status",
+                  "state_not": "power_off"
+                }
+              ],
+              "name": {
+                "type": "device"
+              },
+              "color": "blue",
+              "time_format": {
+                "type": "total",
+                "style": "short"
+              }
+            },
+            {
+              "type": "entity",
+              "show_name": true,
+              "show_state": true,
+              "show_icon": true,
+              "entity": "sensor.dryer_remaining_time",
+              "visibility": [
+                {
+                  "condition": "state",
+                  "entity": "sensor.dryer_current_status",
+                  "state_not": "power_off"
+                }
+              ],
+              "icon": "mdi:tumble-dryer",
+              "show_entity_picture": false,
+              "color": "orange",
+              "time_format": {
+                "type": "total",
+                "style": "short"
+              },
+              "name": {
+                "type": "device"
+              }
+            }
+          ],
+          "cards": [],
+          "visible": [
+            {
+              "user": "c4f06a8f93b644ca8357e5a78962934a"
+            },
+            {
+              "user": "cc22e3428ba742dfb0f4040a3af0719d"
+            },
+            {
+              "user": "b9b55e35c7224b44a611fcc18a201e14"
+            }
+          ],
+          "subview": false,
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "picture",
+                  "image_entity": "image.front_porch_person"
+                }
+              ],
+              "visibility": [
+                {
+                  "condition": "numeric_state",
+                  "above": 0,
+                  "entity": "sensor.front_porch_zone_person_occupancy_last_1_min"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "visibility": [
+                {
+                  "condition": "numeric_state",
+                  "above": 0,
+                  "entity": "sensor.driveway_zone_person_occupancy_last_1_min"
+                }
+              ],
+              "cards": [
+                {
+                  "type": "picture",
+                  "image_entity": "image.driveway_person"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "custom:clock-weather-card",
+                  "entity": "weather.forecast_home",
+                  "animated_icon": false
+                },
+                {
+                  "entities": [
+                    "calendar.david_knowles_personal"
+                  ],
+                  "compact_days_to_show": 3,
+                  "compact_events_to_show": 5,
+                  "compact_events_complete_days": true,
+                  "filter_duplicates": true,
+                  "split_multiday_events": true,
+                  "day_separator_width": "1px",
+                  "month_separator_width": "1px",
+                  "show_countdown": true,
+                  "show_single_allday_time": false,
+                  "show_end_time": false,
+                  "show_location": false,
+                  "weather": {
+                    "position": "date",
+                    "date": {
+                      "show_conditions": true,
+                      "show_high_temp": true,
+                      "show_low_temp": true,
+                      "icon_size": "14px",
+                      "font_size": "12px",
+                      "color": "var(--primary-text-color)"
+                    },
+                    "event": {
+                      "show_conditions": true,
+                      "show_temp": true,
+                      "icon_size": "14px",
+                      "font_size": "12px",
+                      "color": "var(--primary-text-color)"
+                    }
+                  },
+                  "type": "custom:calendar-card-pro"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "visibility": [
+                {
+                  "condition": "state",
+                  "entity": "schedule.morning_commute",
+                  "state": "on"
+                }
+              ],
+              "cards": [
+                {
+                  "type": "custom:auto-entities",
+                  "title": "Next Trains",
+                  "filter": {
+                    "include": [
+                      {
+                        "entity_id": "/sensor.next_train_short_hills.*/",
+                        "attributes": {
+                          "destination": "/New.York|Hoboken/"
+                        }
+                      }
+                    ]
+                  },
+                  "card": {
+                    "type": "custom:flex-table-card",
+                    "title": "Train Departures",
+                    "columns": [
+                      {
+                        "name": "Departure",
+                        "data": "departureDate"
+                      },
+                      {
+                        "name": "Destination",
+                        "data": "destination"
+                      },
+                      {
+                        "name": "Status",
+                        "data": "status"
+                      },
+                      {
+                        "name": "Message",
+                        "data": "inlineMessage"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "custom:auto-entities",
+                  "card": {
+                    "type": "logbook"
+                  },
+                  "filter": {
+                    "include": [
+                      {
+                        "options": {},
+                        "domain": "/cover|door|light|lock|person/"
+                      },
+                      {
+                        "options": {},
+                        "integration": "01KESGEMCHV14Y2E4BMD9XGC5H",
+                        "domain": "device_tracker"
+                      }
+                    ],
+                    "exclude": []
+                  }
+                },
+                {
+                  "type": "custom:entity-progress-card",
+                  "entity": "sensor.q6_e_tron_r_state_of_charge",
+                  "grid_options": {
+                    "columns": "full"
+                  },
+                  "visibility": [
+                    {
+                      "condition": "state",
+                      "entity": "sensor.q6_e_tron_r_charging_state",
+                      "state": "charging"
+                    }
+                  ]
+                },
+                {
+                  "type": "custom:entity-progress-card",
+                  "entity": "sensor.a1mini_0309ca561103443_print_progress",
+                  "grid_options": {
+                    "columns": "full"
+                  },
+                  "visibility": [
+                    {
+                      "condition": "state",
+                      "entity": "sensor.a1mini_0309ca561103443_print_status",
+                      "state": "running"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "max_columns": 2,
+          "dense_section_placement": true
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace_resources",
+  "data": {
+    "items": [
+      {
+        "id": "c9160d6a0c354cac923539e44a8edc82",
+        "url": "/hacsfiles/lovelace-auto-entities/auto-entities.js?hacstag=1677445841161",
+        "type": "module"
+      },
+      {
+        "id": "81d147af873a4007ba15e5c5a5f1f1cf",
+        "url": "/hacsfiles/apexcharts-card/apexcharts-card.js?hacstag=331701152223",
+        "type": "module"
+      },
+      {
+        "id": "a2217e379899434d9d2b2d2d94a45a9d",
+        "url": "/hacsfiles/lovelace-card-mod/card-mod.js?hacstag=190927524421",
+        "type": "module"
+      },
+      {
+        "id": "b5be0f4aad344757ac923986ff315625",
+        "url": "/hacsfiles/calendar-card-pro/calendar-card-pro.js?hacstag=939311749320",
+        "type": "module"
+      },
+      {
+        "id": "599f58661d344781a0334e6bfa178434",
+        "url": "/hacsfiles/clock-weather-card/clock-weather-card.js?hacstag=522634019293",
+        "type": "module"
+      },
+      {
+        "id": "bab9b48f93c34ac797fa41d867370d43",
+        "url": "/hacsfiles/weather-radar-card/weather-radar-card.js?hacstag=487680971364",
+        "type": "module"
+      },
+      {
+        "id": "d2bf85e5a1d74348971cfdeed36c7a0a",
+        "url": "/hacsfiles/flex-table-card/flex-table-card.js?hacstag=15629205814",
+        "type": "module"
+      },
+      {
+        "id": "2824d08d6cec4472ad40db835e705001",
+        "url": "/bambu_lab/ha-bambulab-cards.js?v=0.6.51",
+        "type": "module"
+      },
+      {
+        "id": "3dca228bab134c4688bc922828ae9bdb",
+        "url": "/local/f1-sensor-live-data-card/f1-sensor-live-data-card.js?v=f72930d77a0c",
+        "type": "module"
+      },
+      {
+        "id": "e2f46a07012d41c0ac6af702748ba77a",
+        "url": "/hacsfiles/vehicle-status-card/vehicle-status-card.js?hacstag=8593716631250",
+        "type": "module"
+      },
+      {
+        "id": "3bc0b1da774648d0ae50888cce5603a9",
+        "url": "/hacsfiles/lovelace-entity-progress-card/entity-progress-card.js?hacstag=908868522152",
+        "type": "module"
+      }
+    ]
+  }
+}

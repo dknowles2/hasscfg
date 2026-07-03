@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_unavailable",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Unavailable Shades",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:auto-entities",
+                  "card": {
+                    "type": "entities"
+                  },
+                  "filter": {
+                    "include": [
+                      {
+                        "options": {},
+                        "state": "unavailable",
+                        "domain": "cover"
+                      }
+                    ],
+                    "exclude": []
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "New section"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

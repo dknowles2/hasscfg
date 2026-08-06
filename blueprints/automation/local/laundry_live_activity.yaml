@@ -2,13 +2,16 @@ blueprint:
   name: Laundry Notifications
   description: >-
     Tracks the washer and dryer cycles via the iOS Companion App's Live
-    Activities. While you're home, starts/updates a Live Activity per
-    appliance showing the current phase, a progress bar, and a countdown
-    driven by each appliance's remaining-time sensor. Clears the activity
-    when you leave home or the cycle finishes, and reinstates it if you
-    return home mid-cycle. Sends a completion push notification per
-    appliance — the washer's is held until the dryer is also idle, since you
-    can't empty the washer while the dryer's still going.
+    Activities. While you're home, shows a Live Activity with the current
+    phase, a progress bar, and a countdown driven by that appliance's
+    remaining-time sensor. Only one activity is on screen at a time: the
+    dryer wins while it's mid-cycle, and the washer's card is restored when
+    the dryer goes idle. Clears the activity when you leave home or the
+    cycle finishes, and reinstates it if you return home mid-cycle. Sends a
+    completion push notification per appliance — the washer's is held until
+    the dryer is also idle, since you can't empty the washer while the
+    dryer's still going. Countdown refreshes are sent silently; only phase
+    changes and completions alert.
 
     Entities and appliance-specific details (icons, colors, tags, gate
     logic) are hardcoded for this household's washer/dryer; only presence
@@ -40,6 +43,12 @@ blueprint:
 variables:
   notify_service: !input notify_service
   live_activity_enabled: !input live_activity_enabled
+  # States that count as "this appliance is mid-cycle".
+  active_states:
+    - running
+    - rinsing
+    - spinning
+    - cooling
   appliances:
     - status_entity: sensor.washer_current_status
       remaining_time_entity: sensor.washer_remaining_time
@@ -53,6 +62,9 @@ variables:
       gate_states:
         - power_off
         - end
+      # The dryer outranks the washer on screen: while the dryer is
+      # mid-cycle the washer's Live Activity is hidden.
+      suppressed_by: sensor.dryer_current_status
     - status_entity: sensor.dryer_current_status
       remaining_time_entity: sensor.dryer_remaining_time
       total_time_entity: sensor.dryer_total_time
@@ -63,6 +75,8 @@ variables:
       completion_message: Dryer is done
       gate_entity: ''
       gate_states: []
+      # Nothing outranks the dryer.
+      suppressed_by: ''
 
 triggers:
   - id: status_active
@@ -131,7 +145,8 @@ actions:
           {% for appliance in appliances %}
             {% if trigger.entity_id in [appliance.status_entity,
                                         appliance.remaining_time_entity,
-                                        appliance.gate_entity] %}
+                                        appliance.gate_entity,
+                                        appliance.suppressed_by] %}
               {% set ns.selected = ns.selected + [appliance] %}
             {% endif %}
           {% endfor %}
@@ -149,6 +164,7 @@ actions:
             completion_message: "{{ repeat.item.completion_message }}"
             gate_entity: "{{ repeat.item.gate_entity }}"
             gate_states: "{{ repeat.item.gate_states }}"
+            suppressed_by: "{{ repeat.item.suppressed_by }}"
         - choose:
             - conditions:
                 - condition: trigger
@@ -212,60 +228,87 @@ actions:
                     - conditions:
                         - condition: template
                           value_template: >-
-                            {{ current_state in ['running', 'rinsing', 'spinning',
-                            'cooling'] and live_activity_enabled }}
+                            {{ current_state in active_states and
+                            live_activity_enabled }}
                       sequence:
-                        - choose:
-                            - conditions:
-                                - condition: template
-                                  value_template: >-
-                                    {{ remaining_ts > 0 and minutes_left > 0 and
-                                    total_time_sec > 0 }}
-                              sequence:
-                                - action: "{{ notify_service }}"
-                                  data:
-                                    title: "{{ device_name }}"
-                                    message: "{{ phase }} · {{ minutes_left }} min left"
-                                    data:
-                                      tag: "{{ tag }}"
-                                      live_update: true
-                                      notification_icon: "{{ notification_icon }}"
-                                      notification_icon_color: "{{ color }}"
-                                      color: "{{ color }}"
-                                      chronometer: true
-                                      when: "{{ remaining_ts | int }}"
-                                      when_relative: false
-                                      progress: "{{ elapsed_sec }}"
-                                      progress_max: "{{ total_time_sec }}"
-                                      # Alert only when the appliance changes
-                                      # phase. Countdown refreshes and presence
-                                      # changes go out silently at the lower
-                                      # priority, which is also what keeps iOS
-                                      # from throttling delivery.
-                                      silent: "{{ trigger.id != 'status_active' }}"
-                          # Countdown data is missing or nonsensical. Post the
-                          # plain phase-only card when the cycle is starting or
-                          # we've just come home, but stay silent otherwise —
-                          # otherwise a momentarily bad remaining-time reading
-                          # flips the notification between the countdown card
-                          # and this one, re-alerting each way.
-                          default:
+                        # Only one Live Activity is on screen at a time. While
+                        # the dryer is mid-cycle the washer's card is pulled;
+                        # it comes back by itself once the dryer goes idle,
+                        # because a dryer status change also selects the washer
+                        # in the loop above.
+                        - if:
+                            - condition: template
+                              value_template: >-
+                                {{ suppressed_by != '' and
+                                states(suppressed_by) in active_states }}
+                          then:
+                            # Pull the card on the event that caused the
+                            # suppression, not on every countdown tick that
+                            # arrives while it's already hidden.
                             - if:
                                 - condition: template
                                   value_template: >-
-                                    {{ trigger.id in ['status_active', 'arrived'] }}
+                                    {{ trigger.entity_id == suppressed_by or
+                                    trigger.id == 'arrived' }}
                               then:
                                 - action: "{{ notify_service }}"
                                   data:
-                                    title: "{{ device_name }}"
-                                    message: "{{ phase }}"
+                                    message: clear_notification
                                     data:
                                       tag: "{{ tag }}"
-                                      live_update: true
-                                      notification_icon: "{{ notification_icon }}"
-                                      notification_icon_color: "{{ color }}"
-                                      color: "{{ color }}"
-                                      silent: "{{ trigger.id != 'status_active' }}"
+                          else:
+                            - choose:
+                                - conditions:
+                                    - condition: template
+                                      value_template: >-
+                                        {{ remaining_ts > 0 and minutes_left > 0 and
+                                        total_time_sec > 0 }}
+                                  sequence:
+                                    - action: "{{ notify_service }}"
+                                      data:
+                                        title: "{{ device_name }}"
+                                        message: "{{ phase }} · {{ minutes_left }} min left"
+                                        data:
+                                          tag: "{{ tag }}"
+                                          live_update: true
+                                          notification_icon: "{{ notification_icon }}"
+                                          notification_icon_color: "{{ color }}"
+                                          color: "{{ color }}"
+                                          chronometer: true
+                                          when: "{{ remaining_ts | int }}"
+                                          when_relative: false
+                                          progress: "{{ elapsed_sec }}"
+                                          progress_max: "{{ total_time_sec }}"
+                                          # Alert only when the appliance changes
+                                          # phase. Countdown refreshes and presence
+                                          # changes go out silently at the lower
+                                          # priority, which is also what keeps iOS
+                                          # from throttling delivery.
+                                          silent: "{{ trigger.id != 'status_active' }}"
+                              # Countdown data is missing or nonsensical. Post the
+                              # plain phase-only card when the cycle is starting or
+                              # we've just come home, but stay silent otherwise —
+                              # otherwise a momentarily bad remaining-time reading
+                              # flips the notification between the countdown card
+                              # and this one, re-alerting each way.
+                              default:
+                                - if:
+                                    - condition: template
+                                      value_template: >-
+                                        {{ trigger.id in ['status_active', 'arrived']
+                                        or trigger.entity_id == suppressed_by }}
+                                  then:
+                                    - action: "{{ notify_service }}"
+                                      data:
+                                        title: "{{ device_name }}"
+                                        message: "{{ phase }}"
+                                        data:
+                                          tag: "{{ tag }}"
+                                          live_update: true
+                                          notification_icon: "{{ notification_icon }}"
+                                          notification_icon_color: "{{ color }}"
+                                          color: "{{ color }}"
+                                          silent: "{{ trigger.id != 'status_active' }}"
 
 # Queued, not restart: the washer and dryer sensors update within
 # milliseconds of each other, and under 'restart' the second trigger

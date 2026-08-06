@@ -714,32 +714,26 @@
 - id: '1751500001'
   alias: ThermoPro - Probe Detected
   description: Sends or clears actionable notification based on probe availability
-  # Online uses a template trigger rather than `from: unavailable`, because a
-  # `for:` delay on a plain state trigger restarts on every temperature change
-  # and so would almost never elapse. The boolean below stays true while the
-  # reading fluctuates, which is what makes the 30s debounce work.
   triggers:
   - trigger: template
     value_template: '{{ states(''sensor.thermopro_black_probe_ambient_temperature'')
       not in [''unknown'', ''unavailable''] }}'
-    for: '00:00:30'
+    for: 00:00:30
     id: online_black
   - trigger: template
     value_template: '{{ states(''sensor.thermopro_white_probe_ambient_temperature'')
       not in [''unknown'', ''unavailable''] }}'
-    for: '00:00:30'
+    for: 00:00:30
     id: online_white
-  # Offline is a plain state trigger: the state is literally `unavailable` and
-  # does not change while it holds, so `for:` behaves normally here.
   - trigger: state
     entity_id: sensor.thermopro_black_probe_ambient_temperature
     to: unavailable
-    for: '00:00:30'
+    for: 00:00:30
     id: offline_black
   - trigger: state
     entity_id: sensor.thermopro_white_probe_ambient_temperature
     to: unavailable
-    for: '00:00:30'
+    for: 00:00:30
     id: offline_white
   conditions: []
   actions:
@@ -757,8 +751,6 @@
           message: Pick a target to start monitoring, or open the dashboard.
           data:
             tag: '{{ tag }}'
-            # Consumed by the "ThermoPro - Start Monitoring" automation, which
-            # matches on the PROBE_ prefix. iOS shows at most four actions.
             actions:
             - action: PROBE_{{ probe | upper }}_165
               title: Chicken 165°F
@@ -781,7 +773,6 @@
           message: clear_notification
           data:
             tag: '{{ tag }}'
-  # Both probes can come online at once; single would drop the second.
   mode: queued
   max: 5
 - id: '1751500003'
@@ -816,7 +807,6 @@
       target_temp: "{% if trigger.event.data.action.split('_')[2] == 'CUSTOM' %}\n
         \ {{ trigger.event.data.reply_text | default('', true) | int(0) }}\n{% else
         %}\n  {{ trigger.event.data.action.split('_')[2] | int(0) }}\n{% endif %}"
-      # Honour whichever sensor is selected on the Tools dashboard for this probe.
       sensor: '{{ states(''input_select.meat_probe_'' ~ trigger.event.data.action.split(''_'')[1]
         | lower ~ ''_sensor'') }}'
   - if:
@@ -830,14 +820,11 @@
         message: '{{ raw_temp if raw_temp != ''CUSTOM'' else trigger.event.data.reply_text
           | default('''', true) }} is not between 100 and 250°F.'
     - stop: Invalid target temperature
-  # Keep the dashboard in sync with the target chosen from the notification.
   - action: input_number.set_value
     target:
       entity_id: input_number.meat_probe_{{ probe_key }}_target_temp
     data:
       value: '{{ target_temp | int(0) }}'
-  # script.turn_on does not block, so this automation is free again immediately
-  # instead of being held open for the length of the cook.
   - action: script.turn_on
     target:
       entity_id: script.monitor_meat_probe
@@ -1017,7 +1004,7 @@
     input:
       favorite_sensor: sensor.short_hills_station_to_new_york_penn_station_next_favorite
       dashboard_url: /nj-trains/morning
-      notify_target: notify.mobile_app_davids_iphone_16_pro
+      notify_target: notify.davids_iphone_16_pro
       boarded_helper: input_boolean.nj_transit_dismissed_am
       commute_window:
       - schedule.morning_commute
@@ -1029,7 +1016,66 @@
     input:
       favorite_sensor: sensor.new_york_penn_station_to_short_hills_station_next_favorite
       dashboard_url: /nj-trains/evening
-      notify_target: notify.mobile_app_davids_iphone_16_pro
+      notify_target: notify.davids_iphone_16_pro
       boarded_helper: input_boolean.nj_transit_dismissed_pm
       commute_window:
       - schedule.evening_commute
+- id: '1754460000001'
+  alias: Battery Health Alert
+  description: Flags low and non-reporting batteries as Home Assistant repair issues
+    and sends one non-critical summary notification.
+  use_blueprint:
+    path: dknowles2/battery_health.yaml
+    input:
+      battery_sensors:
+      - sensor.back_door_battery
+      - sensor.basement_button_battery
+      - sensor.bthome_sensor_f562_battery
+      - sensor.front_door_battery
+      - sensor.front_porch_sensor_battery
+      - sensor.guest_bathroom_sink_battery
+      - sensor.jacob_s_bathroom_leak_sensor_battery
+      - sensor.jacob_s_sink_battery
+      - sensor.jacobs_bedoom_sensor_battery
+      - sensor.kitchen_sonos_move_battery
+      - sensor.office_button_battery
+      - sensor.office_kiosk_battery
+      - sensor.office_presence_battery
+      - sensor.office_presence_battery_2
+      - sensor.office_remote_battery
+      - sensor.office_sensor_battery
+      - sensor.primary_bathroom_kiosk_battery
+      - sensor.primary_bedroom_sensor_battery
+      - sensor.q6_e_tron_r_state_of_charge
+      - sensor.sump_pump_battery
+      - sensor.utility_closet_apc_ups_battery_charge
+      - sensor.utility_closet_battery
+      battery_binary_sensors:
+      - binary_sensor.back_door_2
+      - binary_sensor.basement_back_window_2
+      - binary_sensor.basement_side_window_2
+      - binary_sensor.dining_room_front_window_1_2
+      - binary_sensor.dining_room_front_window_2_2
+      - binary_sensor.dining_room_side_window_1_2
+      - binary_sensor.dining_room_side_window_2_2
+      - binary_sensor.foyer_motion_sensor
+      - binary_sensor.front_door_2
+      - binary_sensor.garage_door_2
+      - binary_sensor.kitchen_window_2
+      - binary_sensor.living_room_3_window_2
+      - binary_sensor.living_room_window_1_2
+      - binary_sensor.living_room_window_2_2
+      - binary_sensor.living_room_window_4_2
+      - binary_sensor.master_bedroom_1_window_2
+      - binary_sensor.master_bedroom_2_window_2
+      - binary_sensor.sitting_room_window_1_2
+      - binary_sensor.sitting_room_window_2_2
+      threshold: 20
+      unavailable_grace:
+        hours: 6
+        minutes: 0
+        seconds: 0
+      daily_check: '09:00:00'
+      notify_action: notify.mobile_app_davids_iphone_16_pro
+      repair_domain: homeassistant
+      severity: warning

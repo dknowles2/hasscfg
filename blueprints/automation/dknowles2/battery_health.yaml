@@ -1,0 +1,253 @@
+blueprint:
+  name: Battery Health Alert
+  description: >-
+    Watches every battery entity you point it at and reports two distinct
+    failure modes: a battery that has dropped below a threshold, and a battery
+    device that has stopped reporting altogether.
+
+    The second case is the one that bites. A battery sensor that goes silent
+    keeps showing its last value, or shows nothing at all, which looks
+    identical to "everything is fine" — so a dead sensor is invisible until you
+    need it.
+
+    Raises one Home Assistant repair issue per affected device (via Spook's
+    `repairs.create`) and sends a single non-critical summary notification.
+    Repair issues are withdrawn automatically once a battery recovers.
+  domain: automation
+  input:
+    monitoring:
+      name: What to monitor
+      icon: mdi:battery-alert
+      input:
+        battery_sensors:
+          name: Battery level sensors
+          description: Numeric battery sensors, reported as a percentage.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: sensor
+                  device_class: battery
+        battery_binary_sensors:
+          name: Low-battery binary sensors
+          description: >-
+            Battery entities that only report "normal" or "low" rather than a
+            percentage. On means low.
+          default: []
+          selector:
+            entity:
+              multiple: true
+              filter:
+                - domain: binary_sensor
+                  device_class: battery
+    thresholds:
+      name: When to complain
+      icon: mdi:tune
+      input:
+        threshold:
+          name: Low battery threshold
+          description: Percentage at or below which a battery counts as low.
+          default: 20
+          selector:
+            number:
+              min: 1
+              max: 90
+              unit_of_measurement: "%"
+        unavailable_grace:
+          name: Not-reporting grace period
+          description: >-
+            How long a battery entity must stay unavailable or unknown before
+            it is treated as a fault. Keeps brief dropouts and restarts quiet.
+          default:
+            hours: 6
+            minutes: 0
+            seconds: 0
+          selector:
+            duration:
+        daily_check:
+          name: Daily re-check
+          description: >-
+            Time of the daily sweep. This is what catches a battery that died
+            while Home Assistant was down, since no state change ever fires.
+          default: "09:00:00"
+          selector:
+            time:
+    reporting:
+      name: How to report
+      icon: mdi:bell-outline
+      input:
+        notify_action:
+          name: Notify action
+          description: >-
+            The notify action to call, for example
+            notify.mobile_app_your_phone. Leave blank to skip notifications and
+            only raise repair issues.
+          default: ""
+          selector:
+            text:
+        repair_domain:
+          name: Repair issue logo
+          description: >-
+            Which integration logo the repair issue shows. "homeassistant" is a
+            safe default.
+          default: homeassistant
+          selector:
+            text:
+        severity:
+          name: Repair severity
+          default: warning
+          selector:
+            select:
+              options:
+                - warning
+                - error
+                - critical
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: numeric_state
+    entity_id: !input battery_sensors
+    below: !input threshold
+    id: low
+  - trigger: state
+    entity_id: !input battery_binary_sensors
+    to: "on"
+    id: low
+  # A battery entity that stops reporting is the failure this is really for.
+  - trigger: state
+    entity_id: !input battery_sensors
+    to:
+      - unavailable
+      - unknown
+    for: !input unavailable_grace
+    id: stale
+  - trigger: state
+    entity_id: !input battery_binary_sensors
+    to:
+      - unavailable
+      - unknown
+    for: !input unavailable_grace
+    id: stale
+  - trigger: time
+    at: !input daily_check
+    id: sweep
+  - trigger: homeassistant
+    event: start
+    id: startup
+
+conditions: []
+
+actions:
+  # Entities are still settling immediately after a restart; evaluating now
+  # would flag half the house as not reporting.
+  - if:
+      - condition: trigger
+        id: startup
+    then:
+      - delay:
+          minutes: 10
+
+  - variables:
+      num_sensors: !input battery_sensors
+      bin_sensors: !input battery_binary_sensors
+      low_threshold: !input threshold
+      notify_action: !input notify_action
+      repair_domain: !input repair_domain
+      repair_severity: !input severity
+      faulty: >-
+        {% set ns = namespace(items=[]) %}
+        {% for e in num_sensors %}
+          {% set s = states(e) %}
+          {% if s in ['unknown', 'unavailable'] %}
+            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
+                                           'reason': 'not reporting', 'detail': s}] %}
+          {% elif s | float(101) <= low_threshold | float(20) %}
+            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
+                                           'reason': 'low', 'detail': s ~ '%'}] %}
+          {% endif %}
+        {% endfor %}
+        {% for e in bin_sensors %}
+          {% set s = states(e) %}
+          {% if s in ['unknown', 'unavailable'] %}
+            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
+                                           'reason': 'not reporting', 'detail': s}] %}
+          {% elif s == 'on' %}
+            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
+                                           'reason': 'low', 'detail': 'reported low'}] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+      healthy: >-
+        {{ (num_sensors + bin_sensors)
+           | reject('in', faulty | map(attribute='entity') | list) | list }}
+
+  # One issue per device, so each can be resolved on its own. The issue_id is
+  # derived from the entity, which makes create idempotent.
+  - repeat:
+      for_each: "{{ faulty }}"
+      sequence:
+        - action: repairs.create
+          data:
+            issue_id: "battery_{{ repeat.item.entity }}"
+            title: >-
+              {{ repeat.item.name }} — battery {{ repeat.item.reason }}
+            description: >-
+              `{{ repeat.item.entity }}` is **{{ repeat.item.reason }}**
+              ({{ repeat.item.detail }}).
+
+              {% if repeat.item.reason == 'not reporting' -%}
+              This entity has stopped sending updates. A battery device that
+              goes silent looks the same as one that is simply idle, so this
+              will not surface anywhere else. Check or replace the battery.
+              {%- else -%}
+              Replace the battery soon.
+              {%- endif %}
+
+              This issue clears itself once the entity reports a healthy
+              battery again.
+            domain: "{{ repair_domain }}"
+            severity: "{{ repair_severity }}"
+            persistent: true
+
+  # Withdraw issues for anything that recovered. Removing an issue that does
+  # not exist is a no-op, so this needs no bookkeeping.
+  - repeat:
+      for_each: "{{ healthy }}"
+      sequence:
+        - action: repairs.remove
+          data:
+            issue_id: "battery_{{ repeat.item }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_action != '' and faulty | count > 0 }}"
+        sequence:
+          - action: "{{ notify_action }}"
+            data:
+              title: >-
+                {{ faulty | count }} batter{{ 'y' if faulty | count == 1 else 'ies' }}
+                need attention
+              message: >-
+                {% for f in faulty -%}
+                {{ f.name }} — {{ f.reason }} ({{ f.detail }})
+                {% endfor %}
+              data:
+                # Replaces the previous alert instead of stacking a new one.
+                tag: battery_health
+                url: /config/repairs
+                push:
+                  # Deliberately not critical: batteries are never urgent.
+                  interruption-level: active
+      - conditions:
+          - condition: template
+            value_template: "{{ notify_action != '' and faulty | count == 0 }}"
+        sequence:
+          - action: "{{ notify_action }}"
+            data:
+              message: clear_notification
+              data:
+                tag: battery_health

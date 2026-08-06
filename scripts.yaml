@@ -6,21 +6,14 @@ perform_action_when_entity_becomes_available:
       value_template: '{{ utcnow() - states[repeat.item].last_updated > cooldown }}'
     then: []
     enabled: false
-  - action: notify.mobile_app_davids_iphone_14_pro
-    data:
-      message: Waiting for {{ state_attr(entity_id, 'friendly_name') }} to become
-        available before calling {{ action }}
-    enabled: false
   - wait_template: '{{ not is_state(entity_id, "unavailable") }}'
     continue_on_timeout: false
     timeout: 01:00:00
   - action: '{{ action }}'
     target:
       entity_id: '{{ entity_id }}'
-  - action: notify.mobile_app_davids_iphone_14_pro
-    data:
-      message: Calling {{ action }} on {{ state_attr(entity_id, 'friendly_name') }}
-        ({{ state_translated(entity_id) }})
+  - action: notify.mobile_app_davids_iphone_16_pro
+    data: {}
   fields:
     entity_id:
       selector:
@@ -50,18 +43,9 @@ set_shade_position:
       value_template: '{{ is_state(entity_id, ''unavailable'') }}'
       alias: If shade is unavailable
     then:
-    - action: notify.mobile_app_davids_iphone_14_pro
-      data:
-        message: Waiting for {{ state_attr(entity_id, 'friendly_name') }} to become
-          available before setting posiiton to {{ position }}
-      enabled: false
     - wait_template: '{{ not is_state(entity_id, ''unavailable'') }}'
       continue_on_timeout: false
       timeout: 01:00:00
-    - action: notify.mobile_app_davids_iphone_14_pro
-      data:
-        message: Setting {{ state_attr(entity_id, 'friendly_name') }} position to
-          {{ position }}
   - action: cover.set_cover_position
     target:
       entity_id: '{{ entity_id }}'
@@ -164,18 +148,33 @@ monitor_meat_probe:
 start_white_probe_monitoring:
   alias: Start White Probe Monitoring
   sequence:
-    - action: script.monitor_meat_probe
-      data:
-        probe: White
-        sensor: "{{ states('input_select.meat_probe_white_sensor') }}"
-        target_temp: "{{ states('input_number.meat_probe_white_target_temp') | int }}"
+  - action: script.monitor_meat_probe
+    data:
+      probe: White
+      sensor: '{{ states(''input_select.meat_probe_white_sensor'') }}'
+      target_temp: '{{ states(''input_number.meat_probe_white_target_temp'') | int
+        }}'
   mode: single
 start_black_probe_monitoring:
   alias: Start Black Probe Monitoring
   sequence:
-    - action: script.monitor_meat_probe
-      data:
-        probe: Black
-        sensor: "{{ states('input_select.meat_probe_black_sensor') }}"
-        target_temp: "{{ states('input_number.meat_probe_black_target_temp') | int }}"
+  - action: script.monitor_meat_probe
+    data:
+      probe: Black
+      sensor: '{{ states(''input_select.meat_probe_black_sensor'') }}'
+      target_temp: '{{ states(''input_number.meat_probe_black_target_temp'') | int
+        }}'
+  mode: single
+get_mne_transit_alerts:
+  alias: Get MNE Transit Alerts
+  description: Fetches NJ Transit system status and returns only alerts for the MNE
+    (Morristown Line) abbreviation
+  sequence:
+  - action: rest_command.transit_alerts
+    response_variable: transit_response
+  - variables:
+      mne_alerts: "{{ transit_response.content.data.getSystemStatus\n   | selectattr('abbreviation',
+        'eq', 'MNE')\n   | list }}"
+  - stop: ''
+    response_variable: mne_alerts
   mode: single

@@ -174,8 +174,8 @@
       temperature: 74
     target:
       entity_id:
-      - climate.downstairs
-      - climate.upstairs
+      - climate.downstairs_thermostat
+      - climate.upstairs_thermostat
   - action: input_boolean.turn_on
     metadata: {}
     data: {}
@@ -201,7 +201,7 @@
       entity_id:
       - cover.office_privacy_shade
       - cover.guest_bedroom_privacy_shade
-      - cover.primary_bedroom_privacy_shades
+      - cover.primary_bedroom_primary_bedroom_privacy_shades
     data: {}
   - action: input_boolean.turn_off
     target:
@@ -243,8 +243,8 @@
       metadata: {}
       target:
         entity_id:
-        - light.sconces
-        - light.downstairs_lamps
+        - light.downstairs_all_sconces
+        - light.downstairs_all_lamps
       data: {}
     else:
     - action: light.turn_off
@@ -252,8 +252,8 @@
       data: {}
       target:
         entity_id:
-        - light.sconces
-        - light.downstairs_lamps
+        - light.downstairs_all_sconces
+        - light.downstairs_all_lamps
   mode: restart
 - id: '1733523145702'
   alias: Lights - Outdoors
@@ -272,11 +272,6 @@
     offset: -00:30:00
   conditions: []
   actions:
-  - variables:
-      entities:
-      - light.front_door
-      - light.front_porch
-      - light.driveway_lights
   - if:
     - condition: state
       entity_id: schedule.outdoor_lights_off
@@ -287,24 +282,24 @@
       metadata: {}
       action: light.turn_off
       target:
-        entity_id:
-        - light.front_door
-        - light.front_porch
-        - light.driveway_lights
+        device_id:
+        - 4375183e85e24d2f5cba1ad39bdc0da0
+        - 3a9f32345e801517631adc088e5e8e3d
+        - c6f60356cf30ad7aa4f31c4db6bb90c4
     else:
     - action: switch.turn_on
       metadata: {}
       data: {}
       target:
-        entity_id: switch.front_porch_lights
+        device_id: 497cf3322295712f3ffcc7fcfc774321
     - data: {}
       metadata: {}
       action: light.turn_on
       target:
-        entity_id:
-        - light.front_door
-        - light.front_porch
-        - light.driveway_lights
+        device_id:
+        - 4375183e85e24d2f5cba1ad39bdc0da0
+        - c6f60356cf30ad7aa4f31c4db6bb90c4
+        - 3a9f32345e801517631adc088e5e8e3d
   mode: restart
 - id: '1735483900049'
   alias: Lights - Downstairs Brightness
@@ -331,27 +326,27 @@
           entity_id: sensor.living_room_esphome_illuminance
           below: input_number.living_room_lux_lower_bound
     then:
-    - action: adaptive_lighting.apply
+    - alias: Turn on lamps
+      action: adaptive_lighting.apply
       metadata: {}
       data:
         lights:
-        - light.lamps
+        - light.downstairs_all_lamps
         turn_on_lights: true
         transition: '10'
         adapt_brightness: true
         adapt_color: true
       enabled: true
-      alias: Turn on lamps
-    - action: adaptive_lighting.apply
+    - alias: Turn on sconces
+      action: adaptive_lighting.apply
       metadata: {}
       data:
         lights:
-        - light.sconces
+        - light.downstairs_all_sconces
         turn_on_lights: true
         transition: '10'
         adapt_brightness: true
       enabled: true
-      alias: Turn on sconces
     else:
     - if:
       - condition: or
@@ -370,8 +365,8 @@
           transition: 10
         target:
           entity_id:
-          - light.sconces
-          - light.downstairs_lamps
+          - light.downstairs_all_lamps
+          - light.downstairs_all_sconces
   - delay:
       hours: 0
       minutes: 5
@@ -398,7 +393,7 @@
   triggers:
   - trigger: state
     entity_id:
-    - switch.jacobs_bedroom_plug
+    - switch.jacobs_bedroom_lamp_plug
     from:
     - unavailable
     to:
@@ -411,8 +406,7 @@
     metadata: {}
     data: {}
     target:
-      entity_id:
-      - switch.jacobs_bedroom_plug
+      entity_id: switch.jacobs_bedroom_lamp_plug
   mode: single
 - id: '1750290045798'
   alias: Lights - Foyer Motion Detected
@@ -490,7 +484,7 @@
         entity_id: device_tracker.e2_pro_0216
         state: home
       - condition: state
-        entity_id: cover.david_s_car
+        entity_id: cover.garage_david_s_garage_door
         state:
         - closed
         enabled: true
@@ -502,7 +496,7 @@
       - action: cover.open_cover
         metadata: {}
         target:
-          entity_id: cover.david_s_car
+          entity_id: cover.garage_david_s_garage_door
         data: {}
         enabled: true
     - conditions:
@@ -510,7 +504,7 @@
         entity_id: device_tracker.e2_pro_0216
         state: not_home
       - condition: state
-        entity_id: cover.david_s_car
+        entity_id: cover.garage_david_s_garage_door
         state:
         - open
         enabled: true
@@ -522,7 +516,7 @@
       - action: cover.close_cover
         metadata: {}
         target:
-          entity_id: cover.david_s_car
+          entity_id: cover.garage_david_s_garage_door
         data: {}
   mode: single
 - id: '1754924767384'
@@ -531,7 +525,7 @@
   triggers:
   - trigger: numeric_state
     entity_id:
-    - sensor.jacob_s_bedroom_sensor_battery
+    - sensor.jacobs_bedoom_sensor_battery
     below: 10
   conditions: []
   actions:
@@ -715,8 +709,8 @@
     path: aderusha/link_multiple_devices.yaml
     input:
       linked_entities:
-      - light.back_deck_outdoor_plug_string_lights
-      - light.deck_light
+      - light.back_yard_outdoor_plug_string_lights
+      - light.back_yard_deck_light
 - id: '1782780654041'
   alias: Office Remote
   description: ''
@@ -734,46 +728,46 @@
   alias: ThermoPro - Probe Detected
   description: Sends or clears actionable notification based on probe availability
   triggers:
-    - trigger: state
-      entity_id:
-        - sensor.thermopro_black_probe_ambient_temperature
-        - sensor.thermopro_white_probe_ambient_temperature
-      from: unavailable
-      id: probe_online
-    - trigger: state
-      entity_id:
-        - sensor.thermopro_black_probe_ambient_temperature
-        - sensor.thermopro_white_probe_ambient_temperature
-      to: unavailable
-      id: probe_offline
+  - trigger: state
+    entity_id:
+    - sensor.thermopro_black_probe_ambient_temperature
+    - sensor.thermopro_white_probe_ambient_temperature
+    from: unavailable
+    id: probe_online
+  - trigger: state
+    entity_id:
+    - sensor.thermopro_black_probe_ambient_temperature
+    - sensor.thermopro_white_probe_ambient_temperature
+    to: unavailable
+    id: probe_offline
   conditions: []
   actions:
-    - variables:
-        tag: "thermopro_{{ trigger.entity_id.split('_')[1] }}_probe"
-    - choose:
-        - conditions:
-            - condition: trigger
-              id: probe_online
-          sequence:
-            - action: notify.mobile_app_davids_iphone_16_pro
-              data:
-                title: ThermoPro Probes Online
-                message: Set up monitoring in the Tools dashboard.
-                data:
-                  tag: "{{ tag }}"
-                  actions:
-                    - action: URI
-                      title: Set Up
-                      uri: /dashboard-tools/meat-probe
-        - conditions:
-            - condition: trigger
-              id: probe_offline
-          sequence:
-            - action: notify.mobile_app_davids_iphone_16_pro
-              data:
-                message: clear_notification
-                data:
-                  tag: "{{ tag }}"
+  - variables:
+      tag: thermopro_{{ trigger.entity_id.split('_')[1] }}_probe
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: probe_online
+      sequence:
+      - action: notify.mobile_app_davids_iphone_16_pro
+        data:
+          title: ThermoPro Probes Online
+          message: Set up monitoring in the Tools dashboard.
+          data:
+            tag: '{{ tag }}'
+            actions:
+            - action: URI
+              title: Set Up
+              uri: /dashboard-tools/meat-probe
+    - conditions:
+      - condition: trigger
+        id: probe_offline
+      sequence:
+      - action: notify.mobile_app_davids_iphone_16_pro
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ tag }}'
   mode: single
 - id: '1751500002'
   alias: ThermoPro - Start Monitoring
@@ -801,20 +795,19 @@
       target_temp: '{{ target_temp }}'
   mode: single
 - id: '1783022818951'
-  alias: Frigate Notifications - Driveway
+  alias: Frigate Notifications - Driveway Car
   description: ''
   use_blueprint:
     path: SgtBatten/Stable.yaml
     input:
       camera:
-      - camera.driveway
+      - camera.front_yard_driveway_camera
       notify_device: 2a27233f44fb7770ee97377d85a716bc
       alert_once: true
       final_update: false
       video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
       icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
         else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
-      ios_live_view: camera.driveway
       zone_filter: true
       zones: []
       labels:
@@ -822,6 +815,13 @@
       - person
       attachment: '{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg'
       base_url: https://casa.knowles.xyz
+      master_condition:
+      - condition: template
+        value_template: '{{ not ( (states.cover.sarah_s_car.last_changed is not none
+          and (now() - states.cover.sarah_s_car.last_changed).total_seconds() < 180
+          and states(''cover.garage_sarah_s_garage_door'') == ''open'') or (states.cover.david_s_car.last_changed
+          is not none and (now() - states.cover.david_s_car.last_changed).total_seconds()
+          < 180 and states(''cover.garage_david_s_garage_door'') == ''open'') ) }}'
 - id: '1783022970608'
   alias: Frigate Notifications - Front Porch
   description: ''
@@ -829,20 +829,153 @@
     path: SgtBatten/Stable.yaml
     input:
       camera:
-      - camera.front_porch
+      - camera.front_porch_camera
       notify_device: 2a27233f44fb7770ee97377d85a716bc
       alert_once: true
       final_update: false
       video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
       icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
         else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
-      ios_live_view: camera.driveway
+      zone_filter: true
+      zones:
+      - porch_zone
+      labels:
+      - person
+      - package
+      attachment: '{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg?bbox=1'
+      initial_delay: 0
+      base_url: https://casa.knowles.xyz
+      attachment_2: ''
+- id: '1784470915802'
+  alias: Frigate Notifications - Driveway Person
+  description: ''
+  use_blueprint:
+    path: SgtBatten/Stable.yaml
+    input:
+      camera:
+      - camera.front_yard_driveway_camera
+      notify_device: 2a27233f44fb7770ee97377d85a716bc
+      alert_once: true
+      final_update: false
+      video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
+      icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
+        else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
       zone_filter: true
       zones: []
       labels:
       - person
-      - package
-      attachment: '{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/thumbnail.jpg'
-      initial_delay: 1
+      attachment: '{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/snapshot.jpg'
       base_url: https://casa.knowles.xyz
-      attachment_2: ''
+      master_condition:
+      - condition: template
+        value_template: '{{ not ( (states.cover.garage_sarah_s_garage_door.last_changed
+          is not none and (now() - states.cover.garage_sarah_s_garage_door.last_changed).total_seconds()
+          < 180 and states(''cover.garage_sarah_s_garage_door'') == ''open'') or (states.cover.garage_david_s_garage_door.last_changed
+          is not none and (now() - states.cover.garage_david_s_garage_door.last_changed).total_seconds()
+          < 180 and states(''cover.garage_david_s_garage_door'') == ''open'') ) }}'
+- id: '1784683556634'
+  alias: Power Cycle Unavailable Zigbee Shades
+  description: ''
+  use_blueprint:
+    path: dknowles2/power_cycle_unavailable_shade.yaml
+    input:
+      shades:
+      - cover.jacobs_bedroom_blackout_shade
+      - cover.jacobs_bedroom_privacy_shade
+      power_switch_entity: switch.jacobs_bedroom_shades_plug
+      notify_target:
+      - notify.davids_iphone_16_pro
+- id: '1784683634483'
+  alias: Power Cycle Unavailable Zigbee Shades
+  description: ''
+  use_blueprint:
+    path: dknowles2/power_cycle_unavailable_shade.yaml
+    input:
+      shades:
+      - cover.sitting_room_privacy_shade
+      power_switch_entity: switch.sitting_room_privacy_shade_plug
+      notify_target:
+      - notify.davids_iphone_16_pro
+- id: '1785702140946'
+  alias: Power Cycle Unavailable Zigbee Shades
+  description: ''
+  use_blueprint:
+    path: dknowles2/power_cycle_unavailable_shade.yaml
+    input:
+      shades:
+      - cover.living_room_privacy_shade_center
+      - cover.living_room_privacy_shade_left
+      - cover.living_room_privacy_shade_right
+      power_switch_entity: switch.living_room_window_plug_top_outlet
+      notify_target:
+      - notify.davids_iphone_16_pro
+- id: '1785706696881'
+  alias: Power Cycle Unavailable Zigbee Shades
+  description: ''
+  use_blueprint:
+    path: dknowles2/power_cycle_unavailable_shade.yaml
+    input:
+      shades:
+      - cover.office_blackout_shade
+      - cover.office_privacy_shade
+      power_switch_entity: switch.shades_plug
+      notify_target:
+      - notify.davids_iphone_16_pro
+- id: '1785952800002'
+  alias: NJ Transit - morning commute disruption
+  use_blueprint:
+    path: njtransit/commute_disruption.yaml
+    input:
+      disruption_sensor: binary_sensor.short_hills_station_to_new_york_penn_station_commute_disrupted
+      commute_window:
+      - schedule.morning_commute
+      notification_action:
+      - action: notify.mobile_app_davids_iphone_16_pro
+        data:
+          title: "\U0001F686 {{ commute_name }}"
+          message: '{{ fresh_reasons | join(''\n'') }}'
+          data:
+            group: njtransit
+            push:
+              interruption-level: time-sensitive
+- id: '1785952800003'
+  alias: NJ Transit - evening commute disruption
+  use_blueprint:
+    path: njtransit/commute_disruption.yaml
+    input:
+      disruption_sensor: binary_sensor.new_york_penn_station_to_short_hills_station_commute_disrupted
+      commute_window:
+      - schedule.evening_commute
+      notification_action:
+      - action: notify.mobile_app_davids_iphone_16_pro
+        data:
+          title: "\U0001F686 {{ commute_name }}"
+          message: '{{ fresh_reasons | join(''\n'') }}'
+          data:
+            group: njtransit
+            push:
+              interruption-level: time-sensitive
+- id: '1785842251710'
+  alias: NJ Transit favorite train Live Activity - AM
+  description: ''
+  use_blueprint:
+    path: njtransit/favorite_live_activity.yaml
+    input:
+      favorite_sensor: sensor.short_hills_station_to_new_york_penn_station_next_favorite
+      dashboard_url: /nj-trains/morning
+      notify_target: notify.mobile_app_davids_iphone_16_pro
+      boarded_helper: input_boolean.nj_transit_dismissed_am
+      commute_window:
+      - schedule.morning_commute
+- id: '1785875809099'
+  alias: NJ Transit favorite train Live Activity - PM
+  description: ''
+  use_blueprint:
+    path: njtransit/favorite_live_activity.yaml
+    input:
+      favorite_sensor: sensor.new_york_penn_station_to_short_hills_station_next_favorite
+      dashboard_url: /nj-trains/evening
+      notify_target: notify.mobile_app_davids_iphone_16_pro
+      boarded_helper: input_boolean.nj_transit_dismissed_pm
+      commute_window:
+      - schedule.evening_commute

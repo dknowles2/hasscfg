@@ -26,7 +26,7 @@
       },
       {
         "id": "599f58661d344781a0334e6bfa178434",
-        "url": "/hacsfiles/clock-weather-card/clock-weather-card.js?hacstag=522634019293",
+        "url": "/hacsfiles/clock-weather-card/clock-weather-card.js?hacstag=522634019294",
         "type": "module"
       },
       {
@@ -56,7 +56,7 @@
       },
       {
         "id": "3bc0b1da774648d0ae50888cce5603a9",
-        "url": "/hacsfiles/lovelace-entity-progress-card/entity-progress-card.js?hacstag=908868522152",
+        "url": "/hacsfiles/lovelace-entity-progress-card/entity-progress-card.js?hacstag=908868522160",
         "type": "module"
       }
     ]

@@ -39,6 +39,24 @@
         "require_admin": false,
         "mode": "storage",
         "url_path": "dashboard-tools"
+      },
+      {
+        "id": "dashboard_power",
+        "show_in_sidebar": true,
+        "icon": "mdi:lightning-bolt-outline",
+        "title": "Power",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "dashboard-power"
+      },
+      {
+        "id": "nj_trains",
+        "url_path": "nj-trains",
+        "title": "Trains",
+        "icon": "mdi:train",
+        "show_in_sidebar": true,
+        "require_admin": false,
+        "mode": "storage"
       }
     ]
   }

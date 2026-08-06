@@ -195,15 +195,15 @@
           "Jake's Bedroom"
         ],
         "floor_id": "upstairs",
-        "humidity_entity_id": "sensor.jacob_s_bedroom_sensor_humidity",
+        "humidity_entity_id": "sensor.jacobs_bedoom_sensor_humidity",
         "icon": "mdi:minecraft",
         "id": "jacobs_room",
         "labels": [],
-        "name": "Jacob’s Bedoom",
+        "name": "Jacob’s Bedroom",
         "picture": null,
-        "temperature_entity_id": "sensor.jacob_s_bedroom_sensor_temperature",
+        "temperature_entity_id": "sensor.jacobs_bedoom_sensor_temperature",
         "created_at": "2026-01-12T11:59:21.929392+00:00",
-        "modified_at": "2026-01-13T02:17:56.919969+00:00"
+        "modified_at": "2026-08-01T18:31:22.159547+00:00"
       },
       {
         "aliases": [],
@@ -294,9 +294,9 @@
         "labels": [],
         "name": "Front Porch",
         "picture": null,
-        "temperature_entity_id": "sensor.outdoor_sensor_temperature",
+        "temperature_entity_id": "sensor.front_porch_sensor_temperature",
         "created_at": "2026-01-12T12:55:08.407759+00:00",
-        "modified_at": "2026-01-13T02:21:06.091911+00:00"
+        "modified_at": "2026-08-01T18:31:04.342712+00:00"
       },
       {
         "aliases": [],

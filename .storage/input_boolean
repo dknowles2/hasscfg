@@ -8,6 +8,16 @@
         "id": "cleaners_present",
         "name": "Cleaners Present",
         "icon": "mdi:broom"
+      },
+      {
+        "id": "nj_transit_on_board",
+        "name": "NJ Transit on board",
+        "icon": "mdi:train"
+      },
+      {
+        "id": "nj_transit_dismissed_pm",
+        "name": "NJ Transit dismissed (PM)",
+        "icon": "mdi:train"
       }
     ]
   }

@@ -9,29 +9,16 @@ scene: !include scenes.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 sensor: !include sensors.yaml
-rest: !include rest.yaml
 rest_command: !include rest_command.yaml
 yahoofinance: !include yahoofinance.yaml
 device_tracker:
   - platform: bluetooth_le_tracker
     track_new_devices: false
 
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 127.0.0.1
-    - 172.30.33.0/24
-    - 192.168.1.3
-    - 192.168.1.4
-
 logger:
   logs:
     custom_components.pitboss: debug
     pytboss: info
-    homeassistant.components.rest: debug
-    homeassistant.components.rest.sensor: debug
-    homeassistant.components.rest.binary_sensor: debug
-    homeassistant.components.rest_command: debug
   filters:
     custom_components.audiconnect.audi_connect_account:
       - ".*: 403, .*"
@@ -69,7 +56,7 @@ input_number:
     min: 100
     max: 250
     step: 1
-    unit_of_measurement: '°F'
+    unit_of_measurement: "°F"
     initial: 165
     mode: box
   meat_probe_black_target_temp:
@@ -77,6 +64,12 @@ input_number:
     min: 100
     max: 250
     step: 1
-    unit_of_measurement: '°F'
+    unit_of_measurement: "°F"
     initial: 165
     mode: box
+
+zha:
+  enable_quirks: true
+  custom_quirks_path: /config/zha_quirks/
+
+zha_toolkit:

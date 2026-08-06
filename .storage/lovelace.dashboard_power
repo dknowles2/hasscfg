@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_power",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "New section"
+                },
+                {
+                  "type": "custom:auto-entities",
+                  "card": {
+                    "type": "custom:apexcharts-card"
+                  },
+                  "filter": {
+                    "include": [
+                      {
+                        "options": {},
+                        "attributes": {
+                          "device_class": "power",
+                          "state_class": "measurement"
+                        }
+                      }
+                    ],
+                    "exclude": [
+                      {
+                        "options": {},
+                        "attributes": {
+                          "restored": true
+                        }
+                      },
+                      {
+                        "name": "/Generator/"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

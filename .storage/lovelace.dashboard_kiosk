@@ -54,6 +54,11 @@
               "name": {
                 "type": "device"
               }
+            },
+            {
+              "type": "entity",
+              "entity": "climate.upstairs_thermostat",
+              "show_name": true
             }
           ],
           "cards": [],
@@ -75,7 +80,7 @@
               "cards": [
                 {
                   "type": "picture",
-                  "image_entity": "image.front_porch_person"
+                  "image_entity": "image.front_porch_camera_person"
                 }
               ],
               "visibility": [
@@ -98,7 +103,7 @@
               "cards": [
                 {
                   "type": "picture",
-                  "image_entity": "image.driveway_person"
+                  "image_entity": "image.front_yard_driveway_camera_person"
                 }
               ]
             },
@@ -108,11 +113,33 @@
                 {
                   "type": "custom:clock-weather-card",
                   "entity": "weather.forecast_home",
-                  "animated_icon": false
+                  "animated_icon": false,
+                  "weather_icon_type": "fill",
+                  "forecast_rows": 3,
+                  "show_humidity": true,
+                  "hide_date": true
                 },
                 {
                   "entities": [
-                    "calendar.david_knowles_personal"
+                    "calendar.david_knowles_personal",
+                    {
+                      "entity": "calendar.family_birthdays"
+                    },
+                    {
+                      "entity": "calendar.family"
+                    },
+                    {
+                      "entity": "calendar.jacob_elliott_knowles_gmail_com"
+                    },
+                    {
+                      "entity": "calendar.sknowles3_gmail_com"
+                    },
+                    {
+                      "entity": "calendar.f1_race_season_calendar"
+                    },
+                    {
+                      "entity": "calendar.world_cup_2026"
+                    }
                   ],
                   "compact_days_to_show": 3,
                   "compact_events_to_show": 5,
@@ -158,39 +185,94 @@
               ],
               "cards": [
                 {
+                  "type": "heading",
+                  "heading": "🚆 Short Hills to New York",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "markdown",
+                  "visibility": [
+                    {
+                      "condition": "or",
+                      "conditions": [
+                        {
+                          "condition": "state",
+                          "entity": "binary_sensor.short_hills_station_to_new_york_penn_station_commute_disrupted",
+                          "state": "on"
+                        },
+                        {
+                          "condition": "numeric_state",
+                          "entity": "sensor.short_hills_station_to_new_york_penn_station_service_alerts",
+                          "above": 0
+                        }
+                      ]
+                    }
+                  ],
+                  "content": "{%- set d = 'binary_sensor.short_hills_station_to_new_york_penn_station_commute_disrupted' -%}\n{%- set a = 'sensor.short_hills_station_to_new_york_penn_station_service_alerts' -%}\n{%- for reason in state_attr(d, 'reasons') or [] %}\n⚠️ {{ reason }}\n{% endfor -%}\n{%- for message in state_attr(a, 'messages') or [] %}\nℹ️ {{ message }}\n{% endfor -%}",
+                  "card_mod": {
+                    "style": {
+                      ".": "ha-card {\n  {% if is_state('binary_sensor.short_hills_station_to_new_york_penn_station_commute_disrupted', 'on') %}\n  --njt-accent: var(--error-color);\n  {% else %}\n  --njt-accent: var(--warning-color);\n  {% endif %}\n  border: none;\n  border-left: 3px solid var(--njt-accent);\n  border-radius: 4px;\n  box-shadow: none;\n  background: color-mix(in srgb, var(--njt-accent) 8%, var(--card-background-color));\n}\n",
+                      "ha-markdown $": "p { margin: 5px 0 !important; font-size: 14px; line-height: 1.45; padding-left: 1.6em; text-indent: -1.6em; }\np:first-child { margin-top: 0 !important; }\np:last-child { margin-bottom: 0 !important; }\n"
+                    }
+                  }
+                },
+                {
                   "type": "custom:auto-entities",
-                  "title": "Next Trains",
                   "filter": {
                     "include": [
                       {
-                        "entity_id": "/sensor.next_train_short_hills.*/",
-                        "attributes": {
-                          "destination": "/New.York|Hoboken/"
-                        }
+                        "entity_id": "sensor.short_hills_station_to_new_york_penn_station_*departure*"
+                      }
+                    ],
+                    "exclude": [
+                      {
+                        "state": "unknown"
+                      },
+                      {
+                        "state": "unavailable"
                       }
                     ]
                   },
+                  "sort": {
+                    "method": "state",
+                    "numeric": false
+                  },
                   "card": {
                     "type": "custom:flex-table-card",
-                    "title": "Train Departures",
                     "columns": [
                       {
-                        "name": "Departure",
-                        "data": "departureDate"
+                        "name": "Min",
+                        "data": "state",
+                        "modify": "(function(m){return m+'<span style=\"font-size:13px;font-weight:400;color:var(--secondary-text-color)\"> min</span>';})(Math.max(0,Math.round((new Date(x)-new Date())/60000)))"
                       },
                       {
-                        "name": "Destination",
-                        "data": "destination"
+                        "name": "Departs",
+                        "data": "state",
+                        "modify": "x ? new Date(x).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '—'"
+                      },
+                      {
+                        "name": "To",
+                        "data": "destination",
+                        "modify": "x || '—'"
                       },
                       {
                         "name": "Status",
-                        "data": "status"
-                      },
-                      {
-                        "name": "Message",
-                        "data": "inlineMessage"
+                        "data": "status_text",
+                        "align": "right",
+                        "modify": "(function(t){if(!t)return '';var pill=function(c,t){return '<span style=\"font-size:12px;padding:3px 9px;border-radius:8px;white-space:nowrap;background:color-mix(in srgb,'+c+' 14%,transparent);color:'+c+'\">'+t+'</span>';};var c=/cancel/i.test(t)?'var(--error-color)':/late|delay/i.test(t)?'var(--warning-color)':'var(--success-color)';return pill(c,t);})(x)"
                       }
-                    ]
+                    ],
+                    "css": {
+                      "table+": "padding: 4px 16px 12px;",
+                      "tbody tr:nth-child(odd)": "background-color: transparent;",
+                      "tbody tr:nth-child(even)": "background-color: transparent;",
+                      "tbody tr:last-child td+": "border-bottom: none;",
+                      "td:nth-child(3)": "color: var(--secondary-text-color);",
+                      "thead": "display: none;",
+                      "tr td+": "padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--divider-color);",
+                      "td:nth-child(1)": "font-size: 25px; font-weight: 500; width: 76px; font-variant-numeric: tabular-nums; line-height: 1.1;",
+                      "td:nth-child(2)": "font-variant-numeric: tabular-nums; width: 68px;"
+                    }
                   }
                 }
               ]
@@ -213,6 +295,14 @@
                         "options": {},
                         "integration": "01KESGEMCHV14Y2E4BMD9XGC5H",
                         "domain": "device_tracker"
+                      },
+                      {
+                        "options": {},
+                        "domain": "binary_sensor",
+                        "attributes": {
+                          "device_class": "occupancy"
+                        },
+                        "area": "office"
                       }
                     ],
                     "exclude": []

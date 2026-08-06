@@ -40,6 +40,21 @@
                 {
                   "type": "heading",
                   "heading": "New section"
+                },
+                {
+                  "type": "custom:auto-entities",
+                  "card": {
+                    "type": "history-graph"
+                  },
+                  "filter": {
+                    "include": [
+                      {
+                        "options": {},
+                        "entity_id": "/shade.+lqi/"
+                      }
+                    ],
+                    "exclude": []
+                  }
                 }
               ]
             }

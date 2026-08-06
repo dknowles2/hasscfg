@@ -39,3 +39,5 @@ zigbee2mqtt/configuration_backup*
 zigbee2mqtt/migration*
 go2rtc-*
 espresense
+__pycache__/
+*.bak

@@ -1,0 +1,140 @@
+blueprint:
+  name: Power Cycle Unavailable Zigbee Shades
+  description: >
+    Monitors a group of hardwired Zigbee covers/shades that misreport
+    themselves as battery-powered and periodically drop off the network.
+    When any of the watched shades becomes unavailable, this automation
+    power-cycles the shared Zigbee smart plug wired to their power adapter(s)
+    to force them back online. Create one instance of this blueprint per
+    power switch — list every shade wired to that switch (one or many) as
+    the "Shades" input. If you have shades on separate switches, create one
+    automation per switch; shades sharing a switch stay in a single
+    automation instance.
+  domain: automation
+  source_url: https://github.com/dknowles2/hassio-addons
+  input:
+    shades:
+      name: Shades
+      description: >
+        All Zigbee cover entities powered by the switch below. Add just one
+        if it's on its own circuit, or several if they share power.
+      selector:
+        entity:
+          domain: cover
+          multiple: true
+    power_switch_entity:
+      name: Power switch
+      description: >
+        The Zigbee smart switch/plug wired to the power adapter(s) for the
+        shade(s) above.
+      selector:
+        entity:
+          domain: switch
+    notify_target:
+      name: Notify target (optional)
+      description: >
+        Notify entity/entities (e.g. a mobile_app notify target) to alert if
+        a shade is still unavailable after all power-cycle attempts are
+        exhausted. Leave empty to disable notifications.
+      default: []
+      selector:
+        entity:
+          domain: notify
+          multiple: true
+    initial_grace_period:
+      name: Grace period before first cycle
+      description: >
+        Wait this long after a shade goes unavailable before power cycling,
+        in case it's a brief network blip that resolves on its own.
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 600
+          unit_of_measurement: seconds
+          mode: box
+    power_down_seconds:
+      name: Power-down duration
+      description: How long to keep the switch off before turning it back on.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 300
+          unit_of_measurement: seconds
+          mode: box
+    wait_after_power_on:
+      name: Settle time after power-on
+      description: >
+        How long to wait after restoring power before checking whether the
+        shade(s) have reconnected.
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 300
+          unit_of_measurement: seconds
+          mode: box
+    max_attempts:
+      name: Max retry attempts
+      description: >
+        How many times to retry the power cycle if any shade is still
+        unavailable afterward.
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 5
+          mode: box
+
+# restart: if any watched shade drops again mid-cycle, the timer/attempt
+# sequence restarts cleanly rather than overlapping power cycles on the
+# same shared switch.
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input shades
+    to: "unavailable"
+
+variables:
+  shades: !input shades
+  power_switch_entity: !input power_switch_entity
+  notify_target: !input notify_target
+
+action:
+  - delay:
+      seconds: !input initial_grace_period
+  - condition: template
+    value_template: "{{ shades | select('is_state', 'unavailable') | list | count > 0 }}"
+  - repeat:
+      count: !input max_attempts
+      sequence:
+        - condition: template
+          value_template: "{{ shades | select('is_state', 'unavailable') | list | count > 0 }}"
+        - service: switch.turn_off
+          target:
+            entity_id: "{{ power_switch_entity }}"
+        - delay:
+            seconds: !input power_down_seconds
+        - service: switch.turn_on
+          target:
+            entity_id: "{{ power_switch_entity }}"
+        - delay:
+            seconds: !input wait_after_power_on
+  - variables:
+      still_unavailable: "{{ shades | select('is_state', 'unavailable') | list }}"
+  - if:
+      - condition: template
+        value_template: "{{ still_unavailable | count > 0 }}"
+      - condition: template
+        value_template: "{{ (notify_target | default([])) | count > 0 }}"
+    then:
+      - service: notify.send_message
+        target:
+          entity_id: !input notify_target
+        data:
+          message: >-
+            Shade power-cycle failed to bring these back online:
+            {{ still_unavailable | join(', ') }}

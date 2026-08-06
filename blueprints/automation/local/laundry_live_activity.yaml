@@ -1,0 +1,275 @@
+blueprint:
+  name: Laundry Notifications
+  description: >-
+    Tracks the washer and dryer cycles via the iOS Companion App's Live
+    Activities. While you're home, starts/updates a Live Activity per
+    appliance showing the current phase, a progress bar, and a countdown
+    driven by each appliance's remaining-time sensor. Clears the activity
+    when you leave home or the cycle finishes, and reinstates it if you
+    return home mid-cycle. Sends a completion push notification per
+    appliance — the washer's is held until the dryer is also idle, since you
+    can't empty the washer while the dryer's still going.
+
+    Entities and appliance-specific details (icons, colors, tags, gate
+    logic) are hardcoded for this household's washer/dryer; only presence
+    and the notification target are configurable.
+  domain: automation
+  input:
+    presence_entity:
+      name: Presence Entity
+      description: Person entity used to detect whether you're home.
+      selector:
+        entity:
+          domain: person
+    notify_service:
+      name: Notification Service
+      description: >-
+        Full notify service to call, e.g. notify.mobile_app_johns_iphone.
+      selector:
+        text: {}
+    live_activity_enabled:
+      name: Live Activity Enabled
+      description: >-
+        Enable/disable the Live Activity push (progress bar/countdown).
+        When off, the activity is not started/updated, but the "cycle
+        finished" push notification still sends regardless.
+      default: true
+      selector:
+        boolean: {}
+
+variables:
+  notify_service: !input notify_service
+  live_activity_enabled: !input live_activity_enabled
+  appliances:
+    - status_entity: sensor.washer_current_status
+      remaining_time_entity: sensor.washer_remaining_time
+      total_time_entity: sensor.washer_total_time
+      device_name: Washing Machine
+      tag: washer_cycle
+      notification_icon: mdi:washing-machine
+      color: '#2196F3'
+      completion_message: Washer is done
+      gate_entity: sensor.dryer_current_status
+      gate_states:
+        - power_off
+        - end
+    - status_entity: sensor.dryer_current_status
+      remaining_time_entity: sensor.dryer_remaining_time
+      total_time_entity: sensor.dryer_total_time
+      device_name: Dryer
+      tag: dryer_cycle
+      notification_icon: mdi:tumble-dryer
+      color: '#FF9800'
+      completion_message: Dryer is done
+      gate_entity: ''
+      gate_states: []
+
+triggers:
+  - id: status_active
+    trigger: state
+    entity_id:
+      - sensor.washer_current_status
+      - sensor.dryer_current_status
+    to:
+      - running
+      - rinsing
+      - spinning
+      - cooling
+    for: "00:00:15"
+  - id: status_done
+    trigger: state
+    entity_id:
+      - sensor.washer_current_status
+      - sensor.dryer_current_status
+    to:
+      - end
+      - power_off
+  - id: arrived
+    trigger: state
+    entity_id: !input presence_entity
+    to: home
+  - id: left
+    trigger: state
+    entity_id: !input presence_entity
+    from: home
+  - id: eta_changed
+    trigger: state
+    entity_id:
+      - sensor.washer_remaining_time
+      - sensor.dryer_remaining_time
+    not_from:
+      - unknown
+      - unavailable
+    not_to:
+      - unknown
+      - unavailable
+
+conditions: []
+
+actions:
+  # Ignore ETA recalculations that don't move the displayed minute count.
+  # The appliances re-estimate constantly; without this the automation
+  # re-pushes a notification for every few-second wobble.
+  - if:
+      - condition: template
+        value_template: >-
+          {{ trigger.id == 'eta_changed' and
+          ((as_timestamp(trigger.to_state.state, 0) -
+          as_timestamp(trigger.from_state.state, 0)) | abs) < 60 }}
+    then:
+      - stop: ETA moved less than a minute, no notification needed
+  - repeat:
+      # Only touch the appliance the trigger actually concerns. Presence
+      # changes affect both. A dryer event still selects the washer when the
+      # dryer is the washer's gate entity, so the held completion push can
+      # be released.
+      for_each: >-
+        {% if trigger.id in ['arrived', 'left'] %}
+          {{ appliances }}
+        {% else %}
+          {% set ns = namespace(selected=[]) %}
+          {% for appliance in appliances %}
+            {% if trigger.entity_id in [appliance.status_entity,
+                                        appliance.remaining_time_entity,
+                                        appliance.gate_entity] %}
+              {% set ns.selected = ns.selected + [appliance] %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.selected }}
+        {% endif %}
+      sequence:
+        - variables:
+            status_entity: "{{ repeat.item.status_entity }}"
+            remaining_time_entity: "{{ repeat.item.remaining_time_entity }}"
+            total_time_entity: "{{ repeat.item.total_time_entity }}"
+            device_name: "{{ repeat.item.device_name }}"
+            tag: "{{ repeat.item.tag }}"
+            notification_icon: "{{ repeat.item.notification_icon }}"
+            color: "{{ repeat.item.color }}"
+            completion_message: "{{ repeat.item.completion_message }}"
+            gate_entity: "{{ repeat.item.gate_entity }}"
+            gate_states: "{{ repeat.item.gate_states }}"
+        - choose:
+            - conditions:
+                - condition: trigger
+                  id: left
+              sequence:
+                - action: "{{ notify_service }}"
+                  data:
+                    message: clear_notification
+                    data:
+                      tag: "{{ tag }}"
+                      live_update: true
+          default:
+            - if:
+                - condition: state
+                  entity_id: !input presence_entity
+                  state: home
+              then:
+                - variables:
+                    current_state: "{{ states(status_entity) }}"
+                    remaining_ts: "{{ as_timestamp(states(remaining_time_entity), 0) }}"
+                    minutes_left: "{{ ((remaining_ts - now().timestamp()) / 60) | round(0, 'ceil') }}"
+                    remaining_sec: "{{ (remaining_ts - now().timestamp()) | int }}"
+                    total_time_sec: "{{ (states(total_time_entity) | float(0) * 60) | int }}"
+                    elapsed_sec: "{{ [total_time_sec - remaining_sec, 0] | max }}"
+                    phase: "{{ current_state | replace('_', ' ') | title }}"
+                - choose:
+                    - conditions:
+                        - condition: template
+                          value_template: "{{ current_state in ['end', 'power_off'] }}"
+                      sequence:
+                        - action: "{{ notify_service }}"
+                          data:
+                            message: clear_notification
+                            data:
+                              tag: "{{ tag }}"
+                        # Send the completion push exactly once: either when
+                        # this appliance itself reaches 'end' with its gate
+                        # clear, or when the gate appliance reaches 'end'
+                        # while this one is already waiting. Keying on the
+                        # gate's *transition* rather than its current state
+                        # stops the later 'end' -> 'power_off' change from
+                        # re-sending the same notification.
+                        - if:
+                            - condition: template
+                              value_template: >-
+                                {{ trigger.id == 'status_done' and current_state == 'end'
+                                and (
+                                  (trigger.entity_id == status_entity and
+                                   (gate_entity == '' or states(gate_entity) in gate_states))
+                                  or
+                                  (gate_entity != '' and trigger.entity_id == gate_entity
+                                   and trigger.to_state.state == 'end')
+                                ) }}
+                          then:
+                            - action: "{{ notify_service }}"
+                              data:
+                                message: "{{ completion_message }}"
+                                data:
+                                  push:
+                                    sound: default
+                    - conditions:
+                        - condition: template
+                          value_template: >-
+                            {{ current_state in ['running', 'rinsing', 'spinning',
+                            'cooling'] and live_activity_enabled }}
+                      sequence:
+                        - choose:
+                            - conditions:
+                                - condition: template
+                                  value_template: >-
+                                    {{ remaining_ts > 0 and minutes_left > 0 and
+                                    total_time_sec > 0 }}
+                              sequence:
+                                - action: "{{ notify_service }}"
+                                  data:
+                                    title: "{{ device_name }}"
+                                    message: "{{ phase }} · {{ minutes_left }} min left"
+                                    data:
+                                      tag: "{{ tag }}"
+                                      live_update: true
+                                      notification_icon: "{{ notification_icon }}"
+                                      notification_icon_color: "{{ color }}"
+                                      color: "{{ color }}"
+                                      chronometer: true
+                                      when: "{{ remaining_ts | int }}"
+                                      when_relative: false
+                                      progress: "{{ elapsed_sec }}"
+                                      progress_max: "{{ total_time_sec }}"
+                                      # Alert only when the appliance changes
+                                      # phase. Countdown refreshes and presence
+                                      # changes go out silently at the lower
+                                      # priority, which is also what keeps iOS
+                                      # from throttling delivery.
+                                      silent: "{{ trigger.id != 'status_active' }}"
+                          # Countdown data is missing or nonsensical. Post the
+                          # plain phase-only card when the cycle is starting or
+                          # we've just come home, but stay silent otherwise —
+                          # otherwise a momentarily bad remaining-time reading
+                          # flips the notification between the countdown card
+                          # and this one, re-alerting each way.
+                          default:
+                            - if:
+                                - condition: template
+                                  value_template: >-
+                                    {{ trigger.id in ['status_active', 'arrived'] }}
+                              then:
+                                - action: "{{ notify_service }}"
+                                  data:
+                                    title: "{{ device_name }}"
+                                    message: "{{ phase }}"
+                                    data:
+                                      tag: "{{ tag }}"
+                                      live_update: true
+                                      notification_icon: "{{ notification_icon }}"
+                                      notification_icon_color: "{{ color }}"
+                                      color: "{{ color }}"
+                                      silent: "{{ trigger.id != 'status_active' }}"
+
+# Queued, not restart: the washer and dryer sensors update within
+# milliseconds of each other, and under 'restart' the second trigger
+# aborts the first run mid-loop — dropping updates and, worse, completion
+# notifications.
+mode: queued
+max: 10

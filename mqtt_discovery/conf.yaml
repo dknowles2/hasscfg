@@ -227,6 +227,7 @@ templates:
       off_delay: 30
       payload_on: "1"
       platform: mqtt
+      expire_after: 10800
       state_topic: "rtl_433/devices/DSC-Security/%(sn)s/event"
       unique_id: "%(object_id)s"
 
@@ -243,6 +244,7 @@ templates:
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
+      expire_after: 10800
       state_topic: "rtl_433/devices/DSC-Security/%(sn)s/closed"
       unique_id: "%(object_id)s"
 
@@ -259,6 +261,7 @@ templates:
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
+      expire_after: 10800
       state_topic: "rtl_433/devices/DSC-Security/%(sn)s/closed"
       unique_id: "%(object_id)s"
 
@@ -275,6 +278,7 @@ templates:
       payload_off: "1"
       payload_on: "0"
       platform: mqtt
+      expire_after: 10800
       state_topic: "rtl_433/devices/DSC-Security/%(sn)s/battery_ok"
       unique_id: "%(object_id)s"
 
@@ -290,6 +294,7 @@ templates:
       payload_off: "0"
       payload_on: "1"
       platform: mqtt
+      expire_after: 10800
       state_topic: "rtl_433/devices/DSC-Security/%(sn)s/tamper"
       unique_id: "%(object_id)s"
 
@@ -305,6 +310,12 @@ templates:
       payload_on: "1"
       payload_off: "0"
       off_delay: 30
+      # Without this a silent sensor keeps reporting "off", which is
+      # indistinguishable from "no leak". All four of these had been RF-silent
+      # for 44-160 days while still showing a reassuring off. A day is far
+      # longer than any Govee beacon interval, so this only fires on a genuinely
+      # dead sensor.
+      expire_after: 86400
       platform: mqtt
       state_topic: "rtl_433/devices/Govee-Water/%(sn)s/detect_wet"
       unique_id: "%(object_id)s"
@@ -321,6 +332,7 @@ templates:
       state_class: measurement
       value_template: "{{ (value_json | float * 100) | int }}"
       unit_of_measurement: "%%"
+      expire_after: 86400
       platform: mqtt
       state_topic: "rtl_433/devices/Govee-Water/%(sn)s/battery_ok"
       unique_id: "%(object_id)s"

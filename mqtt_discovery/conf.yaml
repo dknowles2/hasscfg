@@ -55,8 +55,9 @@ templates:
     component: device
     object_id: rtl_433
     config:
+      # No top-level "name" here: DEVICE_DISCOVERY_SCHEMA rejects it outright,
+      # even set to null. The device name belongs under device.name below.
       state_topic: "rtl_433/events"
-      name: null
       device:
         name: "RTL 433"
         manufacturer: "RTL 433"
@@ -66,6 +67,17 @@ templates:
       origin:
         name: "RTL 433"
         sw_version: "unknown"
+      # components is required by the schema, and the device is only registered
+      # as a side effect of an entity being created. Without one, this stays an
+      # unnamed stub that dsc_panel and the Govee sensors hang off via via_device.
+      components:
+        rtl_433_connected:
+          name: Connected
+          unique_id: rtl_433_connected
+          platform: binary_sensor
+          device_class: connectivity
+          state_topic: "rtl_433/events"
+          value_template: "on"
 
   # genmon_percentage_sensor:
   #   component: sensor

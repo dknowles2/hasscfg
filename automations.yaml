@@ -727,47 +727,90 @@
 - id: '1751500001'
   alias: ThermoPro - Probe Detected
   description: Sends or clears actionable notification based on probe availability
+  # Online uses a template trigger rather than `from: unavailable`, because a
+  # `for:` delay on a plain state trigger restarts on every temperature change
+  # and so would almost never elapse. The boolean below stays true while the
+  # reading fluctuates, which is what makes the 30s debounce work.
   triggers:
+  - trigger: template
+    value_template: '{{ states(''sensor.thermopro_black_probe_ambient_temperature'')
+      not in [''unknown'', ''unavailable''] }}'
+    for: '00:00:30'
+    id: online_black
+  - trigger: template
+    value_template: '{{ states(''sensor.thermopro_white_probe_ambient_temperature'')
+      not in [''unknown'', ''unavailable''] }}'
+    for: '00:00:30'
+    id: online_white
+  # Offline is a plain state trigger: the state is literally `unavailable` and
+  # does not change while it holds, so `for:` behaves normally here.
   - trigger: state
-    entity_id:
-    - sensor.thermopro_black_probe_ambient_temperature
-    - sensor.thermopro_white_probe_ambient_temperature
-    from: unavailable
-    id: probe_online
-  - trigger: state
-    entity_id:
-    - sensor.thermopro_black_probe_ambient_temperature
-    - sensor.thermopro_white_probe_ambient_temperature
+    entity_id: sensor.thermopro_black_probe_ambient_temperature
     to: unavailable
-    id: probe_offline
+    for: '00:00:30'
+    id: offline_black
+  - trigger: state
+    entity_id: sensor.thermopro_white_probe_ambient_temperature
+    to: unavailable
+    for: '00:00:30'
+    id: offline_white
   conditions: []
   actions:
   - variables:
-      tag: thermopro_{{ trigger.entity_id.split('_')[1] }}_probe
+      probe: '{{ trigger.id.split(''_'')[1] }}'
+      tag: thermopro_{{ trigger.id.split('_')[1] }}_probe
   - choose:
     - conditions:
-      - condition: trigger
-        id: probe_online
+      - condition: template
+        value_template: '{{ trigger.id.startswith(''online_'') }}'
       sequence:
       - action: notify.mobile_app_davids_iphone_16_pro
         data:
-          title: ThermoPro Probes Online
-          message: Set up monitoring in the Tools dashboard.
+          title: ThermoPro {{ probe | title }} Probe Online
+          message: Pick a target to start monitoring, or open the dashboard.
           data:
             tag: '{{ tag }}'
+            # Consumed by the "ThermoPro - Start Monitoring" automation, which
+            # matches on the PROBE_ prefix. iOS shows at most four actions.
             actions:
+            - action: PROBE_{{ probe | upper }}_165
+              title: Chicken 165°F
+            - action: PROBE_{{ probe | upper }}_203
+              title: Brisket 203°F
+            - action: PROBE_{{ probe | upper }}_CUSTOM
+              title: Custom…
+              behavior: textInput
+              textInputButtonTitle: Start
+              textInputPlaceholder: Target °F
             - action: URI
-              title: Set Up
-              uri: /dashboard-tools/meat-probe
+              title: Open Dashboard
+              uri: /thermopro-probes/{{ probe }}
     - conditions:
-      - condition: trigger
-        id: probe_offline
+      - condition: template
+        value_template: '{{ trigger.id.startswith(''offline_'') }}'
       sequence:
       - action: notify.mobile_app_davids_iphone_16_pro
         data:
           message: clear_notification
           data:
             tag: '{{ tag }}'
+  # Both probes can come online at once; single would drop the second.
+  mode: queued
+  max: 5
+- id: '1751500003'
+  alias: ThermoPro - Clear Monitoring Flags On Start
+  description: Monitoring scripts do not survive a restart, so clear the cancel flags
+    that would otherwise leave the dashboard showing a cook still in progress.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  conditions: []
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id:
+      - input_boolean.meat_probe_white_monitoring
+      - input_boolean.meat_probe_black_monitoring
   mode: single
 - id: '1751500002'
   alias: ThermoPro - Start Monitoring
@@ -777,23 +820,47 @@
     event_type: mobile_app_notification_action
   conditions:
   - condition: template
-    value_template: '{{ trigger.event.data.action.startswith(''PROBE_'') }}'
+    value_template: '{{ (trigger.event.data.action | default('''', true)).startswith(''PROBE_'')
+      }}'
   actions:
   - variables:
-      parts: '{{ trigger.event.data.action.split(''_'') }}'
-      probe: '{{ trigger.event.data.action.split(''_'')[1] | title }}'
-      temp_raw: '{{ trigger.event.data.action.split(''_'')[2] }}'
+      probe_key: '{{ trigger.event.data.action.split(''_'')[1] | lower }}'
+      raw_temp: '{{ trigger.event.data.action.split(''_'')[2] }}'
       target_temp: "{% if trigger.event.data.action.split('_')[2] == 'CUSTOM' %}\n
-        \ {{ trigger.event.data.reply_text | int(0) }}\n{% else %}\n  {{ trigger.event.data.action.split('_')[2]
-        | int }}\n{% endif %}"
-      sensor: '{{ ''Internal Tip'' if trigger.event.data.action.split(''_'')[1] ==
-        ''WHITE'' else ''Internal Center'' }}'
-  - action: script.monitor_meat_probe
+        \ {{ trigger.event.data.reply_text | default('', true) | int(0) }}\n{% else
+        %}\n  {{ trigger.event.data.action.split('_')[2] | int(0) }}\n{% endif %}"
+      # Honour whichever sensor is selected on the Tools dashboard for this probe.
+      sensor: '{{ states(''input_select.meat_probe_'' ~ trigger.event.data.action.split(''_'')[1]
+        | lower ~ ''_sensor'') }}'
+  - if:
+    - condition: template
+      value_template: '{{ target_temp | int(0) < 100 or target_temp | int(0) > 250
+        }}'
+    then:
+    - action: notify.mobile_app_davids_iphone_16_pro
+      data:
+        title: Invalid target temperature
+        message: '{{ raw_temp if raw_temp != ''CUSTOM'' else trigger.event.data.reply_text
+          | default('''', true) }} is not between 100 and 250°F.'
+    - stop: Invalid target temperature
+  # Keep the dashboard in sync with the target chosen from the notification.
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.meat_probe_{{ probe_key }}_target_temp
     data:
-      probe: '{{ probe }}'
-      sensor: '{{ sensor }}'
-      target_temp: '{{ target_temp }}'
-  mode: single
+      value: '{{ target_temp | int(0) }}'
+  # script.turn_on does not block, so this automation is free again immediately
+  # instead of being held open for the length of the cook.
+  - action: script.turn_on
+    target:
+      entity_id: script.monitor_meat_probe
+    data:
+      variables:
+        probe: '{{ probe_key | title }}'
+        sensor: '{{ sensor }}'
+        target_temp: '{{ target_temp | int(0) }}'
+  mode: queued
+  max: 5
 - id: '1783022818951'
   alias: Frigate Notifications - Driveway Car
   description: ''

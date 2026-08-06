@@ -1,0 +1,548 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.thermopro_probes",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "type": "sections",
+          "title": "White",
+          "path": "white",
+          "max_columns": 2,
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "White Probe",
+                  "heading_style": "title",
+                  "icon": "mdi:thermometer",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermopro_white_probe_battery"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermopro_white_probe_ambient_temperature",
+                      "name": "Ambient"
+                    }
+                  ]
+                },
+                {
+                  "type": "markdown",
+                  "content": "{% set c = 'white' %}\n{% set sel = states('input_select.meat_probe_' ~ c ~ '_sensor') %}\n{% set e = 'sensor.thermopro_' ~ c ~ '_probe_' ~ (sel | lower | replace(' ', '_')) ~ '_temperature' %}\n{% set cur = states(e) %}\n{% set tgt = states('input_number.meat_probe_' ~ c ~ '_target_temp') | float(0) %}\n{% if is_state('input_boolean.meat_probe_' ~ c ~ '_monitoring', 'on') %}\n{% if cur in ['unknown', 'unavailable'] %}\n### Probe offline\nMonitoring {{ sel }} - waiting for signal.\n{% else %}\n{% set f = cur | float(0) %}\n{% set pct = ((f / tgt * 100) if tgt > 0 else 0) | round(0) | int %}\n{% set filled = [[pct // 5, 0] | max, 20] | min %}\n### {{ f | round(1) }}°F → {{ tgt | round(0) | int }}°F\n`{{ '█' * filled }}{{ '░' * (20 - filled) }}` {{ pct }}%\n\n{{ (tgt - f) | round(1) }}°F to go · {{ sel }}\n{% endif %}\n{% else %}\n### Idle\nTarget {{ tgt | round(0) | int }}°F on {{ sel }}. Press Start.\n{% endif %}\n"
+                },
+                {
+                  "type": "glance",
+                  "show_name": true,
+                  "show_state": true,
+                  "entities": [
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_tip_temperature",
+                      "name": "Tip"
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_center_temperature",
+                      "name": "Center"
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_end_temperature",
+                      "name": "End"
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_ambient_temperature",
+                      "name": "Ambient"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "input_select.meat_probe_white_sensor",
+                      "name": "Sensor"
+                    },
+                    {
+                      "entity": "input_number.meat_probe_white_target_temp",
+                      "name": "Target Temp"
+                    }
+                  ]
+                },
+                {
+                  "type": "grid",
+                  "columns": 2,
+                  "square": false,
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Chicken",
+                      "icon": "mdi:food-drumstick",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_white_target_temp"
+                        },
+                        "data": {
+                          "value": 165
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_white_target_temp') | int(0) == 165 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Pork",
+                      "icon": "mdi:food",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_white_target_temp"
+                        },
+                        "data": {
+                          "value": 145
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_white_target_temp') | int(0) == 145 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Beef",
+                      "icon": "mdi:food-steak",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_white_target_temp"
+                        },
+                        "data": {
+                          "value": 135
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_white_target_temp') | int(0) == 135 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Brisket",
+                      "icon": "mdi:cow",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_white_target_temp"
+                        },
+                        "data": {
+                          "value": 203
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_white_target_temp') | int(0) == 203 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "grid",
+                  "columns": 2,
+                  "square": false,
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Start",
+                      "icon": "mdi:play",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "script.start_white_probe_monitoring"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Stop",
+                      "icon": "mdi:stop",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_boolean.turn_off",
+                        "target": {
+                          "entity_id": "input_boolean.meat_probe_white_monitoring"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "White Cook Curve",
+                  "heading_style": "title",
+                  "icon": "mdi:chart-line"
+                },
+                {
+                  "type": "custom:apexcharts-card",
+                  "graph_span": "6h",
+                  "header": {
+                    "show": true,
+                    "show_states": true,
+                    "colorize_states": true
+                  },
+                  "yaxis": [
+                    {
+                      "min": 0,
+                      "max": 300,
+                      "decimals": 0
+                    }
+                  ],
+                  "series": [
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_tip_temperature",
+                      "name": "White Tip",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_center_temperature",
+                      "name": "White Center",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_end_temperature",
+                      "name": "White End",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_ambient_temperature",
+                      "name": "White Ambient",
+                      "stroke_width": 1,
+                      "opacity": 0.4
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "sections",
+          "title": "Black",
+          "path": "black",
+          "max_columns": 2,
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Black Probe",
+                  "heading_style": "title",
+                  "icon": "mdi:thermometer",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermopro_black_probe_battery"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermopro_black_probe_ambient_temperature",
+                      "name": "Ambient"
+                    }
+                  ]
+                },
+                {
+                  "type": "markdown",
+                  "content": "{% set c = 'black' %}\n{% set sel = states('input_select.meat_probe_' ~ c ~ '_sensor') %}\n{% set e = 'sensor.thermopro_' ~ c ~ '_probe_' ~ (sel | lower | replace(' ', '_')) ~ '_temperature' %}\n{% set cur = states(e) %}\n{% set tgt = states('input_number.meat_probe_' ~ c ~ '_target_temp') | float(0) %}\n{% if is_state('input_boolean.meat_probe_' ~ c ~ '_monitoring', 'on') %}\n{% if cur in ['unknown', 'unavailable'] %}\n### Probe offline\nMonitoring {{ sel }} - waiting for signal.\n{% else %}\n{% set f = cur | float(0) %}\n{% set pct = ((f / tgt * 100) if tgt > 0 else 0) | round(0) | int %}\n{% set filled = [[pct // 5, 0] | max, 20] | min %}\n### {{ f | round(1) }}°F → {{ tgt | round(0) | int }}°F\n`{{ '█' * filled }}{{ '░' * (20 - filled) }}` {{ pct }}%\n\n{{ (tgt - f) | round(1) }}°F to go · {{ sel }}\n{% endif %}\n{% else %}\n### Idle\nTarget {{ tgt | round(0) | int }}°F on {{ sel }}. Press Start.\n{% endif %}\n"
+                },
+                {
+                  "type": "glance",
+                  "show_name": true,
+                  "show_state": true,
+                  "entities": [
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_tip_temperature",
+                      "name": "Tip"
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_center_temperature",
+                      "name": "Center"
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_end_temperature",
+                      "name": "End"
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_ambient_temperature",
+                      "name": "Ambient"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "input_select.meat_probe_black_sensor",
+                      "name": "Sensor"
+                    },
+                    {
+                      "entity": "input_number.meat_probe_black_target_temp",
+                      "name": "Target Temp"
+                    }
+                  ]
+                },
+                {
+                  "type": "grid",
+                  "columns": 2,
+                  "square": false,
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Chicken",
+                      "icon": "mdi:food-drumstick",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_black_target_temp"
+                        },
+                        "data": {
+                          "value": 165
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_black_target_temp') | int(0) == 165 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Pork",
+                      "icon": "mdi:food",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_black_target_temp"
+                        },
+                        "data": {
+                          "value": 145
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_black_target_temp') | int(0) == 145 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Beef",
+                      "icon": "mdi:food-steak",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_black_target_temp"
+                        },
+                        "data": {
+                          "value": 135
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_black_target_temp') | int(0) == 135 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Brisket",
+                      "icon": "mdi:cow",
+                      "show_name": true,
+                      "show_icon": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_number.set_value",
+                        "target": {
+                          "entity_id": "input_number.meat_probe_black_target_temp"
+                        },
+                        "data": {
+                          "value": 203
+                        }
+                      },
+                      "card_mod": {
+                        "style": "ha-card { border: 2px solid {% if states('input_number.meat_probe_black_target_temp') | int(0) == 203 %}var(--primary-color){% else %}transparent{% endif %}; }"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "grid",
+                  "columns": 2,
+                  "square": false,
+                  "cards": [
+                    {
+                      "type": "button",
+                      "name": "Start",
+                      "icon": "mdi:play",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "script.start_black_probe_monitoring"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "name": "Stop",
+                      "icon": "mdi:stop",
+                      "show_name": true,
+                      "tap_action": {
+                        "action": "perform-action",
+                        "perform_action": "input_boolean.turn_off",
+                        "target": {
+                          "entity_id": "input_boolean.meat_probe_black_monitoring"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Black Cook Curve",
+                  "heading_style": "title",
+                  "icon": "mdi:chart-line"
+                },
+                {
+                  "type": "custom:apexcharts-card",
+                  "graph_span": "6h",
+                  "header": {
+                    "show": true,
+                    "show_states": true,
+                    "colorize_states": true
+                  },
+                  "yaxis": [
+                    {
+                      "min": 0,
+                      "max": 300,
+                      "decimals": 0
+                    }
+                  ],
+                  "series": [
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_tip_temperature",
+                      "name": "Black Tip",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_center_temperature",
+                      "name": "Black Center",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_end_temperature",
+                      "name": "Black End",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_ambient_temperature",
+                      "name": "Black Ambient",
+                      "stroke_width": 1,
+                      "opacity": 0.4
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "title": "Compare",
+          "path": "compare",
+          "cards": [
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Both Probes",
+                  "heading_style": "title",
+                  "icon": "mdi:chart-line"
+                },
+                {
+                  "type": "custom:apexcharts-card",
+                  "graph_span": "6h",
+                  "header": {
+                    "show": true,
+                    "show_states": true,
+                    "colorize_states": true
+                  },
+                  "yaxis": [
+                    {
+                      "min": 0,
+                      "max": 300,
+                      "decimals": 0
+                    }
+                  ],
+                  "series": [
+                    {
+                      "entity": "sensor.thermopro_white_probe_internal_tip_temperature",
+                      "name": "White Tip",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_white_probe_ambient_temperature",
+                      "name": "White Ambient",
+                      "stroke_width": 1,
+                      "opacity": 0.4
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_internal_center_temperature",
+                      "name": "Black Center",
+                      "stroke_width": 2
+                    },
+                    {
+                      "entity": "sensor.thermopro_black_probe_ambient_temperature",
+                      "name": "Black Ambient",
+                      "stroke_width": 1,
+                      "opacity": 0.4
+                    }
+                  ],
+                  "apex_config": {
+                    "chart": {
+                      "height": 460
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

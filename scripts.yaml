@@ -88,10 +88,35 @@ monitor_meat_probe:
           min: 100
           max: 250
           unit_of_measurement: °F
+    timeout_hours:
+      name: Timeout (hours)
+      description: Give up after this long so a stalled cook cannot run forever.
+      required: false
+      default: 12
+      selector:
+        number:
+          min: 1
+          max: 24
+    dropout_seconds:
+      name: Dropout tolerance (seconds)
+      description: How long the probe may stay unavailable before monitoring aborts.
+      required: false
+      default: 600
+      selector:
+        number:
+          min: 60
+          max: 3600
   sequence:
   - variables:
+      probe_key: '{{ probe | lower | trim }}'
       entity_id: sensor.thermopro_{{ probe | lower | trim }}_probe_{{ sensor | lower
         | trim | replace(' ', '_') }}_temperature
+      cancel_flag: input_boolean.meat_probe_{{ probe | lower | trim }}_monitoring
+      activity_id: meat_probe_{{ probe | lower | trim }}
+      target_f: '{{ target_temp | float(0) }}'
+      deadline: '{{ now().timestamp() + (timeout_hours | default(12) | float(12) *
+        3600) }}'
+      dropout_limit: '{{ dropout_seconds | default(600) | float(600) }}'
   - if:
     - condition: template
       value_template: '{{ states(entity_id) in [''unknown'', ''unavailable''] }}'
@@ -100,6 +125,9 @@ monitor_meat_probe:
       data:
         message: Can't find sensor {{ entity_id }} — check probe/sensor selection.
     - stop: Entity unavailable
+  - action: input_boolean.turn_on
+    target:
+      entity_id: '{{ cancel_flag }}'
   - action: notify.mobile_app_davids_iphone_16_pro
     data:
       message: Monitoring {{ probe }} Probe ({{ sensor }}) — target {{ target_temp
@@ -107,63 +135,113 @@ monitor_meat_probe:
       data:
         push:
           live_activity_update_type: start
-          activity_id: meat_probe_{{ probe | lower }}
+          activity_id: '{{ activity_id }}'
           attributes:
             probe: '{{ probe }}'
             sensor: '{{ sensor }}'
             target_temp: '{{ target_temp }}'
           content_state:
-            current_temp: '{{ states(entity_id) | float | round(1) }}'
+            current_temp: '{{ states(entity_id) | float(0) | round(1) }}'
             target_temp: '{{ target_temp }}'
   - repeat:
       while:
+      # Stop button (or any turn_off of the flag) ends the loop cleanly.
       - condition: template
-        value_template: '{{ states(entity_id) | float(0) < target_temp | float }}'
+        value_template: '{{ is_state(cancel_flag, ''on'') }}'
+      - condition: template
+        value_template: '{{ states(entity_id) | float(0) < target_f | float(0) }}'
+      # Overall timeout so a stalled cook cannot hold a parallel slot forever.
+      - condition: template
+        value_template: '{{ now().timestamp() < deadline | float(0) }}'
+      # Tolerate brief BLE dropouts, but give up on a sustained one.
+      - condition: template
+        value_template: "{% set st = states[entity_id] %}\n{{ states(entity_id) not
+          in ['unknown', 'unavailable']\n   or (st is not none\n       and (now() -
+          st.last_changed).total_seconds() < dropout_limit | float(600)) }}\n"
       sequence:
-      - delay:
-          seconds: 60
+      # Wakes immediately on stop or on hitting target; otherwise ticks every 60s
+      # to refresh the Live Activity.
+      - wait_template: "{{ is_state(cancel_flag, 'off')\n   or states(entity_id) |
+          float(0) >= target_f | float(0) }}\n"
+        timeout: '00:01:00'
+        continue_on_timeout: true
+      - if:
+        - condition: template
+          value_template: "{{ is_state(cancel_flag, 'on')\n   and states(entity_id)
+            | float(0) < target_f | float(0) }}\n"
+        then:
+        - action: notify.mobile_app_davids_iphone_16_pro
+          data:
+            message: ''
+            data:
+              push:
+                live_activity_update_type: update
+                activity_id: '{{ activity_id }}'
+                content_state:
+                  current_temp: '{{ states(entity_id) | float(0) | round(1) }}'
+                  target_temp: '{{ target_temp }}'
+  # Every exit path ends the Live Activity, so none are left orphaned on the phone.
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ states(entity_id) | float(0) >= target_f | float(0) }}'
+      sequence:
       - action: notify.mobile_app_davids_iphone_16_pro
         data:
-          message: ''
+          title: Meat is ready!
+          message: '{{ probe }} Probe hit {{ target_temp }}°F'
           data:
             push:
-              live_activity_update_type: update
-              activity_id: meat_probe_{{ probe | lower }}
-              content_state:
-                current_temp: '{{ states(entity_id) | float | round(1) }}'
-                target_temp: '{{ target_temp }}'
-  - action: notify.mobile_app_davids_iphone_16_pro
-    data:
-      title: Meat is ready!
-      message: '{{ probe }} Probe hit {{ target_temp }}°F'
+              live_activity_update_type: end
+              activity_id: '{{ activity_id }}'
+              interruption-level: critical
+              sound:
+                name: default
+                critical: 1
+                volume: 1
+    default:
+    - variables:
+        reason: "{% if is_state(cancel_flag, 'off') %}stopped\n{% elif now().timestamp()
+          >= deadline | float(0) %}timed out after {{ timeout_hours | default(12) }}h\n{%
+          else %}aborted — probe offline\n{% endif %}\n"
+    - action: notify.mobile_app_davids_iphone_16_pro
       data:
-        push:
-          live_activity_update_type: end
-          activity_id: meat_probe_{{ probe | lower }}
-          interruption-level: critical
-          sound:
-            name: default
-            critical: 1
-            volume: 1
+        title: Monitoring ended
+        message: '{{ probe }} Probe monitoring {{ reason | trim }}.'
+        data:
+          push:
+            live_activity_update_type: end
+            activity_id: '{{ activity_id }}'
+  - action: input_boolean.turn_off
+    target:
+      entity_id: '{{ cancel_flag }}'
 start_white_probe_monitoring:
   alias: Start White Probe Monitoring
   sequence:
-  - action: script.monitor_meat_probe
+  # script.turn_on does not wait for completion, so this wrapper returns
+  # immediately instead of staying "running" for the whole cook.
+  - action: script.turn_on
+    target:
+      entity_id: script.monitor_meat_probe
     data:
-      probe: White
-      sensor: '{{ states(''input_select.meat_probe_white_sensor'') }}'
-      target_temp: '{{ states(''input_number.meat_probe_white_target_temp'') | int
-        }}'
+      variables:
+        probe: White
+        sensor: '{{ states(''input_select.meat_probe_white_sensor'') }}'
+        target_temp: '{{ states(''input_number.meat_probe_white_target_temp'') | int
+          }}'
   mode: single
 start_black_probe_monitoring:
   alias: Start Black Probe Monitoring
   sequence:
-  - action: script.monitor_meat_probe
+  - action: script.turn_on
+    target:
+      entity_id: script.monitor_meat_probe
     data:
-      probe: Black
-      sensor: '{{ states(''input_select.meat_probe_black_sensor'') }}'
-      target_temp: '{{ states(''input_number.meat_probe_black_target_temp'') | int
-        }}'
+      variables:
+        probe: Black
+        sensor: '{{ states(''input_select.meat_probe_black_sensor'') }}'
+        target_temp: '{{ states(''input_number.meat_probe_black_target_temp'') | int
+          }}'
   mode: single
 get_mne_transit_alerts:
   alias: Get MNE Transit Alerts

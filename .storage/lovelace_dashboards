@@ -32,13 +32,13 @@
         "url_path": "dashboard-unavailable"
       },
       {
-        "id": "dashboard_tools",
+        "id": "thermopro_probes",
         "show_in_sidebar": true,
-        "icon": "mdi:wrench",
-        "title": "Tools",
+        "icon": "mdi:thermometer",
+        "title": "ThermoPro",
         "require_admin": false,
         "mode": "storage",
-        "url_path": "dashboard-tools"
+        "url_path": "thermopro-probes"
       },
       {
         "id": "dashboard_power",

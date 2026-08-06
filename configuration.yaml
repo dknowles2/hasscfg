@@ -36,28 +36,42 @@ logger:
 #   default_measurement: state
 
 input_select:
+  # Both ThermoPro probes expose the same four temperature sensors.
+  # No `initial:` on these helpers — setting it overrides restore_state, which
+  # would reset your selection on every restart, including mid-cook.
   meat_probe_white_sensor:
     name: White Probe Sensor
     options:
       - Internal Tip
+      - Internal Center
       - Internal End
       - Ambient
-    initial: Internal Tip
   meat_probe_black_sensor:
     name: Black Probe Sensor
     options:
+      - Internal Tip
       - Internal Center
+      - Internal End
       - Ambient
-    initial: Internal Center
+
+input_boolean:
+  # Cancel flags for script.monitor_meat_probe. Turning one off lets that
+  # probe's monitoring loop exit cleanly so it can still end its Live Activity.
+  meat_probe_white_monitoring:
+    name: White Probe Monitoring
+    icon: mdi:thermometer-check
+  meat_probe_black_monitoring:
+    name: Black Probe Monitoring
+    icon: mdi:thermometer-check
 
 input_number:
+  # Likewise no `initial:` — the last target you set should survive a restart.
   meat_probe_white_target_temp:
     name: White Probe Target Temp
     min: 100
     max: 250
     step: 1
     unit_of_measurement: "°F"
-    initial: 165
     mode: box
   meat_probe_black_target_temp:
     name: Black Probe Target Temp
@@ -65,7 +79,6 @@ input_number:
     max: 250
     step: 1
     unit_of_measurement: "°F"
-    initial: 165
     mode: box
 
 zha:

@@ -77,7 +77,11 @@ templates:
           platform: binary_sensor
           device_class: connectivity
           state_topic: "rtl_433/events"
-          value_template: "on"
+          # Every decoded RF frame lands here, measured at roughly 1-2/min with
+          # a 64s worst gap. 15 min is ample headroom and still flags a dead
+          # receiver promptly.
+          expire_after: 900
+          value_template: "ON"
 
   # genmon_percentage_sensor:
   #   component: sensor
@@ -200,8 +204,16 @@ templates:
           unique_id: "dsc_panel_connected"
           platform: binary_sensor
           device_class: connectivity
-          state_topic: "rtl_433/devices/DSC-Security"
-          value_template: "on"
+          # rtl_433 never publishes to the bare DSC-Security topic; every real
+          # message lands one level deeper, so this sensor received nothing and
+          # sat unavailable. "+/time" is set on every rtl_433 message, so it
+          # catches traffic from any DSC sensor.
+          state_topic: "rtl_433/devices/DSC-Security/+/time"
+          # The 19 live sensors each supervise on a staggered ~60 min cycle, so
+          # some message arrives about every 3 min. 30 min tolerates a quiet
+          # stretch and lost packets while still catching a dead panel.
+          expire_after: 1800
+          value_template: "ON"
 
   dsc_motion:
     component: binary_sensor

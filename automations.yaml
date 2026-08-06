@@ -564,26 +564,13 @@
 - id: '1756340236690'
   alias: Notify when print is done
   description: ''
-  triggers:
-  - device_id: f22f507343236e56c84d20afb6bfdfdf
-    domain: bambu_lab
-    type: event_print_finished
-    trigger: device
-  conditions: []
-  actions:
-  - action: camera.snapshot
-    metadata: {}
-    data:
-      filename: /media/printy.jpg
-    target:
-      entity_id: camera.printy_camera
-  - action: notify.mobile_app_davids_iphone
-    metadata: {}
-    data:
-      message: '{{ states(''sensor.printy_task_name'') }} has finished printing.'
-      data:
-        image: /media/local/printy.jpg
-  mode: single
+  use_blueprint:
+    path: local/bambu_print_notifications.yaml
+    input:
+      printer_device: c012d0de6896b01adc93ecdd85e83d9f
+      notify_service: notify.mobile_app_davids_iphone_16_pro
+      events:
+      - event_print_finished
 - id: '1764382802130'
   alias: Button - Basement
   description: ''

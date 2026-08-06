@@ -1,0 +1,125 @@
+blueprint:
+  name: Bambu Lab Print Notifications
+  description: >-
+    Sends a push notification when a Bambu Lab print finishes, fails, or is
+    canceled, with the print's name and a picture attached.
+
+    Everything but the printer and the notification target is derived from the
+    device at runtime: the task-name sensor and the images are looked up by
+    suffix from the device's own entities, so renaming those entities does not
+    break this automation. Re-pairing the printer still does, since that mints
+    a new device — but then only the Printer input needs repointing.
+
+    The Bambu integration exposes the chamber view as an image entity rather
+    than a camera, so there is no snapshot to take. The notification carries
+    the image entity's picture URL instead, read at send time because the
+    token embedded in it rotates. The chamber image reads unknown until the
+    printer has sent a frame, so the sliced plate's cover image is used as a
+    fallback.
+  domain: automation
+  input:
+    printer_device:
+      name: Printer
+      description: The Bambu Lab printer to watch.
+      selector:
+        device:
+          integration: bambu_lab
+    notify_service:
+      name: Notification Service
+      description: >-
+        Full notify service to call, e.g. notify.mobile_app_johns_iphone.
+      selector:
+        text: {}
+    events:
+      name: Events
+      description: Which print outcomes should send a notification.
+      default:
+        - event_print_finished
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: Print finished
+              value: event_print_finished
+            - label: Print failed
+              value: event_print_failed
+            - label: Print canceled
+              value: event_print_canceled
+
+variables:
+  printer_device: !input printer_device
+  notify_service: !input notify_service
+  events: !input events
+  printer_name: >-
+    {{ device_attr(printer_device, 'name_by_user')
+    or device_attr(printer_device, 'name') or 'Printer' }}
+  entities: "{{ device_entities(printer_device) }}"
+  # Matched by suffix rather than by full entity id, so these survive a rename.
+  task_sensor: >-
+    {{ entities | select('search', '^sensor\..*task_name$') | list | first | default('') }}
+  filename_sensor: >-
+    {{ entities | select('search', '^sensor\..*gcode_filename$') | list | first | default('') }}
+  chamber_image: >-
+    {{ entities | select('search', '^image\..*_camera$') | list | first | default('') }}
+  cover_image: >-
+    {{ entities | select('search', '^image\..*cover_image$') | list | first | default('') }}
+  # The task name is often already cleared by the time the print-ended event
+  # lands, so fall back to the gcode filename and then to a generic word.
+  task_name: >-
+    {{ [states(task_sensor) if task_sensor else '',
+    states(filename_sensor) if filename_sensor else '']
+    | reject('in', ['unknown', 'unavailable', 'none', ''])
+    | list | first | default('Print') }}
+  picture: >-
+    {{ (state_attr(chamber_image, 'entity_picture')
+    if chamber_image and states(chamber_image) not in ['unknown', 'unavailable']
+    else (state_attr(cover_image, 'entity_picture') if cover_image else ''))
+    | default('', true) }}
+  message: >-
+    {{ {'event_print_finished': task_name ~ ' has finished printing.',
+    'event_print_failed': task_name ~ ' failed to print.',
+    'event_print_canceled': task_name ~ ' was canceled.'}[trigger.id] }}
+
+triggers:
+  - id: event_print_finished
+    trigger: device
+    device_id: !input printer_device
+    domain: bambu_lab
+    type: event_print_finished
+  - id: event_print_failed
+    trigger: device
+    device_id: !input printer_device
+    domain: bambu_lab
+    type: event_print_failed
+  - id: event_print_canceled
+    trigger: device
+    device_id: !input printer_device
+    domain: bambu_lab
+    type: event_print_canceled
+
+# All three triggers are always wired up; this drops the outcomes that were
+# not selected. Device triggers cannot be built from a template, so the
+# filtering has to happen here rather than at the trigger.
+conditions:
+  - condition: template
+    value_template: "{{ trigger.id in events }}"
+
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ picture != '' }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              title: "{{ printer_name }}"
+              message: "{{ message }}"
+              data:
+                image: "{{ picture }}"
+    default:
+      - action: "{{ notify_service }}"
+        data:
+          title: "{{ printer_name }}"
+          message: "{{ message }}"
+
+mode: single

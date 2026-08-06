@@ -324,14 +324,14 @@
                 },
                 {
                   "type": "custom:entity-progress-card",
-                  "entity": "sensor.a1mini_0309ca561103443_print_progress",
+                  "entity": "sensor.printy_print_progress",
                   "grid_options": {
                     "columns": "full"
                   },
                   "visibility": [
                     {
                       "condition": "state",
-                      "entity": "sensor.a1mini_0309ca561103443_print_status",
+                      "entity": "sensor.printy_print_status",
                       "state": "running"
                     }
                   ]

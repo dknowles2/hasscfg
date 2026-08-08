@@ -72,7 +72,7 @@
     trigger: device
   conditions: []
   actions:
-  - action: notify.mobile_app_davids_iphone_16_pro
+  - action: notify.mobile_app_davids_iphone_17_pro
     metadata: {}
     data:
       message: Person Detected at the Front Door.
@@ -89,7 +89,7 @@
     trigger: device
   conditions: []
   actions:
-  - action: notify.mobile_app_davids_iphone_16_pro
+  - action: notify.mobile_app_davids_iphone_17_pro
     data:
       message: Doorbell pressed
       image: '{{ trigger.event.data.attachment.image }}'
@@ -101,7 +101,7 @@
     path: local/laundry_live_activity.yaml
     input:
       presence_entity: person.david_knowles
-      notify_service: notify.mobile_app_davids_iphone_16_pro
+      notify_service: notify.mobile_app_davids_iphone_17_pro
       live_activity_enabled: true
 - id: '1703026402697'
   alias: Water Leak Detected
@@ -127,7 +127,7 @@
             name: default
             critical: 1
             volume: 1
-    action: notify.mobile_app_davids_iphone_16_pro
+    action: notify.mobile_app_davids_iphone_17_pro
   mode: single
 - id: '1710280107429'
   alias: Button - Office
@@ -477,6 +477,11 @@
       entity_id: schedule.evening_commute
       state:
       - 'on'
+  - condition: template
+    alias: Debounce - skip if this automation ran in the last 30 minutes
+    value_template: >-
+      {{ this.attributes.last_triggered is none
+         or (now() - this.attributes.last_triggered).total_seconds() > 1800 }}
   actions:
   - choose:
     - conditions:
@@ -489,7 +494,7 @@
         - closed
         enabled: true
       sequence:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         metadata: {}
         data:
           message: Garage door opened because eScooter arrived
@@ -509,7 +514,7 @@
         - open
         enabled: true
       sequence:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         metadata: {}
         data:
           message: Garage door close because eScooter left
@@ -568,7 +573,7 @@
     path: local/bambu_print_notifications.yaml
     input:
       printer_device: c012d0de6896b01adc93ecdd85e83d9f
-      notify_service: notify.mobile_app_davids_iphone_16_pro
+      notify_service: notify.mobile_app_davids_iphone_17_pro
       events:
       - event_print_finished
 - id: '1764382802130'
@@ -745,7 +750,7 @@
       - condition: template
         value_template: '{{ trigger.id.startswith(''online_'') }}'
       sequence:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         data:
           title: ThermoPro {{ probe | title }} Probe Online
           message: Pick a target to start monitoring, or open the dashboard.
@@ -768,7 +773,7 @@
       - condition: template
         value_template: '{{ trigger.id.startswith(''offline_'') }}'
       sequence:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         data:
           message: clear_notification
           data:
@@ -814,7 +819,7 @@
       value_template: '{{ target_temp | int(0) < 100 or target_temp | int(0) > 250
         }}'
     then:
-    - action: notify.mobile_app_davids_iphone_16_pro
+    - action: notify.mobile_app_davids_iphone_17_pro
       data:
         title: Invalid target temperature
         message: '{{ raw_temp if raw_temp != ''CUSTOM'' else trigger.event.data.reply_text
@@ -843,7 +848,7 @@
     input:
       camera:
       - camera.front_yard_driveway_camera
-      notify_device: 2a27233f44fb7770ee97377d85a716bc
+      notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
       alert_once: true
       final_update: false
       video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
@@ -858,11 +863,16 @@
       base_url: https://casa.knowles.xyz
       master_condition:
       - condition: template
-        value_template: '{{ not ( (states.cover.sarah_s_car.last_changed is not none
-          and (now() - states.cover.sarah_s_car.last_changed).total_seconds() < 180
-          and states(''cover.garage_sarah_s_garage_door'') == ''open'') or (states.cover.david_s_car.last_changed
-          is not none and (now() - states.cover.david_s_car.last_changed).total_seconds()
-          < 180 and states(''cover.garage_david_s_garage_door'') == ''open'') ) }}'
+        value_template: >-
+          {% set s = states.cover.garage_sarah_s_garage_door %}
+          {% set d = states.cover.garage_david_s_garage_door %}
+          {{ not (
+               (s is not none and s.state == 'open'
+                and (now() - s.last_changed).total_seconds() < 180)
+               or
+               (d is not none and d.state == 'open'
+                and (now() - d.last_changed).total_seconds() < 180)
+             ) }}
 - id: '1783022970608'
   alias: Frigate Notifications - Front Porch
   description: ''
@@ -871,7 +881,7 @@
     input:
       camera:
       - camera.front_porch_camera
-      notify_device: 2a27233f44fb7770ee97377d85a716bc
+      notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
       alert_once: true
       final_update: false
       video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
@@ -895,7 +905,7 @@
     input:
       camera:
       - camera.front_yard_driveway_camera
-      notify_device: 2a27233f44fb7770ee97377d85a716bc
+      notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
       alert_once: true
       final_update: false
       video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
@@ -925,7 +935,7 @@
       - cover.jacobs_bedroom_privacy_shade
       power_switch_entity: switch.jacobs_bedroom_shades_plug
       notify_target:
-      - notify.davids_iphone_16_pro
+      - notify.davids_iphone_17_pro
 - id: '1784683634483'
   alias: Power Cycle Unavailable Zigbee Shades
   description: ''
@@ -936,7 +946,7 @@
       - cover.sitting_room_privacy_shade
       power_switch_entity: switch.sitting_room_privacy_shade_plug
       notify_target:
-      - notify.davids_iphone_16_pro
+      - notify.davids_iphone_17_pro
 - id: '1785702140946'
   alias: Power Cycle Unavailable Zigbee Shades
   description: ''
@@ -949,7 +959,7 @@
       - cover.living_room_privacy_shade_right
       power_switch_entity: switch.living_room_window_plug_top_outlet
       notify_target:
-      - notify.davids_iphone_16_pro
+      - notify.davids_iphone_17_pro
 - id: '1785706696881'
   alias: Power Cycle Unavailable Zigbee Shades
   description: ''
@@ -961,7 +971,7 @@
       - cover.office_privacy_shade
       power_switch_entity: switch.shades_plug
       notify_target:
-      - notify.davids_iphone_16_pro
+      - notify.davids_iphone_17_pro
 - id: '1785952800002'
   alias: NJ Transit - morning commute disruption
   use_blueprint:
@@ -971,7 +981,7 @@
       commute_window:
       - schedule.morning_commute
       notification_action:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         data:
           title: "\U0001F686 {{ commute_name }}"
           message: '{{ fresh_reasons | join(''\n'') }}'
@@ -988,7 +998,7 @@
       commute_window:
       - schedule.evening_commute
       notification_action:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         data:
           title: "\U0001F686 {{ commute_name }}"
           message: '{{ fresh_reasons | join(''\n'') }}'
@@ -1004,10 +1014,13 @@
     input:
       favorite_sensor: sensor.short_hills_station_to_new_york_penn_station_next_favorite
       dashboard_url: /nj-trains/morning
-      notify_target: notify.davids_iphone_16_pro
+      notify_target: notify.davids_iphone_17_pro
       boarded_helper: input_boolean.nj_transit_dismissed_am
       commute_window:
       - schedule.morning_commute
+      presence_entity: person.david_knowles
+      presence_zones:
+      - zone.home
 - id: '1785875809099'
   alias: NJ Transit favorite train Live Activity - PM
   description: ''
@@ -1016,10 +1029,14 @@
     input:
       favorite_sensor: sensor.new_york_penn_station_to_short_hills_station_next_favorite
       dashboard_url: /nj-trains/evening
-      notify_target: notify.davids_iphone_16_pro
+      notify_target: notify.davids_iphone_17_pro
       boarded_helper: input_boolean.nj_transit_dismissed_pm
       commute_window:
       - schedule.evening_commute
+      presence_entity: person.david_knowles
+      follow_any_train: true
+      presence_zones:
+      - zone.nyc
 - id: '1754460000001'
   alias: Battery Health Alert
   description: Flags low and non-reporting batteries as Home Assistant repair issues
@@ -1041,7 +1058,6 @@
       - sensor.office_button_battery
       - sensor.office_kiosk_battery
       - sensor.office_presence_battery
-      - sensor.office_presence_battery_2
       - sensor.office_remote_battery
       - sensor.office_sensor_battery
       - sensor.primary_bathroom_kiosk_battery
@@ -1075,7 +1091,61 @@
         hours: 6
         minutes: 0
         seconds: 0
-      daily_check: '09:00:00'
-      notify_action: notify.mobile_app_davids_iphone_16_pro
+      daily_check: 09:00:00
+      notify_action: notify.mobile_app_davids_iphone_17_pro
+      notification_url: /dashboard-unavailable
       repair_domain: homeassistant
       severity: warning
+- id: '1786107443390'
+  alias: Safety - Close garage door left open after dark
+  description: Fail-safe for the garage door being left open overnight. Closes it if it has been open
+    for 15 minutes while the sun is down.
+  triggers:
+  - trigger: state
+    entity_id:
+    - cover.garage_david_s_garage_door
+    to: open
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+  - trigger: state
+    entity_id:
+    - sun.sun
+    to: below_horizon
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  - condition: state
+    entity_id: cover.garage_david_s_garage_door
+    state: open
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+  actions:
+  - action: notify.mobile_app_davids_iphone_17_pro
+    metadata: {}
+    data:
+      message: Garage door was open after dark - closing it
+  - action: cover.close_cover
+    metadata: {}
+    target:
+      entity_id: cover.garage_david_s_garage_door
+    data: {}
+  mode: single
+- id: '1786155107371'
+  alias: Lights - Office Presence
+  description: ''
+  use_blueprint:
+    path: dknowles2/presence_activated_lights.yaml
+    input:
+      presence_entities:
+      - binary_sensor.office_presence
+      lights:
+        entity_id: light.office_lamps
+      no_presence_wait:
+        hours: 0
+        minutes: 10
+        seconds: 0

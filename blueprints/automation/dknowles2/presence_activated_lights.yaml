@@ -1,0 +1,108 @@
+blueprint:
+  name: Presence Activated Lights
+  description: >
+    Turns lights on when a presence/occupancy sensor detects someone, and
+    turns them back off once presence has been clear for a configurable
+    period. Create one instance of this blueprint per room. If a room has
+    several sensors covering it, list them all in a single instance — the
+    lights turn on when any sensor detects presence, and only turn off once
+    every sensor in the list is clear.
+  domain: automation
+  source_url: https://github.com/dknowles2/hassio-addons
+  input:
+    presence_entities:
+      name: Presence sensors
+      description: >
+        The occupancy/motion sensor(s) covering this room. Any one of them
+        reporting presence turns the lights on.
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class:
+            - occupancy
+            - motion
+            - presence
+          multiple: true
+    lights:
+      name: Lights
+      description: Lights to control. Accepts entities, devices, or a whole area.
+      selector:
+        target:
+          entity:
+            domain: light
+    no_presence_wait:
+      name: Wait time before turning off
+      description: >
+        How long every sensor must stay clear before the lights turn off.
+        The countdown restarts if presence is detected again.
+      default:
+        hours: 0
+        minutes: 10
+        seconds: 0
+      selector:
+        duration:
+    turn_on_condition:
+      name: Additional turn-on conditions (optional)
+      description: >
+        Extra conditions checked before the lights are turned on — for
+        example an illuminance threshold, a schedule, or a "guest mode"
+        boolean. Leave empty to always turn on when presence is detected.
+        These are not checked when turning off, so lights always turn off
+        after the wait period regardless.
+      default: []
+      selector:
+        condition:
+
+# restart: if presence returns while the off-branch is mid-run, the run is
+# cancelled and re-evaluated from the top rather than racing to turn the
+# lights off underneath someone who just walked back in.
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input presence_entities
+    to: "on"
+    id: presence_detected
+  # Both "off" and "unavailable" start the countdown. A sensor that drops off
+  # the network is treated as "no presence" so a dead battery can't leave the
+  # lights on indefinitely.
+  - platform: state
+    entity_id: !input presence_entities
+    to: "off"
+    for: !input no_presence_wait
+    id: presence_clear
+  - platform: state
+    entity_id: !input presence_entities
+    to: "unavailable"
+    for: !input no_presence_wait
+    id: presence_clear
+
+variables:
+  presence_entities: !input presence_entities
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: presence_detected
+          - condition: and
+            conditions: !input turn_on_condition
+        sequence:
+          - service: light.turn_on
+            target: !input lights
+            data: {}
+      - conditions:
+          - condition: trigger
+            id: presence_clear
+          # Only turn off once no sensor in the group reports presence. With a
+          # single sensor this is always true; with several it stops one
+          # sensor's countdown from killing the lights while another still
+          # sees someone.
+          - condition: template
+            value_template: >-
+              {{ presence_entities | select('is_state', 'on') | list | count == 0 }}
+        sequence:
+          - service: light.turn_off
+            target: !input lights
+            data: {}

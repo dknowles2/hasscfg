@@ -10,9 +10,17 @@ blueprint:
     identical to "everything is fine" — so a dead sensor is invisible until you
     need it.
 
-    Raises one Home Assistant repair issue per affected device (via Spook's
-    `repairs.create`) and sends a single non-critical summary notification.
-    Repair issues are withdrawn automatically once a battery recovers.
+    Raises one Home Assistant repair issue per affected *device* (via Spook's
+    `repairs.create`), with a link straight to that device's settings page, and
+    sends a single non-critical summary notification. Repair issues are
+    withdrawn automatically once every battery on the device recovers.
+
+    Entities that have been disabled or deleted are not treated as battery
+    faults. They are absent from the state machine rather than reporting
+    "unavailable", and since they can never report healthy again they would
+    otherwise raise an alert that never clears. They are collected into one
+    separate issue instead, so config rot stays visible without being
+    mistaken for a dead battery.
   domain: automation
   input:
     monitoring:
@@ -86,6 +94,16 @@ blueprint:
           default: ""
           selector:
             text:
+        notification_url:
+          name: Notification tap target
+          description: >-
+            Where tapping the summary notification lands. A push notification
+            has a single tap target, so this cannot deep-link to one device
+            when several are affected — point it at a page that lists them.
+            The repair issues themselves link to each device individually.
+          default: /config/repairs
+          selector:
+            text:
         repair_domain:
           name: Repair issue logo
           description: >-
@@ -155,59 +173,129 @@ actions:
       bin_sensors: !input battery_binary_sensors
       low_threshold: !input threshold
       notify_action: !input notify_action
+      notification_url: !input notification_url
       repair_domain: !input repair_domain
       repair_severity: !input severity
-      faulty: >-
+      # A disabled or deleted entity is absent from the state machine, which
+      # is what separates it from a device that has genuinely gone silent
+      # (that one is still present, reporting "unavailable"). Missing entities
+      # can never recover, so alerting on them would never clear.
+      missing: >-
         {% set ns = namespace(items=[]) %}
-        {% for e in num_sensors %}
-          {% set s = states(e) %}
-          {% if s in ['unknown', 'unavailable'] %}
-            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
-                                           'reason': 'not reporting', 'detail': s}] %}
-          {% elif s | float(101) <= low_threshold | float(20) %}
-            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
-                                           'reason': 'low', 'detail': s ~ '%'}] %}
-          {% endif %}
-        {% endfor %}
-        {% for e in bin_sensors %}
-          {% set s = states(e) %}
-          {% if s in ['unknown', 'unavailable'] %}
-            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
-                                           'reason': 'not reporting', 'detail': s}] %}
-          {% elif s == 'on' %}
-            {% set ns.items = ns.items + [{'entity': e, 'name': state_attr(e, 'friendly_name') or e,
-                                           'reason': 'low', 'detail': 'reported low'}] %}
+        {% for e in num_sensors + bin_sensors %}
+          {% if states[e] is none %}
+            {% set ns.items = ns.items + [e] %}
           {% endif %}
         {% endfor %}
         {{ ns.items }}
-      healthy: >-
-        {{ (num_sensors + bin_sensors)
-           | reject('in', faulty | map(attribute='entity') | list) | list }}
+      live: >-
+        {% set ns = namespace(items=[]) %}
+        {% for e in num_sensors + bin_sensors %}
+          {% if states[e] is not none %}
+            {% set ns.items = ns.items + [e] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
 
-  # One issue per device, so each can be resolved on its own. The issue_id is
-  # derived from the entity, which makes create idempotent.
+  - variables:
+      # Each faulty entity carries its device so the next block can group by
+      # it. Entities with no device fall back to keying on themselves.
+      faulty: >-
+        {% set ns = namespace(items=[]) %}
+        {% for e in live %}
+          {% set s = states(e) %}
+          {% set numeric = e in num_sensors %}
+          {% set reason = none %}
+          {% set detail = none %}
+          {% if s in ['unknown', 'unavailable'] %}
+            {% set reason = 'not reporting' %}
+            {% set detail = s %}
+          {% elif numeric and s | float(101) <= low_threshold | float(20) %}
+            {% set reason = 'low' %}
+            {% set detail = s ~ '%' %}
+          {% elif not numeric and s == 'on' %}
+            {% set reason = 'low' %}
+            {% set detail = 'reported low' %}
+          {% endif %}
+          {% if reason is not none %}
+            {% set dev = device_id(e) %}
+            {% set ns.items = ns.items + [{
+                 'entity': e,
+                 'entity_name': state_attr(e, 'friendly_name') or e,
+                 'reason': reason,
+                 'detail': detail,
+                 'device': dev,
+                 'key': dev if dev else e,
+                 'name': (device_attr(e, 'name_by_user') or device_attr(e, 'name')
+                          or state_attr(e, 'friendly_name') or e) }] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+
+  - variables:
+      # One group per device, not per entity. A device with two battery
+      # entities (a percentage and a low-battery flag, say) is one problem to
+      # fix and should be one issue and one line in the notification.
+      groups: >-
+        {% set ns = namespace(out=[]) %}
+        {% for k in faulty | map(attribute='key') | unique | list %}
+          {% set members = faulty | selectattr('key', 'eq', k) | list %}
+          {% set ns.out = ns.out + [{
+               'key': k,
+               'device': members[0].device,
+               'name': members[0].name,
+               'reasons': members | map(attribute='reason') | unique | list,
+               'members': members }] %}
+        {% endfor %}
+        {{ ns.out }}
+      # Every device key we monitor, so recovered ones can have their issue
+      # withdrawn without keeping any state between runs.
+      # Deliberately spans every monitored entity, not just the live ones. An
+      # entity that has just been disabled still has a stale issue from when
+      # it was live, and its key has to stay in this list for that issue to be
+      # withdrawn — otherwise disabling an entity strands its alert forever.
+      all_keys: >-
+        {% set ns = namespace(k=[]) %}
+        {% for e in num_sensors + bin_sensors %}
+          {% set dev = device_id(e) %}
+          {% set ns.k = ns.k + [dev if dev else e] %}
+        {% endfor %}
+        {{ ns.k | unique | list }}
+
+  - variables:
+      healthy_keys: >-
+        {{ all_keys | reject('in', groups | map(attribute='key') | list) | list }}
+
+  # One issue per device. The issue_id is derived from the device, which makes
+  # create idempotent across runs.
   - repeat:
-      for_each: "{{ faulty }}"
+      for_each: "{{ groups }}"
       sequence:
         - action: repairs.create
           data:
-            issue_id: "battery_{{ repeat.item.entity }}"
+            issue_id: "battery_{{ repeat.item.key }}"
             title: >-
-              {{ repeat.item.name }} — battery {{ repeat.item.reason }}
+              {{ repeat.item.name }} — battery
+              {{ repeat.item.reasons | join(' and ') }}
             description: >-
-              `{{ repeat.item.entity }}` is **{{ repeat.item.reason }}**
-              ({{ repeat.item.detail }}).
+              {% for m in repeat.item.members -%}
+              - `{{ m.entity }}` — **{{ m.reason }}** ({{ m.detail }})
+              {% endfor %}
 
-              {% if repeat.item.reason == 'not reporting' -%}
-              This entity has stopped sending updates. A battery device that
+              {% if repeat.item.device -%}
+              [Open {{ repeat.item.name }} in device settings](/config/devices/device/{{ repeat.item.device }})
+              {%- endif %}
+
+              {% if 'not reporting' in repeat.item.reasons -%}
+              A battery entity here has stopped sending updates. A device that
               goes silent looks the same as one that is simply idle, so this
               will not surface anywhere else. Check or replace the battery.
               {%- else -%}
               Replace the battery soon.
               {%- endif %}
 
-              This issue clears itself once the entity reports a healthy
-              battery again.
+              This issue clears itself once every battery on this device
+              reports healthy again.
             domain: "{{ repair_domain }}"
             severity: "{{ repair_severity }}"
             persistent: true
@@ -215,36 +303,79 @@ actions:
   # Withdraw issues for anything that recovered. Removing an issue that does
   # not exist is a no-op, so this needs no bookkeeping.
   - repeat:
-      for_each: "{{ healthy }}"
+      for_each: "{{ healthy_keys }}"
       sequence:
         - action: repairs.remove
           data:
             issue_id: "battery_{{ repeat.item }}"
 
+  # Config rot, reported separately from battery faults. One issue for all of
+  # them, since the fix is the same edit in one place.
+  - if:
+      - condition: template
+        value_template: "{{ missing | count > 0 }}"
+    then:
+      - action: repairs.create
+        data:
+          issue_id: battery_monitor_missing_entities
+          title: >-
+            {{ missing | count }} monitored battery
+            {{ 'entity has' if missing | count == 1 else 'entities have' }}
+            been disabled or deleted
+          description: >-
+            {% for e in missing -%}
+            - `{{ e }}`
+            {% endfor %}
+
+            {{ 'This entity is' if missing | count == 1 else 'These entities are' }}
+            still listed in this automation but no longer present in Home
+            Assistant — disabled, or removed with their device.
+            {{ 'It' if missing | count == 1 else 'They' }} can never report a
+            battery level again, so
+            {{ 'it is' if missing | count == 1 else 'they are' }} excluded from
+            battery alerts rather than raising a fault that would never clear.
+
+            Remove
+            {{ 'it' if missing | count == 1 else 'them' }} from the automation's
+            battery entity list, or re-enable
+            {{ 'it' if missing | count == 1 else 'them' }} if the battery should
+            still be watched.
+          domain: "{{ repair_domain }}"
+          severity: warning
+          persistent: true
+    else:
+      - action: repairs.remove
+        data:
+          issue_id: battery_monitor_missing_entities
+
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ notify_action != '' and faulty | count > 0 }}"
+            value_template: "{{ notify_action != '' and groups | count > 0 }}"
         sequence:
           - action: "{{ notify_action }}"
             data:
               title: >-
-                {{ faulty | count }} batter{{ 'y' if faulty | count == 1 else 'ies' }}
+                {{ groups | count }}
+                {{ 'device' if groups | count == 1 else 'devices' }}
                 need attention
               message: >-
-                {% for f in faulty -%}
-                {{ f.name }} — {{ f.reason }} ({{ f.detail }})
+                {% for g in groups -%}
+                {{ g.name }} — {{ g.reasons | join(' and ') }}
                 {% endfor %}
               data:
                 # Replaces the previous alert instead of stacking a new one.
                 tag: battery_health
-                url: /config/repairs
+                # A push notification has one tap target and this is a summary
+                # of N devices, so it lands on a list. The per-device links
+                # live in the repair issues.
+                url: "{{ notification_url }}"
                 push:
                   # Deliberately not critical: batteries are never urgent.
                   interruption-level: active
       - conditions:
           - condition: template
-            value_template: "{{ notify_action != '' and faulty | count == 0 }}"
+            value_template: "{{ notify_action != '' and groups | count == 0 }}"
         sequence:
           - action: "{{ notify_action }}"
             data:

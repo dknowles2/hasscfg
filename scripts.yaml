@@ -12,7 +12,7 @@ perform_action_when_entity_becomes_available:
   - action: '{{ action }}'
     target:
       entity_id: '{{ entity_id }}'
-  - action: notify.mobile_app_davids_iphone_16_pro
+  - action: notify.mobile_app_davids_iphone_17_pro
     data: {}
   fields:
     entity_id:
@@ -121,14 +121,14 @@ monitor_meat_probe:
     - condition: template
       value_template: '{{ states(entity_id) in [''unknown'', ''unavailable''] }}'
     then:
-    - action: notify.mobile_app_davids_iphone_16_pro
+    - action: notify.mobile_app_davids_iphone_17_pro
       data:
         message: Can't find sensor {{ entity_id }} — check probe/sensor selection.
     - stop: Entity unavailable
   - action: input_boolean.turn_on
     target:
       entity_id: '{{ cancel_flag }}'
-  - action: notify.mobile_app_davids_iphone_16_pro
+  - action: notify.mobile_app_davids_iphone_17_pro
     data:
       message: Monitoring {{ probe }} Probe ({{ sensor }}) — target {{ target_temp
         }}°F
@@ -170,7 +170,7 @@ monitor_meat_probe:
           value_template: "{{ is_state(cancel_flag, 'on')\n   and states(entity_id)
             | float(0) < target_f | float(0) }}\n"
         then:
-        - action: notify.mobile_app_davids_iphone_16_pro
+        - action: notify.mobile_app_davids_iphone_17_pro
           data:
             message: ''
             data:
@@ -186,7 +186,7 @@ monitor_meat_probe:
       - condition: template
         value_template: '{{ states(entity_id) | float(0) >= target_f | float(0) }}'
       sequence:
-      - action: notify.mobile_app_davids_iphone_16_pro
+      - action: notify.mobile_app_davids_iphone_17_pro
         data:
           title: Meat is ready!
           message: '{{ probe }} Probe hit {{ target_temp }}°F'
@@ -204,7 +204,7 @@ monitor_meat_probe:
         reason: "{% if is_state(cancel_flag, 'off') %}stopped\n{% elif now().timestamp()
           >= deadline | float(0) %}timed out after {{ timeout_hours | default(12) }}h\n{%
           else %}aborted — probe offline\n{% endif %}\n"
-    - action: notify.mobile_app_davids_iphone_16_pro
+    - action: notify.mobile_app_davids_iphone_17_pro
       data:
         title: Monitoring ended
         message: '{{ probe }} Probe monitoring {{ reason | trim }}.'

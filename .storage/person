@@ -9,7 +9,7 @@
         "name": "David Knowles",
         "user_id": "cc22e3428ba742dfb0f4040a3af0719d",
         "device_trackers": [
-          "device_tracker.davids_iphone_16_pro",
+          "device_tracker.davids_iphone_17_pro",
           "device_tracker.davids_ipad_air"
         ]
       },
@@ -34,6 +34,15 @@
         "name": "Office Kiosk",
         "device_trackers": [],
         "user_id": "b9b55e35c7224b44a611fcc18a201e14",
+        "picture": null
+      },
+      {
+        "id": "jacob_knowles",
+        "name": "Jacob Knowles",
+        "device_trackers": [
+          "device_tracker.jacobs_ipad_2"
+        ],
+        "user_id": null,
         "picture": null
       }
     ]

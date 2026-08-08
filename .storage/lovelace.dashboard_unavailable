@@ -57,6 +57,84 @@
                   }
                 }
               ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Battery problems",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:auto-entities",
+                  "card": {
+                    "type": "entities",
+                    "title": "Not reporting"
+                  },
+                  "show_empty": false,
+                  "filter": {
+                    "include": [
+                      {
+                        "domain": "sensor",
+                        "attributes": {
+                          "device_class": "battery"
+                        },
+                        "state": "unavailable"
+                      },
+                      {
+                        "domain": "sensor",
+                        "attributes": {
+                          "device_class": "battery"
+                        },
+                        "state": "unknown"
+                      },
+                      {
+                        "domain": "binary_sensor",
+                        "attributes": {
+                          "device_class": "battery"
+                        },
+                        "state": "unavailable"
+                      },
+                      {
+                        "domain": "binary_sensor",
+                        "attributes": {
+                          "device_class": "battery"
+                        },
+                        "state": "unknown"
+                      }
+                    ],
+                    "exclude": []
+                  }
+                },
+                {
+                  "type": "custom:auto-entities",
+                  "card": {
+                    "type": "entities",
+                    "title": "Low"
+                  },
+                  "show_empty": false,
+                  "filter": {
+                    "include": [
+                      {
+                        "domain": "sensor",
+                        "attributes": {
+                          "device_class": "battery"
+                        },
+                        "state": "< 20"
+                      },
+                      {
+                        "domain": "binary_sensor",
+                        "attributes": {
+                          "device_class": "battery"
+                        },
+                        "state": "on"
+                      }
+                    ],
+                    "exclude": []
+                  }
+                }
+              ]
             }
           ]
         }

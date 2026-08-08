@@ -756,6 +756,9 @@
           message: Pick a target to start monitoring, or open the dashboard.
           data:
             tag: '{{ tag }}'
+            url: /thermopro-probes/{{ probe }}
+            push:
+              interruption-level: time-sensitive
             actions:
             - action: PROBE_{{ probe | upper }}_165
               title: Chicken 165°F

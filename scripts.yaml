@@ -128,21 +128,21 @@ monitor_meat_probe:
   - action: input_boolean.turn_on
     target:
       entity_id: '{{ cancel_flag }}'
+  # Home Assistant drives Live Activities off `tag` + `live_update`, resolving a
+  # stored APNs token per tag. The older live_activity_update_type/activity_id/
+  # content_state keys are not read by mobile_app at all, which is why no
+  # activity ever appeared.
   - action: notify.mobile_app_davids_iphone_17_pro
     data:
-      message: Monitoring {{ probe }} Probe ({{ sensor }}) — target {{ target_temp
-        }}°F
+      title: '{{ probe }} Probe'
+      message: '{{ states(entity_id) | float(0) | round(1) }}°F → {{ target_temp }}°F
+        ({{ sensor }})'
       data:
-        push:
-          live_activity_update_type: start
-          activity_id: '{{ activity_id }}'
-          attributes:
-            probe: '{{ probe }}'
-            sensor: '{{ sensor }}'
-            target_temp: '{{ target_temp }}'
-          content_state:
-            current_temp: '{{ states(entity_id) | float(0) | round(1) }}'
-            target_temp: '{{ target_temp }}'
+        tag: '{{ activity_id }}'
+        live_update: true
+        notification_icon: mdi:thermometer
+        progress: '{{ states(entity_id) | float(0) | round(0) | int }}'
+        progress_max: '{{ target_f | float(0) | round(0) | int }}'
   - repeat:
       while:
       # Stop button (or any turn_off of the flag) ends the loop cleanly.
@@ -172,33 +172,43 @@ monitor_meat_probe:
         then:
         - action: notify.mobile_app_davids_iphone_17_pro
           data:
-            message: ''
+            title: '{{ probe }} Probe'
+            message: '{{ states(entity_id) | float(0) | round(1) }}°F → {{ target_temp
+              }}°F ({{ sensor }})'
             data:
-              push:
-                live_activity_update_type: update
-                activity_id: '{{ activity_id }}'
-                content_state:
-                  current_temp: '{{ states(entity_id) | float(0) | round(1) }}'
-                  target_temp: '{{ target_temp }}'
+              tag: '{{ activity_id }}'
+              live_update: true
+              notification_icon: mdi:thermometer
+              progress: '{{ states(entity_id) | float(0) | round(0) | int }}'
+              progress_max: '{{ target_f | float(0) | round(0) | int }}'
+              # Refreshes must not re-alert once a minute.
+              silent: true
   # Every exit path ends the Live Activity, so none are left orphaned on the phone.
   - choose:
     - conditions:
       - condition: template
         value_template: '{{ states(entity_id) | float(0) >= target_f | float(0) }}'
       sequence:
+      # Alert on its own tag so it is not swallowed by the Live Activity.
       - action: notify.mobile_app_davids_iphone_17_pro
         data:
           title: Meat is ready!
           message: '{{ probe }} Probe hit {{ target_temp }}°F'
           data:
+            tag: '{{ activity_id }}_done'
             push:
-              live_activity_update_type: end
-              activity_id: '{{ activity_id }}'
               interruption-level: critical
               sound:
                 name: default
                 critical: 1
                 volume: 1
+      # clear_notification on the activity tag is what HA turns into the
+      # ActivityKit "end" event, and it drops the stored token.
+      - action: notify.mobile_app_davids_iphone_17_pro
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ activity_id }}'
     default:
     - variables:
         reason: "{% if is_state(cancel_flag, 'off') %}stopped\n{% elif now().timestamp()
@@ -209,9 +219,12 @@ monitor_meat_probe:
         title: Monitoring ended
         message: '{{ probe }} Probe monitoring {{ reason | trim }}.'
         data:
-          push:
-            live_activity_update_type: end
-            activity_id: '{{ activity_id }}'
+          tag: '{{ activity_id }}_done'
+    - action: notify.mobile_app_davids_iphone_17_pro
+      data:
+        message: clear_notification
+        data:
+          tag: '{{ activity_id }}'
   - action: input_boolean.turn_off
     target:
       entity_id: '{{ cancel_flag }}'

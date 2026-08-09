@@ -1,0 +1,321 @@
+blueprint:
+  name: Bambu Print Live Activity
+  description: >-
+    Shows a Live Activity for a running print via the iOS Companion App:
+    task name, current stage, layer count, a progress bar, and a countdown
+    driven by the printer's own end-time sensor.
+
+    Every incremental update is sent silently. The countdown is driven by
+    `chronometer`/`when` rather than by push frequency, so the timer on the
+    Lock Screen keeps ticking accurately between updates and the automation
+    only needs to push when something meaningful actually changes. Progress
+    updates are throttled to a configurable step so a 100-layer print does
+    not become 100 notifications.
+
+    The activity is re-established after a Home Assistant restart if a print
+    is still running, since a restart otherwise loses the on-screen card
+    with no state change to bring it back.
+
+    This blueprint deliberately does not send a "print finished" push by
+    default — the separate Bambu print notification automation already does
+    that, and enabling both gets you two notifications for one event.
+  domain: automation
+  source_url: https://github.com/dknowles2/hasscfg
+  input:
+    entities:
+      name: Printer entities
+      icon: mdi:printer-3d
+      input:
+        status_entity:
+          name: Print status
+          description: Enum sensor reporting idle / prepare / running / pause / finish / failed.
+          selector:
+            entity:
+              domain: sensor
+        progress_entity:
+          name: Print progress
+          description: Percentage complete, 0-100.
+          selector:
+            entity:
+              domain: sensor
+        end_time_entity:
+          name: Estimated end time
+          description: Timestamp sensor. Drives the Lock Screen countdown.
+          selector:
+            entity:
+              domain: sensor
+        task_name_entity:
+          name: Task name
+          selector:
+            entity:
+              domain: sensor
+        stage_entity:
+          name: Current stage
+          description: Enum sensor describing what the printer is doing right now.
+          selector:
+            entity:
+              domain: sensor
+        current_layer_entity:
+          name: Current layer (optional)
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+        total_layer_entity:
+          name: Total layers (optional)
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+    reporting:
+      name: Notification
+      icon: mdi:bell-outline
+      input:
+        notify_service:
+          name: Notification service
+          description: Full notify action, e.g. notify.mobile_app_your_phone.
+          selector:
+            text: {}
+        tag:
+          name: Notification tag
+          description: >-
+            Identifies this activity. Updates replace the previous card
+            rather than stacking. Use a distinct tag per printer.
+          default: bambu_print
+          selector:
+            text: {}
+        progress_step:
+          name: Progress update step
+          description: >-
+            Only push when progress crosses a multiple of this many percent.
+            0% and 100% always push. Lower values mean a smoother bar and
+            more pushes; iOS throttles Live Activity updates that arrive too
+            often, so smaller is not always better.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 25
+              unit_of_measurement: "%"
+        color:
+          name: Accent colour
+          default: "#00AE42"
+          selector:
+            text: {}
+        alert_on_start:
+          name: Alert when a print starts
+          description: >-
+            Off by default: you are usually standing at the printer when a
+            print begins. The Live Activity still appears on the Lock Screen
+            either way, just without a buzz.
+          default: false
+          selector:
+            boolean: {}
+        send_completion_push:
+          name: Send a completion push
+          description: >-
+            Leave off if you already have a separate print-finished
+            automation, or you will be notified twice.
+          default: false
+          selector:
+            boolean: {}
+        live_activity_enabled:
+          name: Live Activity enabled
+          default: true
+          selector:
+            boolean: {}
+
+variables:
+  status_entity: !input status_entity
+  progress_entity: !input progress_entity
+  end_time_entity: !input end_time_entity
+  task_name_entity: !input task_name_entity
+  stage_entity: !input stage_entity
+  current_layer_entity: !input current_layer_entity
+  total_layer_entity: !input total_layer_entity
+  notify_service: !input notify_service
+  tag: !input tag
+  progress_step: !input progress_step
+  color: !input color
+  alert_on_start: !input alert_on_start
+  send_completion_push: !input send_completion_push
+  live_activity_enabled: !input live_activity_enabled
+  # States where a job is on the plate and the card should be on screen.
+  active_states:
+    - prepare
+    - running
+    - pause
+  # States that mean the plate is done with, one way or another.
+  finished_states:
+    - finish
+    - failed
+    - idle
+    - offline
+
+triggers:
+  # 15s settle: the printer flickers through prepare/running while it sets
+  # up, and without this the card is posted against half-populated sensors.
+  - id: print_started
+    trigger: state
+    entity_id: !input status_entity
+    to:
+      - prepare
+      - running
+    for: "00:00:15"
+  - id: print_ended
+    trigger: state
+    entity_id: !input status_entity
+    to:
+      - finish
+      - failed
+      - idle
+      - offline
+  - id: status_changed
+    trigger: state
+    entity_id: !input status_entity
+    to: pause
+  - id: stage_changed
+    trigger: state
+    entity_id: !input stage_entity
+    not_from:
+      - unknown
+      - unavailable
+    not_to:
+      - unknown
+      - unavailable
+  - id: progress_changed
+    trigger: state
+    entity_id: !input progress_entity
+    not_from:
+      - unknown
+      - unavailable
+    not_to:
+      - unknown
+      - unavailable
+  - id: eta_changed
+    trigger: state
+    entity_id: !input end_time_entity
+    not_from:
+      - unknown
+      - unavailable
+    not_to:
+      - unknown
+      - unavailable
+  # A restart drops the on-screen card and there is no state change to
+  # bring it back, so re-post it if a print is still running.
+  - id: startup
+    trigger: homeassistant
+    event: start
+
+conditions: []
+
+actions:
+  # Settle after a restart before reading sensors.
+  - if:
+      - condition: trigger
+        id: startup
+    then:
+      - delay:
+          minutes: 2
+
+  - variables:
+      status: "{{ states(status_entity) }}"
+      progress: "{{ states(progress_entity) | int(0) }}"
+      task_name: "{{ states(task_name_entity) }}"
+      stage_raw: "{{ states(stage_entity) }}"
+      end_ts: "{{ as_timestamp(states(end_time_entity), 0) | int }}"
+      layer_now: >-
+        {{ states(current_layer_entity) | int(0) if current_layer_entity else 0 }}
+      layer_total: >-
+        {{ states(total_layer_entity) | int(0) if total_layer_entity else 0 }}
+
+  # The printer re-estimates the finish time constantly. Without this guard
+  # every few-second wobble becomes another push, which is exactly what iOS
+  # throttles. Movement under a minute does not change what is displayed.
+  - if:
+      - condition: template
+        value_template: >-
+          {{ trigger.id == 'eta_changed'
+             and ((as_timestamp(trigger.to_state.state, 0)
+                   - as_timestamp(trigger.from_state.state, 0)) | abs) < 60 }}
+    then:
+      - stop: ETA moved less than a minute
+
+  # Throttle the progress bar. 0 and 100 always go out so the card is
+  # correct at both ends of the print.
+  - if:
+      - condition: template
+        value_template: >-
+          {{ trigger.id == 'progress_changed'
+             and progress not in [0, 100]
+             and progress % (progress_step | int(5)) != 0 }}
+    then:
+      - stop: Progress has not crossed a step boundary
+
+  - choose:
+      # Job is over: pull the card, then optionally alert.
+      - conditions:
+          - condition: template
+            value_template: "{{ status in finished_states }}"
+        sequence:
+          - action: "{{ notify_service }}"
+            data:
+              message: clear_notification
+              data:
+                tag: "{{ tag }}"
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ send_completion_push and trigger.id == 'print_ended'
+                     and trigger.to_state.state in ['finish', 'failed'] }}
+            then:
+              - action: "{{ notify_service }}"
+                data:
+                  title: "{{ task_name }}"
+                  message: >-
+                    {{ 'Print finished' if trigger.to_state.state == 'finish'
+                       else 'Print failed' }}
+                  data:
+                    push:
+                      sound: default
+
+      # Job is on the plate: post or refresh the card.
+      - conditions:
+          - condition: template
+            value_template: "{{ status in active_states and live_activity_enabled }}"
+        sequence:
+          - variables:
+              stage: "{{ stage_raw | replace('_', ' ') | title }}"
+              layers: >-
+                {{ ' · layer ' ~ layer_now ~ '/' ~ layer_total
+                   if layer_total > 0 else '' }}
+              paused: "{{ status == 'pause' }}"
+          - action: "{{ notify_service }}"
+            data:
+              title: "{{ task_name if task_name not in ['unknown', 'unavailable'] else 'Print' }}"
+              message: >-
+                {{ 'Paused' if paused else stage }}{{ layers }} · {{ progress }}%
+              data:
+                tag: "{{ tag }}"
+                live_update: true
+                notification_icon: mdi:printer-3d-nozzle
+                notification_icon_color: "{{ color }}"
+                color: "{{ color }}"
+                # The countdown is rendered by the OS from this timestamp, so
+                # it stays accurate without a push behind every tick. Dropped
+                # when the printer has no sane estimate, and while paused,
+                # where a fixed end time would count down to a lie.
+                chronometer: "{{ end_ts > 0 and not paused }}"
+                when: "{{ end_ts }}"
+                when_relative: false
+                progress: "{{ progress }}"
+                progress_max: 100
+                # Silent for every incremental update. Only the very first
+                # card of a print can alert, and only if asked to.
+                silent: "{{ not (trigger.id == 'print_started' and alert_on_start) }}"
+
+# Queued rather than restart: status, stage and progress often land within
+# milliseconds of each other, and under restart the later trigger aborts
+# the earlier run mid-flight, dropping the card update it was sending.
+mode: queued
+max: 10

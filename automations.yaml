@@ -1110,3 +1110,22 @@
         hours: 0
         minutes: 10
         seconds: 0
+- id: '1786398000001'
+  alias: Bambu Print Live Activity
+  description: ''
+  use_blueprint:
+    path: local/bambu_print_live_activity.yaml
+    input:
+      status_entity: sensor.printy_print_status
+      progress_entity: sensor.printy_print_progress
+      end_time_entity: sensor.printy_end_time
+      task_name_entity: sensor.printy_task_name
+      stage_entity: sensor.printy_current_stage
+      current_layer_entity: sensor.printy_current_layer
+      total_layer_entity: sensor.printy_total_layer_count
+      notify_service: notify.mobile_app_davids_iphone_17_pro
+      tag: bambu_print
+      progress_step: 5
+      alert_on_start: false
+      send_completion_push: false
+      live_activity_enabled: true

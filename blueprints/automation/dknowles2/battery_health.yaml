@@ -1,7 +1,7 @@
 blueprint:
   name: Battery Health Alert
   description: >-
-    Watches every battery entity you point it at and reports two distinct
+    Watches every battery entity in Home Assistant and reports two distinct
     failure modes: a battery that has dropped below a threshold, and a battery
     device that has stopped reporting altogether.
 
@@ -10,26 +10,38 @@ blueprint:
     identical to "everything is fine" — so a dead sensor is invisible until you
     need it.
 
+    Entities are discovered automatically: anything in the `sensor` or
+    `binary_sensor` domain carrying `device_class: battery`. New battery
+    devices are picked up with no edit here. Configure what to *ignore*
+    instead — phones, tablets and cooking probes are the usual candidates,
+    since their batteries are managed by hand and their sensors drop offline
+    routinely.
+
+    Because the entity set is not known until the automation runs, this
+    cannot use per-entity state triggers — those need their entities at setup
+    time. It scans on a schedule instead. That suits batteries, which move
+    slowly, and it avoids the class of bug where a disabled entity leaves a
+    trigger pointing at something that no longer exists.
+
     Raises one Home Assistant repair issue per affected *device* (via Spook's
     `repairs.create`), with a link straight to that device's settings page, and
     sends a single non-critical summary notification. Repair issues are
     withdrawn automatically once every battery on the device recovers.
 
-    Entities that have been disabled or deleted are not treated as battery
-    faults. They are absent from the state machine rather than reporting
-    "unavailable", and since they can never report healthy again they would
-    otherwise raise an alert that never clears. They are collected into one
-    separate issue instead, so config rot stays visible without being
-    mistaken for a dead battery.
+    A disabled or deleted entity simply stops being discovered, so it stops
+    being alerted on. That is the intended way to retire a battery sensor.
   domain: automation
+  source_url: https://github.com/dknowles2/hasscfg
   input:
     monitoring:
       name: What to monitor
       icon: mdi:battery-alert
       input:
-        battery_sensors:
-          name: Battery level sensors
-          description: Numeric battery sensors, reported as a percentage.
+        exclude_entities:
+          name: Excluded entities
+          description: >-
+            Battery entities to leave alone. Everything else with
+            `device_class: battery` is monitored automatically.
           default: []
           selector:
             entity:
@@ -37,16 +49,6 @@ blueprint:
               filter:
                 - domain: sensor
                   device_class: battery
-        battery_binary_sensors:
-          name: Low-battery binary sensors
-          description: >-
-            Battery entities that only report "normal" or "low" rather than a
-            percentage. On means low.
-          default: []
-          selector:
-            entity:
-              multiple: true
-              filter:
                 - domain: binary_sensor
                   device_class: battery
     thresholds:
@@ -65,19 +67,38 @@ blueprint:
         unavailable_grace:
           name: Not-reporting grace period
           description: >-
-            How long a battery entity must stay unavailable or unknown before
-            it is treated as a fault. Keeps brief dropouts and restarts quiet.
+            How long a battery entity must have been unavailable or unknown
+            before it is treated as a fault. Keeps brief dropouts and restarts
+            quiet. Measured from the entity's last state change, so a restart
+            resets the clock.
           default:
             hours: 6
             minutes: 0
             seconds: 0
           selector:
             duration:
+        scan_interval:
+          name: Scan interval
+          description: >-
+            How often to sweep every battery entity. Batteries move slowly;
+            frequent scanning buys nothing.
+          default: "/30"
+          selector:
+            select:
+              options:
+                - label: Every 5 minutes
+                  value: "/5"
+                - label: Every 10 minutes
+                  value: "/10"
+                - label: Every 15 minutes
+                  value: "/15"
+                - label: Every 30 minutes
+                  value: "/30"
         daily_check:
           name: Daily re-check
           description: >-
-            Time of the daily sweep. This is what catches a battery that died
-            while Home Assistant was down, since no state change ever fires.
+            A guaranteed sweep at a fixed time, independent of the interval
+            above.
           default: "09:00:00"
           selector:
             time:
@@ -126,29 +147,9 @@ mode: single
 max_exceeded: silent
 
 triggers:
-  - trigger: numeric_state
-    entity_id: !input battery_sensors
-    below: !input threshold
-    id: low
-  - trigger: state
-    entity_id: !input battery_binary_sensors
-    to: "on"
-    id: low
-  # A battery entity that stops reporting is the failure this is really for.
-  - trigger: state
-    entity_id: !input battery_sensors
-    to:
-      - unavailable
-      - unknown
-    for: !input unavailable_grace
-    id: stale
-  - trigger: state
-    entity_id: !input battery_binary_sensors
-    to:
-      - unavailable
-      - unknown
-    for: !input unavailable_grace
-    id: stale
+  - trigger: time_pattern
+    minutes: !input scan_interval
+    id: sweep
   - trigger: time
     at: !input daily_check
     id: sweep
@@ -169,65 +170,75 @@ actions:
           minutes: 10
 
   - variables:
-      num_sensors: !input battery_sensors
-      bin_sensors: !input battery_binary_sensors
+      excluded: !input exclude_entities
       low_threshold: !input threshold
+      grace: !input unavailable_grace
       notify_action: !input notify_action
       notification_url: !input notification_url
       repair_domain: !input repair_domain
       repair_severity: !input severity
-      # A disabled or deleted entity is absent from the state machine, which
-      # is what separates it from a device that has genuinely gone silent
-      # (that one is still present, reporting "unavailable"). Missing entities
-      # can never recover, so alerting on them would never clear.
-      missing: >-
+
+  - variables:
+      grace_seconds: >-
+        {{ (grace.hours | default(0) | int) * 3600
+           + (grace.minutes | default(0) | int) * 60
+           + (grace.seconds | default(0) | int) }}
+      # Discovery. Iterating every state is expensive, which is exactly why
+      # this runs on a schedule rather than inside a template trigger — a
+      # template trigger over `states` re-renders on every state change in the
+      # system. Note that an entity which is present but unavailable keeps its
+      # device_class, so the not-reporting case is still discovered; only
+      # entities absent from the state machine (disabled, deleted) drop out,
+      # which is the intent.
+      monitored: >-
         {% set ns = namespace(items=[]) %}
-        {% for e in num_sensors + bin_sensors %}
-          {% if states[e] is none %}
-            {% set ns.items = ns.items + [e] %}
+        {% for st in states.sensor %}
+          {% if st.attributes.device_class | default('') == 'battery' %}
+            {% set ns.items = ns.items + [st.entity_id] %}
           {% endif %}
         {% endfor %}
-        {{ ns.items }}
-      live: >-
-        {% set ns = namespace(items=[]) %}
-        {% for e in num_sensors + bin_sensors %}
-          {% if states[e] is not none %}
-            {% set ns.items = ns.items + [e] %}
+        {% for st in states.binary_sensor %}
+          {% if st.attributes.device_class | default('') == 'battery' %}
+            {% set ns.items = ns.items + [st.entity_id] %}
           {% endif %}
         {% endfor %}
-        {{ ns.items }}
+        {{ ns.items | reject('in', excluded) | sort | list }}
 
   - variables:
       # Each faulty entity carries its device so the next block can group by
       # it. Entities with no device fall back to keying on themselves.
       faulty: >-
         {% set ns = namespace(items=[]) %}
-        {% for e in live %}
-          {% set s = states(e) %}
-          {% set numeric = e in num_sensors %}
-          {% set reason = none %}
-          {% set detail = none %}
-          {% if s in ['unknown', 'unavailable'] %}
-            {% set reason = 'not reporting' %}
-            {% set detail = s %}
-          {% elif numeric and s | float(101) <= low_threshold | float(20) %}
-            {% set reason = 'low' %}
-            {% set detail = s ~ '%' %}
-          {% elif not numeric and s == 'on' %}
-            {% set reason = 'low' %}
-            {% set detail = 'reported low' %}
-          {% endif %}
-          {% if reason is not none %}
-            {% set dev = device_id(e) %}
-            {% set ns.items = ns.items + [{
-                 'entity': e,
-                 'entity_name': state_attr(e, 'friendly_name') or e,
-                 'reason': reason,
-                 'detail': detail,
-                 'device': dev,
-                 'key': dev if dev else e,
-                 'name': (device_attr(e, 'name_by_user') or device_attr(e, 'name')
-                          or state_attr(e, 'friendly_name') or e) }] %}
+        {% for e in monitored %}
+          {% set st = states[e] %}
+          {% if st is not none %}
+            {% set s = st.state %}
+            {% set numeric = e.split('.')[0] == 'sensor' %}
+            {% set reason = none %}
+            {% set detail = none %}
+            {% if s in ['unknown', 'unavailable'] %}
+              {% if (now() - st.last_changed).total_seconds() >= grace_seconds | int %}
+                {% set reason = 'not reporting' %}
+                {% set detail = s %}
+              {% endif %}
+            {% elif numeric and s | float(101) <= low_threshold | float(20) %}
+              {% set reason = 'low' %}
+              {% set detail = s ~ '%' %}
+            {% elif not numeric and s == 'on' %}
+              {% set reason = 'low' %}
+              {% set detail = 'reported low' %}
+            {% endif %}
+            {% if reason is not none %}
+              {% set dev = device_id(e) %}
+              {% set ns.items = ns.items + [{
+                   'entity': e,
+                   'reason': reason,
+                   'detail': detail,
+                   'device': dev,
+                   'key': dev if dev else e,
+                   'name': (device_attr(e, 'name_by_user') or device_attr(e, 'name')
+                            or state_attr(e, 'friendly_name') or e) }] %}
+            {% endif %}
           {% endif %}
         {% endfor %}
         {{ ns.items }}
@@ -248,15 +259,12 @@ actions:
                'members': members }] %}
         {% endfor %}
         {{ ns.out }}
-      # Every device key we monitor, so recovered ones can have their issue
-      # withdrawn without keeping any state between runs.
-      # Deliberately spans every monitored entity, not just the live ones. An
-      # entity that has just been disabled still has a stale issue from when
-      # it was live, and its key has to stay in this list for that issue to be
-      # withdrawn — otherwise disabling an entity strands its alert forever.
+      # Spans the excluded entities too. Excluding something that currently
+      # has an open issue has to withdraw that issue, or it would be stranded
+      # with nothing left to clear it.
       all_keys: >-
         {% set ns = namespace(k=[]) %}
-        {% for e in num_sensors + bin_sensors %}
+        {% for e in monitored + excluded %}
           {% set dev = device_id(e) %}
           {% set ns.k = ns.k + [dev if dev else e] %}
         {% endfor %}
@@ -295,7 +303,8 @@ actions:
               {%- endif %}
 
               This issue clears itself once every battery on this device
-              reports healthy again.
+              reports healthy again. To stop watching it altogether, add its
+              entities to this automation's exclusion list.
             domain: "{{ repair_domain }}"
             severity: "{{ repair_severity }}"
             persistent: true
@@ -309,44 +318,13 @@ actions:
           data:
             issue_id: "battery_{{ repeat.item }}"
 
-  # Config rot, reported separately from battery faults. One issue for all of
-  # them, since the fix is the same edit in one place.
-  - if:
-      - condition: template
-        value_template: "{{ missing | count > 0 }}"
-    then:
-      - action: repairs.create
-        data:
-          issue_id: battery_monitor_missing_entities
-          title: >-
-            {{ missing | count }} monitored battery
-            {{ 'entity has' if missing | count == 1 else 'entities have' }}
-            been disabled or deleted
-          description: >-
-            {% for e in missing -%}
-            - `{{ e }}`
-            {% endfor %}
-
-            {{ 'This entity is' if missing | count == 1 else 'These entities are' }}
-            still listed in this automation but no longer present in Home
-            Assistant — disabled, or removed with their device.
-            {{ 'It' if missing | count == 1 else 'They' }} can never report a
-            battery level again, so
-            {{ 'it is' if missing | count == 1 else 'they are' }} excluded from
-            battery alerts rather than raising a fault that would never clear.
-
-            Remove
-            {{ 'it' if missing | count == 1 else 'them' }} from the automation's
-            battery entity list, or re-enable
-            {{ 'it' if missing | count == 1 else 'them' }} if the battery should
-            still be watched.
-          domain: "{{ repair_domain }}"
-          severity: warning
-          persistent: true
-    else:
-      - action: repairs.remove
-        data:
-          issue_id: battery_monitor_missing_entities
+  # Cleanup from the previous scheme, which alerted on entities that had been
+  # disabled or deleted. Discovery makes that impossible, so the issue can no
+  # longer be raised and would otherwise linger forever. Removing an issue
+  # that is not there costs nothing.
+  - action: repairs.remove
+    data:
+      issue_id: battery_monitor_missing_entities
 
   - choose:
       - conditions:

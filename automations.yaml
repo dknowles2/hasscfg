@@ -129,25 +129,6 @@
             volume: 1
     action: notify.mobile_app_davids_iphone_17_pro
   mode: single
-- id: '1710280107429'
-  alias: Button - Office
-  description: ''
-  triggers:
-  - trigger: event
-    event_type: zha_event
-    event_data:
-      device_id: b4de6ee01618f6ad5f5ef725006a3fab
-      command: single
-    alias: When Office Button is clicked
-  conditions: []
-  actions:
-  - metadata: {}
-    data: {}
-    target:
-      entity_id:
-      - light.office_lamps
-    action: light.toggle
-  mode: restart
 - id: '1723471744681'
   alias: Presence - Cleaners Arrived
   description: ''
@@ -479,9 +460,8 @@
       - 'on'
   - condition: template
     alias: Debounce - skip if this automation ran in the last 30 minutes
-    value_template: >-
-      {{ this.attributes.last_triggered is none
-         or (now() - this.attributes.last_triggered).total_seconds() > 1800 }}
+    value_template: "{{ this.attributes.last_triggered is none\n   or (now() - this.attributes.last_triggered).total_seconds()
+      > 1800 }}"
   actions:
   - choose:
     - conditions:
@@ -824,16 +804,11 @@
       base_url: https://casa.knowles.xyz
       master_condition:
       - condition: template
-        value_template: >-
-          {% set s = states.cover.garage_sarah_s_garage_door %}
-          {% set d = states.cover.garage_david_s_garage_door %}
-          {{ not (
-               (s is not none and s.state == 'open'
-                and (now() - s.last_changed).total_seconds() < 180)
-               or
-               (d is not none and d.state == 'open'
-                and (now() - d.last_changed).total_seconds() < 180)
-             ) }}
+        value_template: "{% set s = states.cover.garage_sarah_s_garage_door %} {%
+          set d = states.cover.garage_david_s_garage_door %} {{ not (\n     (s is
+          not none and s.state == 'open'\n      and (now() - s.last_changed).total_seconds()
+          < 180)\n     or\n     (d is not none and d.state == 'open'\n      and (now()
+          - d.last_changed).total_seconds() < 180)\n   ) }}"
 - id: '1783022970608'
   alias: Frigate Notifications - Front Porch
   description: ''
@@ -1000,58 +975,29 @@
       - zone.nyc
 - id: '1754460000001'
   alias: Battery Health Alert
-  description: Flags low and non-reporting batteries as Home Assistant repair issues
-    and sends one non-critical summary notification.
+  description: ''
   use_blueprint:
     path: dknowles2/battery_health.yaml
     input:
-      battery_sensors:
-      - sensor.back_door_battery
-      - sensor.basement_button_battery
-      - sensor.bthome_sensor_f562_battery
-      - sensor.front_door_battery
-      - sensor.front_porch_sensor_battery
-      - sensor.guest_bathroom_sink_battery
-      - sensor.jacob_s_bathroom_leak_sensor_battery
-      - sensor.jacob_s_sink_battery
-      - sensor.jacobs_bedoom_sensor_battery
-      - sensor.kitchen_sonos_move_battery
-      - sensor.office_button_battery
-      - sensor.office_kiosk_battery
-      - sensor.office_presence_battery
-      - sensor.office_remote_battery
-      - sensor.office_sensor_battery
-      - sensor.primary_bathroom_kiosk_battery
-      - sensor.primary_bedroom_sensor_battery
-      - sensor.q6_e_tron_r_state_of_charge
-      - sensor.sump_pump_battery
-      - sensor.utility_closet_apc_ups_battery_charge
-      - sensor.utility_closet_battery
-      battery_binary_sensors:
-      - binary_sensor.back_door_2
-      - binary_sensor.basement_back_window_2
-      - binary_sensor.basement_side_window_2
-      - binary_sensor.dining_room_front_window_1_2
-      - binary_sensor.dining_room_front_window_2_2
-      - binary_sensor.dining_room_side_window_1_2
-      - binary_sensor.dining_room_side_window_2_2
-      - binary_sensor.foyer_motion_sensor
-      - binary_sensor.front_door_2
-      - binary_sensor.garage_door_2
-      - binary_sensor.kitchen_window_2
-      - binary_sensor.living_room_3_window_2
-      - binary_sensor.living_room_window_1_2
-      - binary_sensor.living_room_window_2_2
-      - binary_sensor.living_room_window_4_2
-      - binary_sensor.master_bedroom_1_window_2
-      - binary_sensor.master_bedroom_2_window_2
-      - binary_sensor.sitting_room_window_1_2
-      - binary_sensor.sitting_room_window_2_2
+      exclude_entities:
+      # Phones, watches and the iPad manage their own charging; alerting on
+      # them is daily noise, not a maintenance signal.
+      - sensor.davids_iphone_17_pro_battery_level
+      - sensor.davids_iphone_17_pro_watch_battery_level
+      - sensor.davids_iphone_16_pro_battery_level
+      - sensor.davids_iphone_16_pro_watch_battery_level
+      - sensor.davids_ipad_air_battery_level
+      - sensor.sarah_s_iphone_battery_level
+      # Cooking probes are unavailable whenever they are not in use, which
+      # would read as "not reporting" almost permanently.
+      - sensor.thermopro_black_probe_battery
+      - sensor.thermopro_white_probe_battery
       threshold: 20
       unavailable_grace:
         hours: 6
         minutes: 0
         seconds: 0
+      scan_interval: /30
       daily_check: 09:00:00
       notify_action: notify.mobile_app_davids_iphone_17_pro
       notification_url: /dashboard-unavailable
@@ -1059,8 +1005,8 @@
       severity: warning
 - id: '1786107443390'
   alias: Safety - Close garage door left open after dark
-  description: Fail-safe for the garage door being left open overnight. Closes it if it has been open
-    for 15 minutes while the sun is down.
+  description: Fail-safe for the garage door being left open overnight. Closes it
+    if it has been open for 15 minutes while the sun is down.
   triggers:
   - trigger: state
     entity_id:

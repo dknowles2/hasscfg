@@ -524,48 +524,6 @@
           entity_id: cover.garage_david_s_garage_door
         data: {}
   mode: single
-- id: '1754924767384'
-  alias: Battery Low - Jacob's Bedroom Sensor
-  description: ''
-  triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.jacobs_bedoom_sensor_battery
-    below: 10
-  conditions: []
-  actions:
-  - action: persistent_notification.create
-    metadata: {}
-    data:
-      title: Jacob Sensor Battery Low
-      message: Jacob Sensor battery is below 10%
-  - action: notify.notify
-    metadata: {}
-    data:
-      title: Jacob Sensor Battery Low
-      message: Jacob Sensor battery is below 10%
-  mode: single
-- id: '1754925445057'
-  alias: Battery Low - Primary Bedroom Sensor
-  description: ''
-  triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.primary_bedroom_sensor_battery
-    below: 10
-  conditions: []
-  actions:
-  - action: persistent_notification.create
-    metadata: {}
-    data:
-      title: Primary Bedroom Sensor Battery Low
-      message: Primary Bedroom Sensor battery is below 10%
-  - action: notify.notify
-    metadata: {}
-    data:
-      title: Primary Bedroom Sensor Battery Low
-      message: Primary Bedroom Sensor battery is below 10%
-  mode: single
 - id: '1756340236690'
   alias: Notify when print is done
   description: ''

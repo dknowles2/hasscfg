@@ -16,6 +16,13 @@ blueprint:
     token embedded in it rotates. The chamber image reads unknown until the
     printer has sent a frame, so the sliced plate's cover image is used as a
     fallback.
+
+    That picture URL must be absolute. `entity_picture` is a site-relative
+    path, and the iOS notification attachment is fetched by the Companion
+    app's notification service extension, which does not resolve it against
+    the server — the attachment silently fails to render. Verified by sending
+    the same image both ways: relative failed, absolute rendered. Hence the
+    Base URL input.
   domain: automation
   input:
     printer_device:
@@ -28,6 +35,15 @@ blueprint:
       name: Notification Service
       description: >-
         Full notify service to call, e.g. notify.mobile_app_johns_iphone.
+      selector:
+        text: {}
+    base_url:
+      name: Base URL
+      description: >-
+        External URL of this Home Assistant instance, e.g.
+        https://ha.example.com — no trailing slash. Used to make the attached
+        picture URL absolute, which the iOS notification extension requires.
+      default: ""
       selector:
         text: {}
     events:
@@ -47,6 +63,7 @@ blueprint:
               value: event_print_canceled
 
 variables:
+  base_url: !input base_url
   printer_device: !input printer_device
   notify_service: !input notify_service
   events: !input events
@@ -70,11 +87,17 @@ variables:
     states(filename_sensor) if filename_sensor else '']
     | reject('in', ['unknown', 'unavailable', 'none', ''])
     | list | first | default('Print') }}
-  picture: >-
+  picture_path: >-
     {{ (state_attr(chamber_image, 'entity_picture')
     if chamber_image and states(chamber_image) not in ['unknown', 'unavailable']
     else (state_attr(cover_image, 'entity_picture') if cover_image else ''))
     | default('', true) }}
+  # entity_picture is site-relative; the notification extension needs it
+  # absolute. If no base URL is configured, send no picture rather than a
+  # relative one that will render as a broken attachment.
+  picture: >-
+    {{ (base_url | trim | regex_replace('/$', '')) ~ picture_path
+    if picture_path and base_url | trim else '' }}
   message: >-
     {{ {'event_print_finished': task_name ~ ' has finished printing.',
     'event_print_failed': task_name ~ ' failed to print.',

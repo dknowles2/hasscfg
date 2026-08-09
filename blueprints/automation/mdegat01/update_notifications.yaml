@@ -36,6 +36,18 @@ blueprint:
       default: false
       selector:
         boolean: {}
+    base_url:
+      name: Base URL
+      description: >-
+        External URL of this Home Assistant instance, e.g.
+        https://ha.example.com — no trailing slash. entity_picture is a
+        site-relative path, and on iOS the notification attachment is fetched
+        by the Companion app's notification service extension, which does not
+        resolve it against the server, so the image silently fails to render.
+        Leave blank to keep the original relative behaviour.
+      default: ""
+      selector:
+        text: {}
     reminder_hours:
       name: Reminder hours
       description: 'If provided, will send reminders for pending updates every x hours.
@@ -185,6 +197,7 @@ variables:
   mobile_app_device_2: '{{ _mobile_app_device_2 if _mobile_app_device_2 != mobile_app_device
     }}'
   send_to_ha: !input send_to_ha
+  base_url: !input base_url
   _changelog_urls: !input changelog_urls
   changelog_urls: '{{ _changelog_urls if _changelog_urls is mapping else {} }}'
   take_backup: !input take_backup
@@ -343,8 +356,8 @@ action:
           channel: !input notification_channel
           group: !input notification_channel
           notification_icon: !input status_bar_icon
-          icon_url: '{{ state_attr(entity_id, ''entity_picture'') | default('''',
-            true) }}'
+          icon_url: "{% set p = state_attr(entity_id, 'entity_picture') | default('', true) %}\
+            {{ (base_url | trim | regex_replace('/$', '') ~ p) if p and base_url | trim else p }}"
           url: '{{ url }}'
           clickAction: '{{ url }}'
           sticky: 'true'

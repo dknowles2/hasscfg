@@ -512,6 +512,7 @@
     input:
       printer_device: c012d0de6896b01adc93ecdd85e83d9f
       notify_service: notify.mobile_app_davids_iphone_17_pro
+      base_url: https://casa.knowles.xyz
       events:
       - event_print_finished
 - id: '1764382802130'

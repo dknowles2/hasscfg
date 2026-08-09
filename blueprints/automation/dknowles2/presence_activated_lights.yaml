@@ -77,6 +77,13 @@ trigger:
     to: "unavailable"
     for: !input no_presence_wait
     id: presence_clear
+  # A `for:` countdown does not survive a restart. If the sensors were already
+  # clear when Home Assistant went down, there is no new state transition on
+  # the way back up to restart it, so the pending turn-off is lost and the
+  # lights stay on until someone next walks in. Re-check on start.
+  - platform: homeassistant
+    event: start
+    id: startup
 
 variables:
   presence_entities: !input presence_entities
@@ -103,6 +110,22 @@ action:
             value_template: >-
               {{ presence_entities | select('is_state', 'on') | list | count == 0 }}
         sequence:
+          - service: light.turn_off
+            target: !input lights
+            data: {}
+      - conditions:
+          - condition: trigger
+            id: startup
+        sequence:
+          # The elapsed clear time cannot be recovered after a restart --
+          # last_changed is reset by the restart itself -- so serve the full
+          # wait again rather than guessing. This doubles as a settle delay
+          # while entities repopulate. mode: restart means presence returning
+          # during the wait cancels this branch cleanly.
+          - delay: !input no_presence_wait
+          - condition: template
+            value_template: >-
+              {{ presence_entities | select('is_state', 'on') | list | count == 0 }}
           - service: light.turn_off
             target: !input lights
             data: {}

@@ -269,3 +269,142 @@ get_mne_transit_alerts:
   - stop: ''
     response_variable: mne_alerts
   mode: single
+acknowledge_flash:
+  alias: Acknowledge flash
+  description: >-
+    Briefly fades a light to a colour and back, as visual confirmation that an
+    automation ran. The light is snapshotted first and restored afterwards, so
+    this is safe to call on a light that is in use -- including one that is
+    off, which flashes and then goes dark again.
+  sequence:
+  - variables:
+      # Not fully saturated: a pure 0,255,0 reads as a harsh lime on most
+      # bulbs, and the point here is to be noticed, not to hurt.
+      palette:
+        green:
+        - 0
+        - 220
+        - 60
+        red:
+        - 255
+        - 40
+        - 0
+        amber:
+        - 255
+        - 150
+        - 0
+        blue:
+        - 0
+        - 120
+        - 255
+      rgb: '{{ palette[color | default(''green'', true)] }}'
+      # Keyed on the light so two different lights can flash at once without
+      # trampling each other's snapshot.
+      scene_id: ack_flash_{{ entity_id | replace('.', '_') }}
+      al_switch: '{{ adaptive_lighting_switch | default('''', true) }}'
+  - action: scene.create
+    data:
+      scene_id: '{{ scene_id }}'
+      snapshot_entities: '{{ [entity_id] }}'
+  # Adaptive Lighting treats an outside colour change as the user taking over
+  # and would either fight the flash or leave the light stranded in manual
+  # mode. Claiming and releasing control explicitly avoids both.
+  - if:
+    - condition: template
+      value_template: '{{ al_switch != '''' }}'
+    then:
+    - action: adaptive_lighting.set_manual_control
+      data:
+        entity_id: '{{ al_switch }}'
+        lights: '{{ [entity_id] }}'
+        manual_control: true
+  - action: light.turn_on
+    target:
+      entity_id: '{{ entity_id }}'
+    data:
+      rgb_color: '{{ rgb }}'
+      brightness_pct: '{{ brightness_pct | default(100, true) | int }}'
+      transition: '{{ transition | default(0.3, true) | float }}'
+  - delay:
+      seconds: '{{ hold | default(1, true) | float }}'
+  - action: scene.turn_on
+    target:
+      entity_id: scene.{{ scene_id }}
+    data:
+      transition: '{{ transition | default(0.3, true) | float }}'
+  # The scene is transient and would vanish on restart anyway, but leaving it
+  # behind means a stray scene entity per light forever.
+  - action: scene.delete
+    target:
+      entity_id: scene.{{ scene_id }}
+  - if:
+    - condition: template
+      value_template: '{{ al_switch != '''' }}'
+    then:
+    - delay:
+        seconds: '{{ transition | default(0.3, true) | float }}'
+    - action: adaptive_lighting.set_manual_control
+      data:
+        entity_id: '{{ al_switch }}'
+        lights: '{{ [entity_id] }}'
+        manual_control: false
+  fields:
+    entity_id:
+      name: Light
+      required: true
+      selector:
+        entity:
+          domain: light
+    color:
+      name: Colour
+      default: green
+      selector:
+        select:
+          options:
+          - green
+          - red
+          - amber
+          - blue
+    hold:
+      name: Hold
+      description: Seconds to stay on the colour before fading back.
+      default: 1
+      selector:
+        number:
+          min: 0.2
+          max: 10
+          step: 0.1
+          unit_of_measurement: s
+    transition:
+      name: Fade
+      description: Seconds for each fade, in and out.
+      default: 0.3
+      selector:
+        number:
+          min: 0
+          max: 5
+          step: 0.1
+          unit_of_measurement: s
+    brightness_pct:
+      name: Brightness
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: '%'
+    adaptive_lighting_switch:
+      name: Adaptive Lighting switch
+      description: >-
+        Optional. If this light is managed by Adaptive Lighting, pass its
+        switch so control is claimed and released cleanly around the flash.
+      default: ''
+      selector:
+        entity:
+          integration: adaptive_lighting
+          domain: switch
+  # Queued rather than parallel: two acknowledgements landing on the same light
+  # at once would have the second snapshot capture the first one's colour and
+  # restore to that.
+  mode: queued
+  max: 10

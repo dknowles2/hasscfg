@@ -40,13 +40,6 @@ captive_portal:
 bluetooth_proxy:
   active: true
 
-esp32_ble_beacon:
-  type: iBeacon
-  # casa.knowles.xyz
-  uuid: '63617361-2e6b-6e6f-776c-65732e78797a'
-  major: 2
-  minor: 2
-
 button:
   - platform: restart
     name: "Restart"

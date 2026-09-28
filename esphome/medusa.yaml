@@ -29,6 +29,11 @@ wifi:
 
 captive_portal:
 
+output:
+  - platform: gpio
+    id: cooldown_led
+    pin: GPIO2   # Blue LED on most ESP32 dev boards
+  
 # Relay module IN terminal (jumper set to H)
 switch:
   - platform: gpio
@@ -104,6 +109,10 @@ binary_sensor:
   - platform: template
     name: "Cooldown active"
     lambda: 'return id(trigger_prop).is_running();'
+    on_press:
+      - output.turn_on: cooldown_led
+    on_release:
+      - output.turn_off: cooldown_led
 
 # Manual trigger for testing from Home Assistant
 button:

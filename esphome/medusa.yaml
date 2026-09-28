@@ -15,6 +15,7 @@ logger:
 api:
   encryption:
     key: "8iImaSCeLvGXkmdBV+/PfS+UPqLE051kQlzH/HBpHyQ="
+  reboot_timeout: 0s   # Don't reboot if Home Assistant is unreachable
 
 ota:
   - platform: esphome
@@ -27,3 +28,86 @@ wifi:
     password: "s0FlttqZsTA2"
 
 captive_portal:
+
+# Relay module IN terminal (jumper set to H)
+switch:
+  - platform: gpio
+    id: prop_relay
+    name: "Prop relay"
+    pin: GPIO26
+    restore_mode: ALWAYS_OFF
+    internal: true     # Hidden from Home Assistant; use the button below instead
+
+  - platform: template
+    id: prop_enabled
+    name: "Prop enabled"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+# Adjustable timings, remembered across reboots
+number:
+  - platform: template
+    id: pulse_ms
+    name: "Trigger pulse length"
+    unit_of_measurement: ms
+    min_value: 50
+    max_value: 2000
+    step: 50
+    initial_value: 250
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
+  - platform: template
+    id: cooldown_s
+    name: "Cooldown"
+    unit_of_measurement: s
+    min_value: 1
+    max_value: 600
+    step: 1
+    initial_value: 30
+    optimistic: true
+    restore_value: true
+    entity_category: config
+
+# Pulse the relay, then wait out the cooldown.
+# mode: single ignores new triggers while this is still running.
+script:
+  - id: trigger_prop
+    mode: single
+    then:
+      - switch.turn_on: prop_relay
+      - delay: !lambda 'return (uint32_t) id(pulse_ms).state;'
+      - switch.turn_off: prop_relay
+      - delay: !lambda 'return (uint32_t) (id(cooldown_s).state * 1000);'
+
+binary_sensor:
+  # E3Z-R61 black wire, mode selector set to D (Dark-ON)
+  - platform: gpio
+    id: beam_broken
+    name: "Beam broken"
+    pin:
+      number: GPIO27
+      mode:
+        input: true
+        pullup: true
+      inverted: true   # Sensor output pulls the pin low when the beam is broken
+    filters:
+      - delayed_on: 10ms
+    on_press:          # Fires only when the beam changes from clear to broken
+      - if:
+          condition:
+            switch.is_on: prop_enabled
+          then:
+            - script.execute: trigger_prop
+
+  - platform: template
+    name: "Cooldown active"
+    lambda: 'return id(trigger_prop).is_running();'
+
+# Manual trigger for testing from Home Assistant
+button:
+  - platform: template
+    name: "Trigger prop"
+    on_press:
+      - script.execute: trigger_prop

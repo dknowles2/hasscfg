@@ -17,7 +17,9 @@ blueprint:
       description: Motion Sensor or a group with Motion Sensors (But can be anything
         switching between "on" and "off")
       selector:
-        entity: {}
+        entity:
+          multiple: false
+          reorder: false
     light_target:
       name: Light
       selector:
@@ -34,14 +36,16 @@ blueprint:
           min: 0.0
           max: 3600.0
           unit_of_measurement: seconds
-          mode: slider
           step: 1.0
+          mode: slider
     automation_blocker:
       name: Automation Blocker (Optional)
       description: Only run if this boolean is in desired state (see next input)
       default:
       selector:
-        entity: {}
+        entity:
+          multiple: false
+          reorder: false
     automation_blocker_boolean:
       name: Automation Blocker Chooser (Optional)
       description: Desired state of automation blocker, choose on for on and off for
@@ -55,7 +59,9 @@ blueprint:
         (see next input)
       default:
       selector:
-        entity: {}
+        entity:
+          multiple: false
+          reorder: false
     no_motion_blocker_boolean:
       name: No Motion Chooser (Optional)
       description: Desired state of no motion blocker, choose on for on and off for
@@ -73,8 +79,8 @@ blueprint:
           min: -90.0
           max: 90.0
           unit_of_measurement: degrees
-          mode: slider
           step: 1.0
+          mode: slider
     scene_ambient:
       name: Ambient Scene (Optional)
       description: Scene for ambient state. Will be activated when no motion is detected.
@@ -84,6 +90,7 @@ blueprint:
           domain:
           - scene
           multiple: false
+          reorder: false
     time_scene_ambient_start:
       name: Ambient time frame start (Optional)
       description: Time from which on ambient scene will be activated
@@ -104,6 +111,7 @@ blueprint:
           domain:
           - scene
           multiple: false
+          reorder: false
     time_scene_morning:
       name: Time for the morning scene (Optional)
       description: A time input which defines the time from which on the scene will
@@ -119,6 +127,7 @@ blueprint:
           domain:
           - scene
           multiple: false
+          reorder: false
     time_scene_day:
       name: Time for the day scene (Optional)
       description: A time input which defines the time from which on the scene will
@@ -134,6 +143,7 @@ blueprint:
           domain:
           - scene
           multiple: false
+          reorder: false
     time_scene_evening:
       name: Time for the evening scene (Optional)
       description: A time input which defines the time from which on the scene will
@@ -149,6 +159,7 @@ blueprint:
           domain:
           - scene
           multiple: false
+          reorder: false
     time_scene_night:
       name: Time for the night scene (Optional)
       description: A time input which defines the time from which on the scene will
@@ -165,6 +176,7 @@ blueprint:
           domain:
           - scene
           multiple: false
+          reorder: false
 mode: restart
 max_exceeded: silent
 variables:

@@ -14,6 +14,7 @@ blueprint:
           domain:
           - update
           multiple: true
+          reorder: false
     mobile_app_device:
       name: Mobile app device
       description: (Optional) Android, iphone, mac. Anything with the companion app
@@ -36,18 +37,6 @@ blueprint:
       default: false
       selector:
         boolean: {}
-    base_url:
-      name: Base URL
-      description: >-
-        External URL of this Home Assistant instance, e.g.
-        https://ha.example.com — no trailing slash. entity_picture is a
-        site-relative path, and on iOS the notification attachment is fetched
-        by the Companion app's notification service extension, which does not
-        resolve it against the server, so the image silently fails to render.
-        Leave blank to keep the original relative behaviour.
-      default: ""
-      selector:
-        text: {}
     reminder_hours:
       name: Reminder hours
       description: 'If provided, will send reminders for pending updates every x hours.
@@ -94,7 +83,8 @@ blueprint:
         or `update.mariadb_update: https://github.com/home-assistant/addons/blob/master/mariadb/CHANGELOG.md`'
       default: none
       selector:
-        object: {}
+        object:
+          multiple: false
     only_after:
       name: Only after
       description: Only send notifications to mobile devices after this time
@@ -114,7 +104,9 @@ blueprint:
         (ios) for update notifications
       default: Updates
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     status_bar_icon:
       name: Status bar icon
       description: '(Android only) Sets the [status bar icon](https://companion.home-assistant.io/docs/notifications/notifications-basic/#notification-icon).
@@ -197,7 +189,6 @@ variables:
   mobile_app_device_2: '{{ _mobile_app_device_2 if _mobile_app_device_2 != mobile_app_device
     }}'
   send_to_ha: !input send_to_ha
-  base_url: !input base_url
   _changelog_urls: !input changelog_urls
   changelog_urls: '{{ _changelog_urls if _changelog_urls is mapping else {} }}'
   take_backup: !input take_backup
@@ -356,8 +347,8 @@ action:
           channel: !input notification_channel
           group: !input notification_channel
           notification_icon: !input status_bar_icon
-          icon_url: "{% set p = state_attr(entity_id, 'entity_picture') | default('', true) %}\
-            {{ (base_url | trim | regex_replace('/$', '') ~ p) if p and base_url | trim else p }}"
+          icon_url: '{{ state_attr(entity_id, ''entity_picture'') | default('''',
+            true) }}'
           url: '{{ url }}'
           clickAction: '{{ url }}'
           sticky: 'true'

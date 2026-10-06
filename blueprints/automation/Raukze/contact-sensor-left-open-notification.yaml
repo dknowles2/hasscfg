@@ -20,6 +20,7 @@ blueprint:
           - binary_sensor
           - input_boolean
           multiple: false
+          reorder: false
     friendly_name:
       name: "\U0001F3F7️ Custom Device Friendly Name"
       description: What should we call the entity in the notification? (e.g. Fridge).
@@ -27,7 +28,9 @@ blueprint:
         with [`binary_sensor` groups](https://www.home-assistant.io/integrations/group/#binary-sensor-light-and-switch-groups).
       default: ''
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     issue_state:
       name: ⚠️ Issue State
       description: 'The state that triggers the automation. Because this is a `binary_sensor`/`input_boolean`,
@@ -41,9 +44,9 @@ blueprint:
           options:
           - 'on'
           - 'off'
-          sort: false
           multiple: false
           custom_value: false
+          sort: false
     duration_issue_state:
       name: ⏰ Time before alert
       description: The amount of time that the device can be in the issue state before
@@ -53,6 +56,7 @@ blueprint:
       selector:
         duration:
           enable_day: true
+          enable_second: true
     condition_send_notification:
       name: "\U0001F50D Additional condition"
       description: Define a condition that is checked after the initial trigger before
@@ -80,6 +84,7 @@ blueprint:
       selector:
         duration:
           enable_day: true
+          enable_second: true
     notify_services_string:
       name: "\U0001F4F2 Notify Services"
       description: 'The service that will be called to deliver the notification. (e.g.,
@@ -90,7 +95,9 @@ blueprint:
         '
       default: notify.mobile_app_<your_device_id_here>
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     notification_click_url:
       name: "\U0001F517 Click URL"
       description: 'Where the user will be taken if they tap the notification. (e.g.,
@@ -100,13 +107,17 @@ blueprint:
         '
       default: /lovelace/ROOM
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     notification_title:
       name: "\U0001F4E2 Notification Title"
       description: The title of the notification.
       default: The {{ friendly_name }} was left open
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     notification_message:
       name: "\U0001F4EC Notification Message"
       description: 'The message of the notification.
@@ -115,7 +126,9 @@ blueprint:
       default: The {{ friendly_name }} was left open at {{ as_timestamp(initially_triggered_at)
         | timestamp_custom('%T', True) }}.
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     repeat_notification:
       name: "\U0001F501 Repeat Notification"
       description: Whether or not a notification should be repeated after a certain
@@ -131,6 +144,7 @@ blueprint:
       selector:
         duration:
           enable_day: true
+          enable_second: true
     notification_icon_warning:
       name: "\U0001F6A8 Notification Icon (Android Only)"
       description: 'The icon that is shown when the issue is reported. (e.g., `mdi:fridge-alert`)
@@ -155,9 +169,9 @@ blueprint:
           - window-closed
           - window-open
           - window-open-variant
-          sort: false
           multiple: false
           custom_value: false
+          sort: false
     notification_color:
       name: "\U0001F308 Notification Color (Android Only)"
       description: The color of the notification. See [documentation](https://companion.home-assistant.io/docs/notifications/notifications-basic/#notification-color)
@@ -172,9 +186,9 @@ blueprint:
           - green
           - blue
           - purple
-          sort: false
           multiple: false
           custom_value: false
+          sort: false
     notification_persistent:
       name: "\U0001F4CC Persistent Notification (Android Only)"
       description: The notification cannot be closed manually. See [documentation](https://companion.home-assistant.io/docs/notifications/notifications-basic/#persistent-notification)
@@ -198,9 +212,9 @@ blueprint:
           - active
           - time-sensitive
           - critical
-          sort: false
           multiple: false
           custom_value: false
+          sort: false
     custom_action_issue_state:
       name: ⚙️ Custom Action Issue State
       description: Custom actions that are executed when the device state enters the

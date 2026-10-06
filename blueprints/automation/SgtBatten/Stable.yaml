@@ -225,8 +225,8 @@ blueprint:
             entity:
               filter:
               - integration: input_text
-              reorder: false
               multiple: false
+              reorder: false
         alert_once:
           name: Alert Once (Optional)
           description: Only the first notification for each event will play a sound.
@@ -463,8 +463,8 @@ blueprint:
               filter:
               - domain:
                 - camera
-              reorder: false
               multiple: false
+              reorder: false
         android_auto:
           name: Android Auto
           description: Show the notification on Android Auto if the receiving device
@@ -610,8 +610,8 @@ blueprint:
           default: ''
           selector:
             entity:
-              reorder: false
               multiple: false
+              reorder: false
         state_filter_states:
           name: State Filter States (Optional)
           description: Enter the states that the above entity must be in, one at a

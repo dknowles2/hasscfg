@@ -31,7 +31,9 @@ blueprint:
         event reported by external integrations).
       default: ''
       selector:
-        text: {}
+        text:
+          multiline: false
+          multiple: false
     trigger_at_homeassistant_startup:
       name: (Optional) Trigger at Home Assistant startup
       description: Trigger the target state check and enforcement at Home Assistant
@@ -40,6 +42,9 @@ blueprint:
       selector:
         boolean: {}
 variables:
+  ahb_version: 2025.11.04
+  ahb_maintainers:
+  - EPMatt
   off_time: !input off_time
   on_time: !input on_time
   trigger_at_homeassistant_startup: !input trigger_at_homeassistant_startup

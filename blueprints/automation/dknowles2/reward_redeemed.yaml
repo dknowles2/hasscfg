@@ -1,0 +1,96 @@
+blueprint:
+  name: Skylight — reward redeemed
+  description: 'Notify when someone redeems a Skylight reward.
+
+
+    This watches the frame''s event entity rather than any dashboard, so it fires
+    for a redemption made on the frame itself, in the Skylight app, or from Home Assistant.
+    That is what makes it the one to rely on: Skylight has no notion of *requesting*
+    a reward, only of redeeming one, so being told afterwards is the only account
+    of a redemption that is complete.'
+  domain: automation
+  homeassistant:
+    min_version: 2026.8.0
+  source_url: https://github.com/dknowles2/ha-skylight/blob/main/blueprints/automation/skylight/reward_redeemed.yaml
+  input:
+    redeemed_event:
+      name: Reward redeemed event
+      description: The frame's "reward redeemed" event entity.
+      selector:
+        entity:
+          filter:
+          - integration: skylight
+            domain:
+            - event
+          multiple: false
+          reorder: false
+    profile:
+      name: Only this profile
+      description: Leave empty to be told about everyone. Otherwise the profile's
+        name exactly as the frame spells it — the same name that appears on the chore
+        chart.
+      default: ''
+      selector:
+        text:
+          multiline: false
+          multiple: false
+    notify_device:
+      name: Device to notify
+      description: 'A device running the Home Assistant app. This is all most people
+        need — pick a phone and you get a notification saying what happened.
+
+
+        Leave it empty if you would rather build the actions yourself below.'
+      default: ''
+      selector:
+        device:
+          filter:
+          - integration: mobile_app
+          multiple: false
+    notification:
+      name: Or do something else
+      description: 'Leave this empty unless you want something other than a phone
+        notification — a speaker announcement, a light, a message somewhere else.
+        Whatever you put here runs in addition to the notification above, or on its
+        own if you chose no device.
+
+
+        These are available to your actions: `reward`, `profile`, and `points` — what
+        the reward cost.'
+      default: []
+      selector:
+        action: {}
+mode: queued
+max: 10
+max_exceeded: silent
+triggers:
+- trigger: state
+  entity_id: !input redeemed_event
+variables:
+  notify_device: !input notify_device
+  notify_action: "{{ ('notify.mobile_app_' ~ (device_attr(notify_device, 'name') |
+    slugify))\n   if notify_device not in ['', none] else '' }}"
+  chosen_profile: !input profile
+  reward: '{{ trigger.to_state.attributes.reward }}'
+  profile: '{{ trigger.to_state.attributes.profile }}'
+  points: '{{ trigger.to_state.attributes.point_value | int(0) }}'
+conditions:
+- condition: template
+  value_template: "{{ trigger.from_state is not none\n   and trigger.from_state.state
+    != 'unavailable'\n   and trigger.to_state.state not in ['unknown', 'unavailable']\n
+    \  and trigger.to_state.state != trigger.from_state.state }}"
+- condition: template
+  value_template: '{{ chosen_profile == '''' or chosen_profile == profile }}'
+actions:
+- alias: Tell the phone, if one was chosen
+  choose:
+  - conditions:
+    - condition: template
+      value_template: '{{ notify_device not in ['''', none] }}'
+    sequence:
+    - action: '{{ notify_action }}'
+      data:
+        title: '{{ profile }} redeemed a reward'
+        message: '{{ reward }}{% if points %} — {{ points }} points{% endif %}'
+- alias: Anything else you asked for
+  sequence: !input notification

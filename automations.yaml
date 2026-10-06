@@ -227,6 +227,12 @@
         - light.downstairs_all_sconces
         - light.downstairs_all_lamps
       data: {}
+    - action: adaptive_lighting.apply
+      metadata: {}
+      data:
+        lights:
+        - light.downstairs_all_lamps
+        - light.downstairs_all_sconces
     else:
     - action: light.turn_off
       metadata: {}
@@ -238,50 +244,91 @@
   mode: restart
 - id: '1733523145702'
   alias: Lights - Outdoors
-  description: ''
+  description: 'On from 05:30, or 30 minutes before sunrise when the sun beats that, until
+    30 minutes after sunrise; then from 30 minutes before sunset until 23:00 on weeknights
+    or 00:30 following a Friday or Saturday night. The sun and clock triggers act on their
+    own edge, so there is no drift. The two morning on-triggers cannot collide with the off-edge:
+    the earliest sunrise here is 05:24, which puts sunrise+30 no earlier than 05:54. The restart
+    trigger re-derives the right state from the sun and the calendar, so a reboot inside a
+    window does not strand the lights.'
   triggers:
-  - entity_id:
-    - schedule.outdoor_lights_off
-    trigger: state
-  - event: start
-    trigger: homeassistant
   - trigger: sun
     event: sunrise
     offset: -00:30:00
+    id: 'on'
+  - trigger: time
+    at: 05:30:00
+    id: 'on'
   - trigger: sun
     event: sunset
     offset: -00:30:00
+    id: 'on'
+  - trigger: sun
+    event: sunrise
+    offset: 00:30:00
+    id: 'off'
+  - trigger: time
+    at: '23:00:00'
+    id: off_weeknight
+  - trigger: time
+    at: 00:30:00
+    id: off_late_night
+  - trigger: homeassistant
+    event: start
+    id: resync
   conditions: []
   actions:
-  - if:
-    - condition: state
-      entity_id: schedule.outdoor_lights_off
-      state:
-      - 'on'
-    then:
-    - data: {}
-      metadata: {}
-      action: light.turn_off
-      target:
-        device_id:
-        - 4375183e85e24d2f5cba1ad39bdc0da0
-        - 3a9f32345e801517631adc088e5e8e3d
-        - c6f60356cf30ad7aa4f31c4db6bb90c4
-    else:
-    - action: switch.turn_on
-      metadata: {}
-      data: {}
-      target:
-        device_id: 497cf3322295712f3ffcc7fcfc774321
-    - data: {}
-      metadata: {}
-      action: light.turn_on
-      target:
-        device_id:
-        - 4375183e85e24d2f5cba1ad39bdc0da0
-        - c6f60356cf30ad7aa4f31c4db6bb90c4
-        - 3a9f32345e801517631adc088e5e8e3d
-  mode: restart
+  - variables:
+      late_nights:
+      - 4
+      - 5
+      want: "{%- if trigger.id in ['on', 'off'] -%}\n  {{ trigger.id }}\n{%- elif trigger.id\
+        \ == 'off_weeknight' -%}\n  {{ 'skip' if now().weekday() in late_nights else 'off'\
+        \ }}\n{%- elif trigger.id == 'off_late_night' -%}\n  {{ 'off' if (now().weekday()\
+        \ - 1) % 7 in late_nights else 'skip' }}\n{%- else -%}\n  {%- set n = now() -%}\n\
+        \  {%- set nr = state_attr('sun.sun', 'next_rising') -%}\n  {%- set ns = state_attr('sun.sun',\
+        \ 'next_setting') -%}\n  {%- if nr is none or ns is none -%}\n    skip\n  {%- else\
+        \ -%}\n    {#- sun.sun only publishes the *next* event. Before today's\n        sunrise\
+        \ that is today's; after it, it is tomorrow's, which is\n        within a couple of\
+        \ minutes of today's. Fine for a restart. -#}\n    {%- set nr = nr | as_datetime |\
+        \ as_local -%}\n    {%- set ns = ns | as_datetime | as_local -%}\n    {%- set sunrise\
+        \ = nr if nr.date() == n.date() else nr - timedelta(days=1) -%}\n    {%- set sunset\
+        \ = ns if ns.date() == n.date() else ns - timedelta(days=1) -%}\n    {%- set day0\
+        \ = n.replace(hour=0, minute=0, second=0, microsecond=0) -%}\n    {#- 05:30, or sunrise-30\
+        \ when the sun is up earlier than that. -#}\n    {%- set morning_on = [day0.replace(hour=5,\
+        \ minute=30),\n                          sunrise - timedelta(minutes=30)] | min -%}\n\
+        \    {%- set cutoff = (day0 + timedelta(days=1, minutes=30))\n                   \
+        \  if n.weekday() in late_nights else day0.replace(hour=23) -%}\n    {%- set tail_end\
+        \ = day0.replace(minute=30)\n                       if (n.weekday() - 1) % 7 in late_nights\
+        \ else day0 -%}\n    {{ 'on' if (n < tail_end\n                or morning_on <= n\
+        \ < (sunrise + timedelta(minutes=30))\n                or (sunset - timedelta(minutes=30))\
+        \ <= n < cutoff)\n       else 'off' }}\n  {%- endif -%}\n{%- endif -%}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ want | trim == ''on'' }}'
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.front_porch_lights
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.driveway_lights
+          - light.front_porch_light
+          - light.front_porch_door_light
+    - conditions:
+      - condition: template
+        value_template: '{{ want | trim == ''off'' }}'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.driveway_lights
+          - light.front_porch_light
+          - light.front_porch_door_light
+  mode: single
+  max_exceeded: silent
 - id: '1735483900049'
   alias: Lights - Downstairs Brightness
   description: ''
@@ -655,6 +702,53 @@
         target:
           entity_id: light.office_lamps
         data: {}
+      button_4_single:
+      - action: input_boolean.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.office_guest_mode
+      - if:
+        - condition: state
+          entity_id: input_boolean.office_guest_mode
+          state: 'on'
+        then:
+        - action: homeassistant.add_label_to_device
+          metadata: {}
+          data:
+            label_id:
+            - blackout_auto_close
+            device_id:
+            - 872075f5fa9743d2ad6ee515a23bd561
+        - action: automation.turn_off
+          metadata: {}
+          target:
+            entity_id: automation.lights_office_presence
+          data:
+            stop_actions: true
+        - action: script.acknowledge_flash
+          data:
+            entity_id: light.office_bookshelf
+            color: green
+            adaptive_lighting_switch: switch.office_adaptive_lighting_adaptive_lighting
+        else:
+        - action: homeassistant.remove_label_from_device
+          metadata: {}
+          data:
+            label_id:
+            - blackout_auto_close
+            device_id:
+            - 872075f5fa9743d2ad6ee515a23bd561
+        - action: automation.turn_on
+          metadata: {}
+          target:
+            entity_id: automation.lights_office_presence
+          data: {}
+        - action: script.acknowledge_flash
+          data:
+            entity_id: light.office_bookshelf
+            color: red
+            adaptive_lighting_switch: switch.office_adaptive_lighting_adaptive_lighting
 - id: '1751500001'
   alias: ThermoPro - Probe Detected
   description: Sends or clears actionable notification based on probe availability
@@ -793,7 +887,7 @@
       notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
       alert_once: true
       final_update: false
-      video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
+      video: ''
       icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
         else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
       zone_filter: true
@@ -821,7 +915,7 @@
       notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
       alert_once: true
       final_update: false
-      video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
+      video: ''
       icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
         else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
       zone_filter: true
@@ -834,6 +928,12 @@
       initial_delay: 0
       base_url: https://casa.knowles.xyz
       attachment_2: ''
+      master_condition:
+      - condition: template
+        alias: Skip if the front door was opened in the last 5 minutes
+        value_template: "{% set d = states.binary_sensor.front_door %}\n{{ d is none\n
+          \  or d.state in ['unknown', 'unavailable']\n   or (d.state == 'off'\n       and
+          (now() - d.last_changed).total_seconds() >= 300) }}"
 - id: '1784470915802'
   alias: Frigate Notifications - Driveway Person
   description: ''
@@ -845,7 +945,7 @@
       notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
       alert_once: true
       final_update: false
-      video: '{{base_url}}/api/frigate{{client_id}}/notifications/{{review_id}}/review_preview.gif?format=ts'
+      video: ''
       icon: mdi:{{'account-outline' if label == 'Person' else 'dog' if label == 'Dog'
         else 'cat' if label == 'Cat' else 'car' if label == 'Car' else 'home-assistant'}}
       zone_filter: true
@@ -897,6 +997,7 @@
       power_switch_entity: switch.living_room_window_plug_top_outlet
       notify_target:
       - notify.davids_iphone_17_pro
+      power_down_seconds: 30
 - id: '1785706696881'
   alias: Power Cycle Unavailable Zigbee Shades
   description: ''
@@ -981,18 +1082,15 @@
     path: dknowles2/battery_health.yaml
     input:
       exclude_entities:
-      # Phones, watches and the iPad manage their own charging; alerting on
-      # them is daily noise, not a maintenance signal.
       - sensor.davids_iphone_17_pro_battery_level
       - sensor.davids_iphone_17_pro_watch_battery_level
       - sensor.davids_iphone_16_pro_battery_level
       - sensor.davids_iphone_16_pro_watch_battery_level
       - sensor.davids_ipad_air_battery_level
       - sensor.sarah_s_iphone_battery_level
-      # Cooking probes are unavailable whenever they are not in use, which
-      # would read as "not reporting" almost permanently.
       - sensor.thermopro_black_probe_battery
       - sensor.thermopro_white_probe_battery
+      - sensor.primary_bathroom_kiosk_battery
       threshold: 20
       unavailable_grace:
         hours: 6
@@ -1076,3 +1174,73 @@
       alert_on_start: false
       send_completion_push: false
       live_activity_enabled: true
+- id: '1786414047126'
+  alias: Skylight — chore completed, with an undo
+  description: ''
+  use_blueprint:
+    path: dknowles2/chore_completed.yaml
+    input:
+      notify_device: 478a6e3aefee914c0d6d3c4a9e32c58e
+      chore_lists:
+      - todo.the_knowles_jacob_chores
+      chore_event: event.kitchen_the_knowles_chore_completed
+- id: '1788999631493'
+  alias: Presence - White noise for Zapp
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.primary_bedroom_dog_bed_pressure_sensor_presence
+  conditions: []
+  actions:
+  - if:
+    - condition: state
+      entity_id: binary_sensor.primary_bedroom_dog_bed_pressure_sensor_presence
+      state:
+      - 'on'
+    then:
+    - action: fan.turn_on
+      metadata: {}
+      target:
+        entity_id: fan.primary_bedroom_white_noise_machine
+      data: {}
+    else:
+    - delay:
+        hours: 0
+        minutes: 1
+        seconds: 0
+        milliseconds: 0
+      enabled: false
+    - action: fan.turn_off
+      metadata: {}
+      target:
+        entity_id: fan.primary_bedroom_white_noise_machine
+      data: {}
+      enabled: false
+  mode: restart
+- id: '1789840298773'
+  alias: Dog Bowl out of water
+  description: ''
+  triggers:
+  - trigger: moisture.cleared
+    target:
+      device_id: 00dfda591a035361cb0a050f418b9fff
+    options:
+      behavior: first
+      for: 00:00:00
+  conditions: []
+  actions:
+  - action: notify.mobile_app_davids_iphone_17_pro
+    metadata: {}
+    data:
+      data:
+        notification_icon: mdi:dog
+      title: Zapp's water bowl is empty
+      message: Zapp is probably thirsty.
+  - action: notify.mobile_app_sarah_s_iphone
+    metadata: {}
+    data:
+      data:
+        notification_icon: mdi:dog
+      title: Zapp's water bowl is empty
+      message: Zapp is probably thirsty.
+  mode: single

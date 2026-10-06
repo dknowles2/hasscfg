@@ -11,8 +11,25 @@ blueprint:
 
 
     The activity appears once the train is inside the lead time, refreshes when
-    its status or track changes, and clears after it departs. Updates reuse the
-    same `tag`, so they are silent — no banner, no sound.
+    its status or track changes, and — if you are still following it when it
+    leaves — switches to counting down to your arrival instead, showing how
+    many stops are left and the next station. It clears when you get there.
+
+
+    On the RailData source at New York Penn, the track can be known before the
+    board posts it: the signaling system shows which platform the train is
+    standing on, typically ten minutes earlier, and has matched the board 229
+    times out of 231. That shows as **Track 3 (likely)** until the board
+    confirms it, at which point the "(likely)" drops.
+    Updates are sent `passive` and reuse the same `tag`, so they replace what
+    is on screen without a banner or a sound — and one is only sent when
+    something you can read on the activity has actually changed.
+
+
+    The arrival half needs the commute's **Stops away** sensor, which is
+    derived from the favourite sensor unless you say otherwise. Note it cannot
+    tell whether you actually boarded: it follows the train you were waiting
+    for, so if you watched it go, use **Dismiss**.
 
 
     It also shows how full the train is, once the board publishes consist data
@@ -29,11 +46,13 @@ blueprint:
     **Dismissing.** Live Activities cannot carry buttons, and swiping one
     away tells iOS but not Home Assistant — so the next refresh puts it back.
     A plain, silent notification carrying a **Dismiss** button is therefore
-    sent alongside it. Tapping that ends the activity and stays quiet for the
-    rest of the window, which is what stops a second favourite departing soon
-    after the one you caught from counting down at you on the train. It
-    resets when the commute window ends, or at 3am if you are not using a
-    schedule.
+    sent alongside it. **Press and hold that notification, then tap Dismiss** —
+    an action on an iOS notification only appears on a long press, and this one
+    is delivered silently, so it never banners on its own. Dismissing ends the
+    activity and stays quiet for the rest of the window, which is what stops a
+    second favourite departing soon after the one you caught from counting down
+    at you on the train. It resets when the commute window ends, or at 3am if
+    you are not using a schedule.
   domain: automation
   source_url: https://github.com/dknowles2/ha-njtransit/blob/main/blueprints/automation/njtransit/favorite_live_activity.yaml
   homeassistant:
@@ -50,13 +69,46 @@ blueprint:
             - integration: njtransit
               domain: sensor
               device_class: timestamp
-    notify_target:
-      name: Notify action
+    progress_sensor:
+      name: Progress sensor
       description: >
-        The mobile_app action for the iPhone, e.g.
-        `notify.mobile_app_my_iphone`.
+        Optional. The `Stops away` sensor for the same commute, which is what
+        lets the activity carry on once you are aboard: it switches from
+        counting down to the departure to counting down to the arrival.
+
+
+        Left empty it is derived from the favourite sensor, which is right
+        unless you have renamed one of them. Set it explicitly if you have.
+      default: ""
       selector:
-        text: {}
+        entity:
+          filter:
+            - integration: njtransit
+              domain: sensor
+    notify_target:
+      name: Phone
+      description: >
+        The iPhone to put the activity on. Pick its **notify entity** — the
+        one the Home Assistant companion app creates, named after the device.
+
+
+        What actually gets called is the older `notify.mobile_app_…` action
+        for the same phone, derived from what you pick here. That indirection
+        is not tidiness: a notify entity's `send_message` takes only a message
+        and a title, with nowhere to put the `data` payload that carries the
+        Live Activity. The entity is the thing worth *picking*, and the action
+        is the only thing that can be *called*.
+
+
+        Typing the action name directly still works, so an automation set up
+        before this became a picker keeps running. Re-pick the phone when
+        convenient — the stored text will look like an unknown entity in the
+        UI until you do.
+      selector:
+        entity:
+          filter:
+            - integration: mobile_app
+              domain: notify
     boarded_helper:
       name: Dismissed flag
       description: >
@@ -70,11 +122,120 @@ blueprint:
         entity:
           filter:
             - domain: input_boolean
+    presence_entity:
+      name: Where you are
+      description: >
+        Optional. The person or device tracker to judge by. Leave empty and
+        location is ignored entirely, which is how this behaved before.
+
+
+        **It fails open.** If this entity has no location — phone off, GPS
+        denied, not reported yet — the activity is shown anyway. A missing
+        countdown for a train you were running for is a worse failure than an
+        unnecessary one, and it would be invisible: you would simply never
+        find out the notification was suppressed.
+      default: ""
+      selector:
+        entity:
+          filter:
+            - domain: person
+            - domain: device_tracker
+    presence_zones:
+      name: Only when you are in one of these
+      description: >
+        Optional, and does nothing without **Where you are**. The activity is
+        shown only while you are inside one of these zones.
+
+
+        Pick the places from which you would actually catch this train. For an
+        outbound morning commute that is home, or a zone around the station
+        big enough to cover getting there. For the return it is wherever you
+        spend the day.
+
+
+        This is what makes the activity stop being noise: on a day working
+        from home you are not in the zone for the evening train, so nothing is
+        sent. Once you are on the train you have left the morning zone, so the
+        countdown to the *next* service out of your origin stops too.
+      default: []
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: zone
+    origin_radius:
+      name: How far from the station still counts
+      description: >
+        Optional, and does nothing without **Where you are**. Used instead of
+        zones when you have not set any.
+
+
+        **In whatever unit your Home Assistant measures distance in** — miles
+        on a US install, kilometres elsewhere. There is no unit shown on the
+        box because a blueprint cannot know which one you are on, and printing
+        the wrong one is worse than printing none. The derived default is
+        computed the same way, so it is right either way.
+
+
+        Leave it at 0 and it is worked out for you, from how far the origin
+        station is from your Home Assistant home location: half that distance,
+        floored at 2. For a station you walk to the floor does the work and
+        covers home and the walk. For the far end of the commute the halving
+        does — it takes in the whole city you might be anywhere in, while
+        still excluding home, because half a distance can never reach it.
+
+
+        That single rule is why there is no separate setting for the outbound
+        and return legs. Set a number here only if it gets your geography
+        wrong.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 50
+          step: 0.5
+          mode: box
+    follow_any_train:
+      name: Follow any train once your favourites have gone
+      description: >
+        Optional. When no favourite is left to catch, fall back to the next
+        departure that actually serves your destination.
+
+
+        For the evening you stayed late and your usual train went hours ago —
+        the trains you would never normally take are exactly the ones you need
+        then. Off by default, because without **Only when you are in one of
+        these** set it means a countdown to *some* train all day. It only
+        applies while you are in one of those zones, and inside the commute
+        window if you have set one.
+      default: false
+      selector:
+        boolean: {}
     commute_window:
       name: Commute window
       description: >
-        Optional. A schedule covering the hours you travel. Its end is what
-        resets the dismissed flag; without one it resets at 3am.
+        Optional. A schedule covering the hours you travel — and, if you set
+        one, **the activity is only sent while it is on**. Leave it empty and
+        no time gating happens at all.
+
+
+        This is the only thing that can tell a day off from a commute. Location
+        cannot: on a working-from-home morning you are at home, which is
+        exactly where you would be if you *were* about to catch the train, so
+        no radius or zone can separate the two. A schedule that runs Tuesday to
+        Thursday simply says nothing on a Friday.
+
+
+        Its end also resets the dismissed flag. Without a schedule that happens
+        at 3am instead.
+
+
+        It gates the arrival countdown too, so set it wide enough to cover the
+        journey — a window closing at 10:00 ends the countdown of a train
+        arriving at 10:15. The alternative was letting the arrival half ignore
+        the window, and that put a countdown on the Lock Screen of someone
+        working from home, because the integration can see that a train left
+        your station but not whether you were on it.
       default: []
       selector:
         entity:
@@ -150,6 +311,21 @@ triggers:
 variables:
   sensor: !input favorite_sensor
   boarded: !input boarded_helper
+  # What the picker returns is `notify.davids_iphone`; what has to be called is
+  # `notify.mobile_app_davids_iphone`. Both are slugified from the same device
+  # name by the same function at registration, so one is the other with a
+  # prefix -- but only while the notify entity keeps its generated id. Rename
+  # that entity and this stops resolving, because the action name was fixed
+  # when the app registered and does not follow.
+  #
+  # The `mobile_app_` test is what lets an action name typed in before this
+  # input became a picker keep working: it is already in the target form, so
+  # it is passed through untouched rather than prefixed twice.
+  notify_target: !input notify_target
+  notify_action: >-
+    {%- set name = notify_target | replace('notify.', '') -%}
+    {{ 'notify.' ~ (name if name.startswith('mobile_app_')
+                    else 'mobile_app_' ~ name) }}
   lead: !input lead_time
   icon: !input icon
   # Empty unless a dashboard was named. The notification payloads below are
@@ -158,6 +334,7 @@ variables:
   # and this blueprint has to keep working for anyone who never builds the
   # dashboard.
   dashboard: !input dashboard_url
+  progress: !input progress_sensor
   # Namespaced per commute, so two directions do not dismiss each other.
   action_id: >-
     {{ 'NJT_ONBOARD_' ~ (sensor | replace('sensor.', '') | upper) }}
@@ -171,9 +348,140 @@ variables:
   tag: >-
     {{ 'njt_' ~ (sensor | replace('sensor.', '') | replace('_next_favorite', '')) }}
   dismiss_tag: "{{ tag ~ '_dismiss' }}"
-  scheduled: "{{ states(sensor) }}"
-  known: >-
-    {{ scheduled not in ['unknown', 'unavailable', 'none', ''] }}
+  nothing: "{{ ['unknown', 'unavailable', 'none', ''] }}"
+  presence: !input presence_entity
+  zones: !input presence_zones
+  windows: !input commute_window
+  any_train: !input follow_any_train
+  radius: !input origin_radius
+  origin_lat: "{{ state_attr(sensor, 'origin_latitude') }}"
+  origin_lon: "{{ state_attr(sensor, 'origin_longitude') }}"
+  # How far home is from the station this commute leaves from. `distance` with
+  # a bare coordinate pair measures from Home Assistant's own home location,
+  # which is exactly the anchor wanted here.
+  #
+  # It answers in the instance's own distance unit, not always kilometres: on a
+  # US install this is miles. Verified rather than assumed -- a station measured
+  # at 0.99 km came back as 0.61. Nothing here converts, because every distance
+  # in this gate comes from the same function and the derived radius is built
+  # from that same answer, so the comparison is consistent whichever unit it
+  # is. Only a *typed-in* number has to match the instance, which is what the
+  # input description says.
+  home_to_origin: >-
+    {{ distance(origin_lat | float(0), origin_lon | float(0))
+       if origin_lat is not none and origin_lon is not none else none }}
+  # Half the distance home sits at, floored at 2.
+  #
+  # Halving is not arbitrary: it is the largest radius that cannot reach home,
+  # so the far end of a commute silences itself on a day worked from home
+  # without anyone choosing a number. At the near end the halving is irrelevant
+  # and the floor does the work -- a station you walk to needs a radius that
+  # still includes the house you walk from.
+  effective_radius: >-
+    {{ radius | float(0) if radius | float(0) > 0
+       else ([2.0, home_to_origin | float(0) / 2] | max
+             if home_to_origin is not none else 0) }}
+  # Whether you are at the station this train leaves from.
+  #
+  # Standing on the platform is the least ambiguous "yes" there is, and until
+  # this existed the zone branch below could not say it: with zones configured
+  # it only ever asked whether you were inside one of them, and a station you
+  # walk to is not inside the home zone. Measured on the live instance, the
+  # morning commute had the person 36 m from the origin and 638 m from a home
+  # zone with a 100 m radius -- so the activity was cleared on the walk to the
+  # train, every morning, and the countdown vanished a few minutes before the
+  # train it was counting down to arrived.
+  #
+  # `effective_radius` was already the right number and was simply unreachable
+  # from that branch. At the near end its floor of 2 km covers the station and
+  # the house you left. At the far end it is half the distance home, which
+  # cannot reach home by construction, so this does not weaken the gate that
+  # keeps an evening commute quiet on a day worked from home.
+  at_origin: >-
+    {%- if not presence or origin_lat is none or origin_lon is none
+          or effective_radius | float(0) <= 0 -%}
+    false
+    {%- else -%}
+    {%- set away = distance(presence, origin_lat | float(0), origin_lon | float(0)) -%}
+    {{ away is not none and away <= effective_radius | float(0) }}
+    {%- endif -%}
+  # Whether you are somewhere this train could still be caught from.
+  #
+  # Measured with `distance` against each zone's own radius rather than by
+  # comparing the person's state to a zone name: a person entity reports
+  # `home` for the home zone but the zone's *title* for every other one, and
+  # a device tracker reports neither reliably. Coordinates are the only thing
+  # both agree on.
+  #
+  # Fails open at every step. Not configured, no coordinates, or a zone that
+  # cannot be measured all come out as "yes, show it" -- a suppressed
+  # countdown is invisible, and the failure would look like the integration
+  # having nothing to say rather than a location lookup going wrong.
+  nearby: >-
+    {%- if not presence -%}
+    true
+    {%- elif not zones and effective_radius | float(0) <= 0 -%}
+    true
+    {%- elif states(presence) in nothing or state_attr(presence, 'latitude') is none -%}
+    true
+    {%- elif not zones -%}
+    {#- No zones, so fall back to plain distance from the station. `distance`
+        returns null if the entity has no position, which is the same
+        can-not-measure case the zone branch handles below. -#}
+    {%- set away = distance(presence, origin_lat | float(0), origin_lon | float(0)) -%}
+    {{ away is none or away <= effective_radius | float(0) }}
+    {%- else -%}
+    {%- set ns = namespace(near=false, measured=false) -%}
+    {%- for z in zones -%}
+    {%- set away = distance(presence, z) -%}
+    {%- if away is not none -%}
+    {%- set ns.measured = true -%}
+    {%- if (away * 1000) <= (state_attr(z, 'radius') | float(100)) -%}
+    {%- set ns.near = true -%}
+    {%- endif -%}
+    {%- endif -%}
+    {%- endfor -%}
+    {#- `not measured` is the fail-open case and it is not hypothetical: a
+        renamed or deleted zone makes `distance` return null for every entry,
+        and without this line that reads as "you are nowhere near any of them"
+        and silences the commute permanently. Measured-and-outside and
+        could-not-measure are different answers. -#}
+    {{ ns.near or at_origin | bool(false) or not ns.measured }}
+    {%- endif -%}
+  in_window: >-
+    {{ not windows or windows | select('is_state', 'on') | list | count > 0 }}
+  # The next train out, whoever is driving it. Only consulted once the
+  # favourites are gone, and only somewhere you could board -- otherwise this
+  # is a countdown to a service leaving a station you are nowhere near.
+  #
+  # The first train you could actually board, which is not the same as the
+  # first train on the board: a cancelled service stays listed, and that is the
+  # point of it being listed. Counting down to one on a Lock Screen is worse
+  # than saying nothing, because a chronometer ticking toward a departure reads
+  # as a train that is coming.
+  #
+  # Empty when every upcoming departure is cancelled -- during a line
+  # suspension the honest Live Activity is no Live Activity, and the disruption
+  # blueprint is what carries that news.
+  fallback_entity: >-
+    {%- set rows = [sensor | replace('_next_favorite', '_next_departure'),
+                    sensor | replace('_next_favorite', '_departure_2'),
+                    sensor | replace('_next_favorite', '_departure_3')] -%}
+    {%- set pick = namespace(row='') -%}
+    {%- for row in rows if not pick.row -%}
+    {%- if states(row) not in nothing
+           and state_attr(row, 'status') != 'cancelled' -%}
+    {%- set pick.row = row -%}
+    {%- endif -%}
+    {%- endfor -%}
+    {{ pick.row }}
+  favorite_known: "{{ states(sensor) not in nothing }}"
+  use_fallback: >-
+    {{ any_train and not favorite_known and nearby | bool(false) and in_window
+       and fallback_entity != '' }}
+  source: "{{ fallback_entity if use_fallback else sensor }}"
+  scheduled: "{{ states(source) }}"
+  known: "{{ scheduled not in nothing }}"
   minutes_out: >-
     {{ ((as_timestamp(scheduled) - as_timestamp(now())) / 60) | round(0) | int
        if known else 9999 }}
@@ -181,13 +489,111 @@ variables:
   # train you are running for slips off the board. An unset helper is "", and
   # is_state on "" is simply false, so leaving it empty behaves exactly as this
   # blueprint did before the input existed.
-  showing: >-
+  # Note `in_window`. Without it the commute window only ever reset the
+  # dismissed flag, so a schedule that deliberately excludes Friday still
+  # counted down at someone working from home -- the input was named for a
+  # behaviour it did not have.
+  #
+  # Deliberately not applied to `riding` below. A window ending at 10:00 while
+  # you are aboard a train arriving at 10:30 must not take the arrival
+  # countdown with it; the same reasoning as the location gate, which is also
+  # about deciding whether to *board*, not whether you already have.
+  waiting: >-
     {{ known and minutes_out <= (lead | int) and minutes_out > -2
-       and not is_state(boarded, 'on') }}
-  train: "{{ state_attr(sensor, 'train_id') or '' }}"
-  track: "{{ state_attr(sensor, 'track') }}"
-  status: "{{ state_attr(sensor, 'status_text') or 'Scheduled' }}"
-  destination: "{{ state_attr(sensor, 'destination') or '' }}"
+       and not is_state(boarded, 'on') and nearby | bool(false)
+       and in_window }}
+  # Where the train is, once the departure board can no longer say. It drops a
+  # train the moment it leaves, so from that point the stop list is the only
+  # account of the journey -- and `sensor` has already moved on to whatever
+  # favourite comes next, which is not the train you are sitting on.
+  progress_entity: >-
+    {{ progress if progress else (sensor | replace('_next_favorite',
+                                                   '_stops_away')) }}
+  eta: "{{ state_attr(progress_entity, 'eta_at_destination') }}"
+  # `on_board` is the integration's own reading: origin behind the train,
+  # destination still ahead. There is no way to know you actually boarded --
+  # Home Assistant cannot see which platform you are on -- so this follows the
+  # train you were waiting for and Dismiss remains the answer if you let it go.
+  #
+  # Deliberately not gated on location. Being aboard is itself the answer to
+  # "could you catch this train", and the zones that make sense for waiting --
+  # home, or the office -- are exactly the places you are *not* while riding.
+  # Applying that gate here would kill the arrival countdown the moment it
+  # became the useful half.
+  #
+  # `in_window` IS applied, and the reasoning that once excluded it was wrong.
+  # It ran: a window ending at 10:00 must not take the arrival countdown of a
+  # train arriving at 10:30 with it. True, but it rested on `on_board` meaning
+  # "you are on this train" -- and it does not. It means the train has passed
+  # your station, which happens every weekday whether or not you were on it.
+  # So on a day off the favourite ran, left Short Hills, flipped `on_board`,
+  # and put an arrival countdown on the Lock Screen of someone who had not
+  # left the house. Observed twice.
+  #
+  # The cost is real but bounded and visible: if your window closes before
+  # your train arrives, the last of the countdown goes with it. Widen the
+  # window. That is a setting someone can find, and a silent notification on a
+  # day off is not.
+  riding: >-
+    {{ state_attr(progress_entity, 'on_board') | default(false, true)
+       and eta not in [none, 'unknown', 'unavailable', '']
+       and not is_state(boarded, 'on')
+       and in_window }}
+  showing: "{{ waiting or riding }}"
+  # Whether this refresh has anything new to say.
+  #
+  # The favourite sensor carries `status_raw`, which is the board's own
+  # countdown -- "in 23 Min" -- so it changes every single minute, and a bare
+  # state trigger fires on any attribute. Nothing on the activity renders it:
+  # the chronometer counts down on the phone, which is the entire reason this
+  # is not supposed to push once a minute. So the phone was handed a push
+  # carrying a face identical to the one already on screen, every minute, for
+  # the whole lead window.
+  #
+  # Compared against the trigger's own `from_state` rather than a remembered
+  # copy, which would need a helper the user has to create. The fields are the
+  # ones that reach the screen: anything not listed here can change freely
+  # without waking the phone.
+  #
+  # Three cases deliberately pass straight through:
+  #   * a time-pattern refresh, which has no `from_state` -- it is what shows
+  #     the activity in the first place and what ends it;
+  #   * a trigger on some entity other than the one being rendered, which
+  #     happens when the favourite is unknown and the fallback row is showing;
+  #   * riding, where the face is built from the progress sensor and changes
+  #     on its own schedule while the favourite sits still.
+  shown_fields: >-
+    {{ [states(source), state_attr(source, 'train_id'),
+        state_attr(source, 'track'), state_attr(source, 'signaled_track'),
+        state_attr(source, 'status_text'), state_attr(source, 'crowding')] }}
+  changed: >-
+    {{ riding
+       or trigger.from_state is not defined or trigger.from_state is none
+       or trigger.entity_id != source
+       or [trigger.from_state.state,
+           trigger.from_state.attributes.get('train_id'),
+           trigger.from_state.attributes.get('track'),
+           trigger.from_state.attributes.get('signaled_track'),
+           trigger.from_state.attributes.get('status_text'),
+           trigger.from_state.attributes.get('crowding')] != shown_fields }}
+  ride_train: "{{ state_attr(progress_entity, 'train_id') or '' }}"
+  ride_stops: "{{ state_attr(progress_entity, 'stops_to_destination') }}"
+  ride_next: "{{ state_attr(progress_entity, 'next_stop') or '' }}"
+  ride_late: "{{ state_attr(progress_entity, 'minutes_late') | int(0) }}"
+  train: "{{ state_attr(source, 'train_id') or '' }}"
+  # The board's track once it has posted one; before that, the platform the
+  # signaling system shows the train standing on, if the source carries it.
+  # The board always wins -- it is the official answer and the one the
+  # platform signs match -- and the signaled one is marked as a likelihood,
+  # however good its record, because a "3" that turns into a "4" with no
+  # warning is worse than a "3 (likely)" that does.
+  posted_track: "{{ state_attr(source, 'track') }}"
+  signaled_track: "{{ state_attr(source, 'signaled_track') }}"
+  track: >-
+    {{ posted_track if posted_track else
+       (signaled_track ~ ' (likely)' if signaled_track else none) }}
+  status: "{{ state_attr(source, 'status_text') or 'Scheduled' }}"
+  destination: "{{ state_attr(source, 'destination') or '' }}"
   # How full the train is, when the board says. It only carries consist data
   # for imminent departures -- roughly a quarter of rows -- so this is empty
   # for most of the lead window and appears as departure nears, which is
@@ -200,7 +606,7 @@ variables:
   # being reported as a crowding level.
   busy: >-
     {{ {'moderate': 'Filling up', 'heavy': 'Busy'}
-       .get(state_attr(sensor, 'crowding'), '') }}
+       .get(state_attr(source, 'crowding'), '') }}
   # The status has to live in the title. `chronometer` replaces the message
   # line with the countdown, and replaces critical_text too, so the title is
   # the only text field that survives alongside a timer. An Apple Watch
@@ -215,6 +621,43 @@ variables:
     Train {{ train }}{% if track %} · Track {{ track }}{% endif %}
     {{- ' · ' ~ status if status else '' }}
     {{- ' · ' ~ busy if busy else '' }}
+  # Aboard, the three things worth a glance are which train, how much of the
+  # journey is left, and whether it is running late. Track and crowding stop
+  # mattering the moment the doors close.
+  #
+  # Zero stops means the destination is the next call, so it reads "Arriving"
+  # rather than "0 stops" -- the number is only useful while there is one.
+  ride_headline: >-
+    Train {{ ride_train }}
+    {{- ' · ' ~ ('Arriving' if ride_stops | int == 0 else
+                 ride_stops ~ (' stop' if ride_stops | int == 1 else ' stops'))
+        if ride_stops is not none else '' }}
+    {{- ' · ' ~ ride_late ~ ' min late' if ride_late > 0 else '' }}
+  activity_title: "{{ ride_headline if riding else headline }}"
+  # The countdown target. Departure while waiting, arrival once aboard -- the
+  # switch is the whole point, and it is one field.
+  #
+  # Both defaults are load-bearing. Variables are rendered on every trigger,
+  # whatever branch the actions then take, so this has to survive there being
+  # no train at all -- not merely the case where an activity is being shown.
+  # `scheduled` is `unknown` for most of the day, and for the whole of a line
+  # suspension, and `as_timestamp` raises on that rather than returning
+  # nothing:
+  #
+  #   as_timestamp got invalid input 'unknown' ... but no default was specified
+  #
+  # The zero is never sent. It exists so the render succeeds; the branch that
+  # would use it cannot run, because `showing` is false whenever `scheduled` is
+  # unknown.
+  activity_when: >-
+    {{ (as_timestamp(eta, 0) if riding else as_timestamp(scheduled, 0)) | int }}
+  activity_message: >-
+    {%- if riding -%}
+    {{ ('next ' ~ ride_next) if ride_next else 'Arriving' }}
+    {%- else -%}
+    {{ ('to ' ~ destination) if destination else status }}
+    {{- ' · ' ~ busy if busy else '' }}
+    {%- endif -%}
 
 actions:
   - choose:
@@ -226,17 +669,25 @@ actions:
             value_template: >-
               {{ boarded and trigger.event.data.action == action_id }}
         sequence:
+          # Templated rather than `!input`. The helper is optional, and an
+          # empty `!input` lands in `target.entity_id` as `''`, which fails
+          # config validation -- so leaving it empty, which the input's own
+          # description invites, did not merely skip the Dismiss button: it
+          # stopped the whole automation loading. A template is resolved at
+          # run time instead, and this branch is unreachable without a helper
+          # because the notification carrying the button is only sent when one
+          # is set.
           - action: input_boolean.turn_on
             target:
-              entity_id: !input boarded_helper
-          - action: !input notify_target
+              entity_id: "{{ boarded }}"
+          - action: "{{ notify_action }}"
             data:
               message: clear_notification
               data:
                 tag: "{{ tag }}"
           # The button's own notification has to go too, or it sits there
           # offering to dismiss something already gone.
-          - action: !input notify_target
+          - action: "{{ notify_action }}"
             data:
               message: clear_notification
               data:
@@ -249,9 +700,24 @@ actions:
           - condition: template
             value_template: "{{ boarded | length > 0 }}"
         sequence:
+          # Templated for the same reason as the branch above, and guarded by
+          # this branch's own `boarded | length > 0` condition.
           - action: input_boolean.turn_off
             target:
-              entity_id: !input boarded_helper
+              entity_id: "{{ boarded }}"
+
+      # Ahead of the branch that shows, and ahead of the branch that clears.
+      # Falling through to either would be wrong: one re-pushes an identical
+      # activity, the other takes a perfectly good activity off the screen
+      # because the train has not changed in a minute.
+      - alias: Nothing about the train changed, so say nothing
+        conditions:
+          - condition: trigger
+            id: refresh
+          - condition: template
+            value_template: "{{ showing and not changed }}"
+        sequence:
+          - stop: The activity already on the phone is current
 
       - alias: Show or refresh the activity
         conditions:
@@ -260,16 +726,14 @@ actions:
           - condition: template
             value_template: "{{ showing }}"
         sequence:
-          - action: !input notify_target
+          - action: "{{ notify_action }}"
             data:
-              title: "{{ headline }}"
+              title: "{{ activity_title }}"
               # Dropped on the phone, where `chronometer` takes this line, but
               # an Apple Watch renders the push as an ordinary notification and
               # shows it -- so it is worth carrying the busyness here too
               # rather than leaving the watch with only a truncated title.
-              message: >-
-                {{ ('to ' ~ destination) if destination else status }}
-                {{- ' · ' ~ busy if busy else '' }}
+              message: "{{ activity_message }}"
               data:
                 tag: "{{ tag }}"
                 live_update: true
@@ -279,9 +743,23 @@ actions:
                 # phone count down from about 1.75 billion. Absolute is also
                 # steadier: it cannot drift between this firing and the push
                 # landing.
-                when: "{{ as_timestamp(scheduled) | int }}"
+                when: "{{ activity_when }}"
                 notification_icon: !input icon
                 group: njtransit
+                # The same tag replaces the notification rather than stacking
+                # it, and that was mistaken here for the update being silent.
+                # It is not: iOS still alerts on every push at the default
+                # interruption level, so a refreshing activity buzzed the
+                # wrist each time. `passive` is what actually means "update
+                # what is on screen, do not interrupt" -- the companion
+                # notification below has always set it, which is why that one
+                # never made a sound and this one did.
+                #
+                # A `url` key alongside these broke the activity outright (see
+                # below), so this was added on its own and its effect on the
+                # activity checked before anything else changed.
+                push:
+                  interruption-level: passive
                 # Deliberately no `url` here. Adding one stopped the activity
                 # rendering at all -- the payload was verified to reach the
                 # notify service as a correct dict with `live_update` and
@@ -304,10 +782,18 @@ actions:
               - condition: template
                 value_template: "{{ boarded | length > 0 }}"
             then:
-              - action: !input notify_target
+              - action: "{{ notify_action }}"
                 data:
-                  title: "{{ headline }}"
-                  message: Tap to dismiss until the next commute
+                  title: "{{ activity_title }}"
+                  # The gesture matters and is not guessable. An action on
+                  # an iOS notification only appears on a long press, and
+                  # this notification is `passive` -- it never banners, it
+                  # goes straight to Notification Center, so there is no
+                  # moment where the button is on screen by itself. Saying
+                  # "tap" here sent people to the `url` below instead, which
+                  # opens the dashboard and looks like the dismiss silently
+                  # failing.
+                  message: Hold this notification, then tap Dismiss
                   data: >-
                     {{ {
                          'tag': dismiss_tag,
@@ -330,12 +816,12 @@ actions:
           - condition: trigger
             id: refresh
         sequence:
-          - action: !input notify_target
+          - action: "{{ notify_action }}"
             data:
               message: clear_notification
               data:
                 tag: "{{ tag }}"
-          - action: !input notify_target
+          - action: "{{ notify_action }}"
             data:
               message: clear_notification
               data:

@@ -1,6 +1,4 @@
 default_config:
-homeassistant:
-  customize: !include customize.yaml
 
 frontend:
   themes: !include_dir_merge_named themes
@@ -26,14 +24,6 @@ logger:
       - ".*SSLCertVerificationError.*"
     custom_components.pitboss:
       - ".*Manually updated pitboss data.*"
-# influxdb:
-#   host: a0d7b954-influxdb
-#   port: 8086
-#   database: homeassistant
-#   username: homeassistant
-#   password: !secret influxdb_password
-#   max_retries: 3
-#   default_measurement: state
 
 input_select:
   # Both ThermoPro probes expose the same four temperature sensors.

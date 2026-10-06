@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.jacob_chores",
+  "data": {
+    "config": {
+      "kiosk_mode": {
+        "hide_sidebar": true,
+        "hide_menubutton": true,
+        "hide_account": true,
+        "hide_search": true,
+        "hide_assistant": true,
+        "hide_notifications": true,
+        "hide_overflow": true
+      },
+      "views": [
+        {
+          "title": "Chores",
+          "path": "chores",
+          "type": "sections",
+          "max_columns": 3,
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "custom:skylight-chores",
+                  "entity": "todo.the_knowles_jacob_chores",
+                  "show_progress": true,
+                  "hide_completed": true,
+                  "title": "Jacob's Chores",
+                  "text_scale": 0.75
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "custom:skylight-chores",
+                  "entity": "todo.kitchen_the_knowles_up_for_grabs",
+                  "title": "Up for Grabs",
+                  "show_progress": true,
+                  "hide_completed": false,
+                  "text_scale": 0.75
+                }
+              ]
+            }
+          ],
+          "dense_section_placement": true,
+          "cards": []
+        },
+        {
+          "title": "Rewards",
+          "path": "rewards",
+          "type": "sections",
+          "max_columns": 2,
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "custom:skylight-rewards",
+                  "profile": "Jacob"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

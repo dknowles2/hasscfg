@@ -21,12 +21,12 @@
       },
       {
         "id": "b5be0f4aad344757ac923986ff315625",
-        "url": "/hacsfiles/calendar-card-pro/calendar-card-pro.js?hacstag=939311749320",
+        "url": "/hacsfiles/calendar-card-pro/calendar-card-pro.js?hacstag=939311749420",
         "type": "module"
       },
       {
         "id": "599f58661d344781a0334e6bfa178434",
-        "url": "/hacsfiles/clock-weather-card/clock-weather-card.js?hacstag=522634019294",
+        "url": "/hacsfiles/clock-weather-card/clock-weather-card.js?hacstag=522634019296",
         "type": "module"
       },
       {
@@ -36,27 +36,47 @@
       },
       {
         "id": "d2bf85e5a1d74348971cfdeed36c7a0a",
-        "url": "/hacsfiles/flex-table-card/flex-table-card.js?hacstag=15629205814",
-        "type": "module"
-      },
-      {
-        "id": "2824d08d6cec4472ad40db835e705001",
-        "url": "/bambu_lab/ha-bambulab-cards.js?v=0.6.51",
+        "url": "/hacsfiles/flex-table-card/flex-table-card.js?hacstag=15629205815",
         "type": "module"
       },
       {
         "id": "3dca228bab134c4688bc922828ae9bdb",
-        "url": "/local/f1-sensor-live-data-card/f1-sensor-live-data-card.js?v=f72930d77a0c",
+        "url": "/local/f1-sensor-live-data-card/register.js?v=8914822f2341",
         "type": "module"
       },
       {
         "id": "e2f46a07012d41c0ac6af702748ba77a",
-        "url": "/hacsfiles/vehicle-status-card/vehicle-status-card.js?hacstag=8593716631250",
+        "url": "/hacsfiles/vehicle-status-card/vehicle-status-card.js?hacstag=8593716631261",
         "type": "module"
       },
       {
         "id": "3bc0b1da774648d0ae50888cce5603a9",
-        "url": "/hacsfiles/lovelace-entity-progress-card/entity-progress-card.js?hacstag=908868522160",
+        "url": "/hacsfiles/lovelace-entity-progress-card/entity-progress-card.js?hacstag=908868522163",
+        "type": "module"
+      },
+      {
+        "id": "03ddd17896864fedac53aeab87e8f9ce",
+        "url": "/bambu_lab/ha-bambulab-cards.js?v=0.6.54",
+        "type": "module"
+      },
+      {
+        "id": "c49e84c07f024d31aca4c48ea6f92597",
+        "url": "/skylight/frontend/skylight-rewards.js?v=2026.8.14",
+        "type": "module"
+      },
+      {
+        "id": "cae40bf2b1b94899a57ece1eea3bb0db",
+        "url": "/skylight/frontend/skylight-chores.js?v=2026.8.14",
+        "type": "module"
+      },
+      {
+        "id": "e8226f9aa28a48dda2fbca4dbd412b96",
+        "url": "/voice_satellite/voice-satellite-card.js?v=2026.9.13",
+        "type": "module"
+      },
+      {
+        "id": "c00f2b42d7cc47df87a189e547bb1f27",
+        "url": "/houseplan_files/houseplan-card.js?v=1.79.0",
         "type": "module"
       }
     ]

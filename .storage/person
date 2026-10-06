@@ -10,14 +10,17 @@
         "user_id": "cc22e3428ba742dfb0f4040a3af0719d",
         "device_trackers": [
           "device_tracker.davids_iphone_17_pro",
-          "device_tracker.davids_ipad_air"
-        ]
+          "device_tracker.davids_ipad_air",
+          "device_tracker.davids_iphone_17_pro_apple_watch"
+        ],
+        "picture": "/api/image/serve/6ba2953bd242deea6923797995a40f60/512x512"
       },
       {
         "id": "sarah_knowles",
         "name": "Sarah Knowles",
         "device_trackers": [
-          "device_tracker.sarah_s_iphone"
+          "device_tracker.sarah_s_iphone",
+          "device_tracker.sarah_s_iphone_2"
         ],
         "user_id": "8048b02710ac40b7b6d184ede1128584",
         "picture": null
@@ -42,7 +45,7 @@
         "device_trackers": [
           "device_tracker.jacobs_ipad_2"
         ],
-        "user_id": null,
+        "user_id": "105c748e2d704607be2b9b22411c2e6f",
         "picture": null
       }
     ]

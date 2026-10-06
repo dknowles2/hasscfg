@@ -18,6 +18,16 @@
         "id": "nj_transit_dismissed_pm",
         "name": "NJ Transit dismissed (PM)",
         "icon": "mdi:train"
+      },
+      {
+        "id": "office_guest_mode",
+        "name": "Guest Mode",
+        "icon": "mdi:bed"
+      },
+      {
+        "id": "guest_room_guest_mode",
+        "name": "Guest Mode",
+        "icon": "mdi:bed"
       }
     ]
   }

@@ -20,15 +20,15 @@
       {
         "aliases": [],
         "floor_id": "downstairs",
-        "humidity_entity_id": "sensor.downstairs_current_humidity",
+        "humidity_entity_id": "sensor.downstairs_thermostat_humidity",
         "icon": "mdi:home-floor-1",
         "id": "downstairs",
         "labels": [],
         "name": "Downstairs",
         "picture": null,
-        "temperature_entity_id": "sensor.downstairs_current_temperature",
+        "temperature_entity_id": "sensor.downstairs_thermostat_temperature",
         "created_at": "2026-01-12T12:39:55.127093+00:00",
-        "modified_at": "2026-01-13T02:18:40.394621+00:00"
+        "modified_at": "2026-10-06T01:54:08.516067+00:00"
       },
       {
         "aliases": [],
@@ -137,15 +137,15 @@
       {
         "aliases": [],
         "floor_id": "upstairs",
-        "humidity_entity_id": "sensor.upstairs_current_humidity",
+        "humidity_entity_id": "sensor.upstairs_thermostat_humidity",
         "icon": "mdi:home-floor-2",
         "id": "upstairs_floor",
         "labels": [],
         "name": "Upstairs",
         "picture": null,
-        "temperature_entity_id": "sensor.upstairs_current_temperature",
+        "temperature_entity_id": "sensor.upstairs_thermostat_temperature",
         "created_at": "2026-01-12T12:04:54.752329+00:00",
-        "modified_at": "2026-01-13T02:18:30.724128+00:00"
+        "modified_at": "2026-10-06T01:54:18.766455+00:00"
       },
       {
         "aliases": [],
@@ -191,8 +191,8 @@
       {
         "aliases": [
           "Jake's Room",
-          "Jacob’s Room",
-          "Jake's Bedroom"
+          "Jake's Bedroom",
+          "Jacob’s Room"
         ],
         "floor_id": "upstairs",
         "humidity_entity_id": "sensor.jacobs_bedoom_sensor_humidity",
@@ -323,6 +323,19 @@
         "temperature_entity_id": null,
         "created_at": "2026-01-12T04:50:40.399028+00:00",
         "modified_at": "2026-01-12T04:50:40.399030+00:00"
+      },
+      {
+        "aliases": [],
+        "floor_id": "downstairs",
+        "humidity_entity_id": null,
+        "icon": "mdi:halloween",
+        "id": "haunted_house",
+        "labels": [],
+        "name": "Haunted House",
+        "picture": null,
+        "temperature_entity_id": null,
+        "created_at": "2026-10-05T01:02:18.697543+00:00",
+        "modified_at": "2026-10-05T01:02:18.697546+00:00"
       }
     ]
   }

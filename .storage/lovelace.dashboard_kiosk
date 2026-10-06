@@ -59,6 +59,22 @@
               "type": "entity",
               "entity": "climate.upstairs_thermostat",
               "show_name": true
+            },
+            {
+              "type": "entity",
+              "show_name": true,
+              "show_state": true,
+              "show_icon": true,
+              "entity": "sensor.office_sensor_temperature",
+              "name": [
+                {
+                  "type": "area"
+                },
+                {
+                  "type": "entity"
+                }
+              ],
+              "show_entity_picture": false
             }
           ],
           "cards": [],
@@ -115,7 +131,7 @@
                   "entity": "weather.forecast_home",
                   "animated_icon": false,
                   "weather_icon_type": "fill",
-                  "forecast_rows": 3,
+                  "forecast_rows": 2,
                   "show_humidity": true,
                   "hide_date": true
                 },

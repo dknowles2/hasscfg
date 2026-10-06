@@ -125,6 +125,11 @@ monitor_meat_probe:
       data:
         message: Can't find sensor {{ entity_id }} — check probe/sensor selection.
     - stop: Entity unavailable
+  # Baseline the bar on the temperature at start. Feeding raw degrees with
+  # progress_max = target starts a 203F cook already a third full, because the
+  # probe reads room temperature before it goes in the meat.
+  - variables:
+      start_f: '{{ states(entity_id) | float(0) }}'
   - action: input_boolean.turn_on
     target:
       entity_id: '{{ cancel_flag }}'
@@ -141,8 +146,14 @@ monitor_meat_probe:
         tag: '{{ activity_id }}'
         live_update: true
         notification_icon: mdi:thermometer
-        progress: '{{ states(entity_id) | float(0) | round(0) | int }}'
-        progress_max: '{{ target_f | float(0) | round(0) | int }}'
+        critical_text: '{{ states(entity_id) | float(0) | round(0) | int }}°F'
+        progress: >-
+          {% set cur = states(entity_id) | float(0) %}
+          {% set lo = start_f | float(0) %}
+          {% set span = (target_f | float(0)) - lo %}
+          {{ 0 if span <= 0 else
+             [[(((cur - lo) / span) * 100) | round(0) | int, 0] | max, 100] | min }}
+        progress_max: 100
   - repeat:
       while:
       # Stop button (or any turn_off of the flag) ends the loop cleanly.
@@ -179,8 +190,14 @@ monitor_meat_probe:
               tag: '{{ activity_id }}'
               live_update: true
               notification_icon: mdi:thermometer
-              progress: '{{ states(entity_id) | float(0) | round(0) | int }}'
-              progress_max: '{{ target_f | float(0) | round(0) | int }}'
+              critical_text: '{{ states(entity_id) | float(0) | round(0) | int }}°F'
+              progress: >-
+                {% set cur = states(entity_id) | float(0) %}
+                {% set lo = start_f | float(0) %}
+                {% set span = (target_f | float(0)) - lo %}
+                {{ 0 if span <= 0 else
+                   [[(((cur - lo) / span) * 100) | round(0) | int, 0] | max, 100] | min }}
+              progress_max: 100
               # Refreshes must not re-alert once a minute.
               silent: true
   # Every exit path ends the Live Activity, so none are left orphaned on the phone.
